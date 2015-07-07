@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+    id 'idea'
+    id "de.undercouch.download" version "1.2"
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+    compile group: 'org.xerial', name: 'sqlite-jdbc', version: '3.7.2'
+    compile group: 'org.apache.logging.log4j', name:'log4j-core', version: '2.3'
+    compile group: 'com.google.inject', name: 'guice', version: '4.0'
+    compile group: 'commons-configuration', name: 'commons-configuration', version: '1.10'
+    compile group: 'com.google.guava', name: 'guava', version: '18.0'
+    compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
+}
+
+repositories {
+    mavenCentral()
+}
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+version = '1.0'
+jar {
+    manifest {
+        attributes 'Implementation-Title': 'Pulse Search Engine',
+                   'Implementation-Version': version,
+                   'Main-Class': 'net.digitalbebop.Pulse'
+    }
+}
+
+import de.undercouch.gradle.tasks.download.Download
+task getDependencies(type: Download, dependsOn: build) {
+     src([
+	         'https://bitbucket.org/xerial/sqlite-jdbc/downloads/sqlite-jdbc-3.7.2.jar',
+	         'http://central.maven.org/maven2/org/apache/logging/log4j/log4j-core/2.3/log4j-core-2.3.jar',
+	         'https://github.com/google/guice/releases/download/4.0/guice-4.0.jar',
+	         'http://central.maven.org/maven2/commons-configuration/commons-configuration/1.10/commons-configuration-1.10.jar',
+             'http://search.maven.org/remotecontent?filepath=com/google/guava/guava/18.0/guava-18.0.jar',
+             'http://central.maven.org/maven2/javax/inject/javax.inject/1/javax.inject-1.jar',
+             'http://central.maven.org/maven2/commons-lang/commons-lang/2.6/commons-lang-2.6.jar'
+     ])
+     dest "$buildDir/libs"
+}
