@@ -2,11 +2,11 @@ package net.digitalbebop;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
-import org.apache.commons.configuration.BaseConfiguration;
+import com.google.inject.Singleton;
 
 public class PulseModule implements Module {
     @Override
     public void configure(Binder binder) {
-        binder.bind(BaseConfiguration.class).to(PulseProperties.class);
+        binder.bind(PulseProperties.class).in(Singleton.class);
     }
 }

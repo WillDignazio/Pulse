@@ -1,6 +1,5 @@
 package net.digitalbebop;
 
-public class Pulse extends Application
-{
+public class Pulse extends Application {
 
 }

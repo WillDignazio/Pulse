@@ -1,32 +1,74 @@
 package net.digitalbebop;
 
-import com.google.inject.Inject;
-import org.apache.commons.configuration.BaseConfiguration;
-import org.apache.commons.configuration.Configuration;
+import com.google.inject.Singleton;
+import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PropertyConfigurator;
 
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
+import java.util.Properties;
 
-public class PulseProperties extends BaseConfiguration {
-    private final Logger logger = LogManager.getLogger(PulseProperties.class);
-    private Configuration baseConfig;
-    private Configuration pulseConfig;
-    private Map<String, String> envVars;
+@Singleton
+public class PulseProperties extends Properties {
+    private final Logger logger = Logger.getLogger(PulseProperties.class);
 
-    @Inject
-    private PulseProperties(Configuration baseConfig) {
-        this.baseConfig = baseConfig;
+    public PulseProperties() {
+        super();
 
-        envVars = System.getenv();
+        logger.info("Initializing Pulse property instance.");
+        bootstrapConfiguration();
+    }
+
+    private void bootstrapConfiguration() {
+        final CompositeConfiguration config = new CompositeConfiguration();
+        final Map<String, String> envVars = System.getenv();
+
         try {
-            String pulseConfig = envVars.get(PulseEnvironment.PULSE_CONFIG);
+            /* Retrieve the set configuration path from the Environment Variables */
+            String pulseConfigPath = envVars.getOrDefault(PulseEnvironmentKeys.PULSE_CONFIG.toString(), ".");
+            String pulseConfigFilepath = pulseConfigPath + "/pulse.properties";
 
-            logger.info("Configuring Pulse from: " + pulseConfig + "/pulse.properties");
-            this.pulseConfig = new PropertiesConfiguration(pulseConfig);
-        } catch(Exception e) {
-            throw new RuntimeException("Failed to parse properties file: " + e.toString());
+            /*
+             * Configure Log4J instance
+             */
+            PropertyConfigurator.configure(pulseConfigPath + "/log4j.properties");
+
+            /*
+             * Add base property definitions
+             */
+            config.addConfiguration(new PropertiesConfiguration(pulseConfigFilepath));
+
+            /* Add in environment variables */
+            for(PulseEnvironmentKeys key : Arrays.asList(PulseEnvironmentKeys.values())) {
+                this.
+                setProperty(key.name(), envVars.get(key.name()));
+                System.out.println("Set: " + key);
+            }
+
+            Iterator<String> iter = config.getKeys();
+            while(iter.hasNext()) {
+                String key = iter.next();
+                Object o = config.getProperty(key);
+
+                if(o instanceof String) {
+                    setProperty(key, (String) o);
+                } else {
+                    try {
+                        String valstr = o.toString();
+                        logger.warn("Property \"" + key + "\" was converted to a string: " + valstr);
+                        setProperty(key, valstr);
+                    } catch(Exception e) {
+                        logger.error("Failed to parse property \"" + key + "\"", e);
+                        throw new IllegalArgumentException(e);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            //logger.error("Failed to parse configuration file.");
+            throw new RuntimeException(e);
         }
     }
 }
