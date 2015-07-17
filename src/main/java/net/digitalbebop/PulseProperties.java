@@ -3,6 +3,7 @@ package net.digitalbebop;
 import com.google.inject.Singleton;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.log4j.BasicConfigurator;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 
@@ -18,6 +19,11 @@ public class PulseProperties extends Properties {
     public PulseProperties() {
         super();
 
+        /*
+         * Because we haven't had a chance to setup our logging facilities yet,
+         * we're going to configure a basic logging setup until we bring in our own.
+         */
+        BasicConfigurator.configure();
         logger.info("Initializing Pulse property instance.");
         bootstrapConfiguration();
     }
@@ -71,4 +77,7 @@ public class PulseProperties extends Properties {
             throw new RuntimeException(e);
         }
     }
+
+    public final String PulsePIDPath = getProperty(
+            PulseConfigKeys.PID_FILE.toString(), "/tmp");
 }

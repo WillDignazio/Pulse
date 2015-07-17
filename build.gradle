@@ -13,6 +13,7 @@ dependencies {
     compile group: 'com.google.guava', name: 'guava', version: '18.0'
     compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
     compile group: 'commons-daemon', name: 'commons-daemon', version: '1.0.15'
+    compile group: 'org.reflections', name: 'reflections', version: '0.9.10'
 }
 
 defaultTasks 'build', 'writeClasspath'
