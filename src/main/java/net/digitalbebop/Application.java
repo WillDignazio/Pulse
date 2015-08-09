@@ -2,9 +2,10 @@ package net.digitalbebop;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
+import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -13,33 +14,25 @@ import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
 
-public class Application implements Runnable {
-    private static Injector injector;
+public class Application {
     private static final Logger logger = LogManager.getLogger(Application.class);
 
     protected static PulseProperties defaultProperties;
-
-    protected final String appName;
-    protected final File pidFile;
+    private final String appName;
+    private final File pidFile;
 
     /*
      * Make sure to initialize any base objects here, critically, we must
      * configure all dependency injections transparently from all deriving classes.
      */
     static {
-        injector = Guice.createInjector(new PulseModule());
+        Injector injector = Guice.createInjector(new PulseModule());
         defaultProperties = injector.getInstance(PulseProperties.class);
     }
 
-    /**
-     * Application construction paramaters should match the properties of the PulseApp
-     * annotation. At runtime, the reflection tools will find classes that have both the
-     * PulseApp annotation, and extend the Application class.
-     * @param appName
-     */
-    public Application(String appName) {
-        this.appName = appName;
-        this.pidFile = getPIDFile();
+    public Application(@NotNull String name) {
+        appName = name;
+        pidFile = getPIDFile();
         Runtime.getRuntime().addShutdownHook(new Thread(new ApplicationShutdownTask()));
     }
 
@@ -60,6 +53,10 @@ public class Application implements Runnable {
                 logger.info("Removed PID file.");
             }
         }
+    }
+
+    public String getApplicationName() {
+        return appName;
     }
 
     /**
@@ -111,18 +108,5 @@ public class Application implements Runnable {
         }
 
         return pidFile;
-    }
-
-    @Override
-    public void run() {
-        while (true) {
-            try {
-                Thread.sleep(10000); // Sleep 10 Seconds
-            } catch (InterruptedException e) {
-                logger.warn("Daemon interrupted: " + e.getMessage());
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        }
     }
 }

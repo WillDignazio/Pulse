@@ -1,18 +1,43 @@
 package net.digitalbebop;
 
-import org.apache.log4j.Logger;
+import net.digitalbebop.http.EndpointServer;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
-import java.util.concurrent.Executors;
+public class Pulse extends DaemonizedApplication {
+    private static Logger logger = LogManager.getLogger(Pulse.class);
 
-public class Pulse extends Application {
-    private static Logger logger = Logger.getLogger(Pulse.class);
+    private EndpointServer server;
 
     public Pulse() {
         super("pulse");
+
+        logger.info("Pulse Solr instance address: " + defaultProperties.SolrAddress);
+        try {
+            logger.info("Initializing server...");
+
+            server = new EndpointServer("127.0.0.1", 8080);
+
+            logger.info("Initialized server: " + server.toString());
+        } catch (Exception e) {
+            logger.error("Setup exception: " + e);
+        }
     }
 
+    private void registerEndpoints() {
+        if (server.isInitialized()) {
+            throw new IllegalStateException("Server not initialized.");
+        }
+
+
+    }
+
+
     public static void main(String[] args) {
+        Pulse pulseApp;
+
         logger.info("Starting Pulse application....");
-        Executors.newCachedThreadPool().submit(new Pulse());
+        pulseApp = new Pulse();
+        pulseApp.init();
     }
 }
