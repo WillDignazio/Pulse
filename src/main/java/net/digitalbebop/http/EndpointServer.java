@@ -13,14 +13,32 @@ import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
 import java.nio.charset.Charset;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
 public class EndpointServer extends BaseServer {
     private static final Logger logger = LogManager.getLogger(EndpointServer.class);
 
-    private final ConcurrentHashMap<Pattern, RequestHandler> endpointMap = new ConcurrentHashMap<>();
+    private static class EndpointMap {
+        private final Pattern _pattern;
+        private final RequestHandler _handler;
+
+        public EndpointMap(@NotNull Pattern pattern, @NotNull RequestHandler handler) {
+            this._pattern = pattern;
+            this._handler = handler;
+        }
+
+        public Pattern getPattern() {
+            return this._pattern;
+        }
+
+        public RequestHandler getHandler() {
+            return this._handler;
+        }
+    }
+
+    private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
     private PulseProperties properties;
 
     private static RequestHandler notFoundHandler = req -> {
@@ -43,12 +61,11 @@ public class EndpointServer extends BaseServer {
         final String requestURI = request.getRequestLine().getUri();
         final RequestHandler handler;
 
-        for (Pattern pattern : endpointMap.keySet()) {
-            if (pattern.matcher(requestURI).matches()) {
-                handler = endpointMap.get(pattern);
-
-                logger.debug("Handling request (" + requestURI + ") with " + handler.toString());
-                return handler.handle(request);
+        logger.debug("Recieved request: " + request.getRequestLine());
+        for (EndpointMap map : endpointMap) {
+            if (map.getPattern().matcher(requestURI).matches()) {
+                logger.debug("Handling request (" + requestURI + ") with " + map.getHandler().toString());
+                return map.getHandler().handle(request);
             }
         }
 
@@ -59,11 +76,9 @@ public class EndpointServer extends BaseServer {
     public void registerEndpoint(@NotNull final String regex, RequestHandler handler) {
         try {
             Pattern pattern = Pattern.compile(regex);
+            final EndpointMap map = new EndpointMap(pattern, handler);
 
-            RequestHandler chk = endpointMap.putIfAbsent(pattern, handler);
-            if (chk == null) {
-                throw new IllegalArgumentException("Endpoint pattern is already registered.");
-            }
+            endpointMap.add(map);
         } catch (PatternSyntaxException pe) {
             throw new IllegalArgumentException("Given endpoint URI is a valid regex string.");
         }

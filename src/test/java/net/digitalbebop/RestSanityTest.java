@@ -1,4 +1,4 @@
 package net.digitalbebop;
-public class RestSanityTest {
 
+public class RestSanityTest {
 }
