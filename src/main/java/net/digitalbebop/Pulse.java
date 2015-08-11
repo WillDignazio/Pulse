@@ -17,6 +17,8 @@ public class Pulse extends DaemonizedApplication {
             logger.info("Initializing server...");
 
             server = new EndpointServer("127.0.0.1", 8080);
+            registerEndpoints();
+            server.init();
 
             logger.info("Initialized server: " + server.toString());
         } catch (Exception e) {
@@ -28,8 +30,6 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
-
-
     }
 
 

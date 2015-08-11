@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -67,10 +68,11 @@ abstract class BaseServer {
                     logger.debug("Accepted connection from " + sock.toString());
                     executor.submit(() -> {
                         try {
+                            final OutputStream sos = sock.getOutputStream();
                             final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
                             final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
 
-                            sessionOutputBuffer.bind(sock.getOutputStream());
+                            sessionOutputBuffer.bind(sos);
                             sessionInputBuffer.bind(sock.getInputStream());
 
                             final DefaultHttpRequestParser parser  = new DefaultHttpRequestParser(sessionInputBuffer);
@@ -80,7 +82,15 @@ abstract class BaseServer {
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
                             msgWriter.write(rawResponse);
 
+                            logger.debug(rawResponse.toString());
                             sessionOutputBuffer.flush();
+
+                            if (rawResponse.getEntity() != null) {
+                                rawResponse.getEntity().writeTo(sock.getOutputStream());
+                            }
+
+                            sessionOutputBuffer.flush();
+                            sos.close();
                             sock.close();
                         } catch (HttpException | IOException e) {
                             logger.error("Error processing request: " + e.getMessage(), e);
