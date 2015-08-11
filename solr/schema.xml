@@ -106,7 +106,7 @@
       trailing underscores (e.g. _version_) are reserved.
    -->
         
-   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" default="NEW"/> 
+   <field name="id" type="uuid" indexed="true" stored="true" required="true" multiValued="false" /> 
    
    <!-- points to the root document of a block of nested documents. Required for nested
         document support, may be removed otherwise
@@ -119,34 +119,34 @@
 
    <!-- if the document is the most current index of the element it represents.
       This allows queries to search only the most current version of documents -->
-   <field name="current" type="boolean" index="true" stored="true" required="true" />
+   <field name="current" type="boolean" indexed="true" stored="true" required="true" />
 
    <!-- the format of the data that the document represents. This will be
       things like pdf, code, movie, etc. -->
    <field name="format" type="string" indexed="true" stored="true" />
 
    <!-- special keywords for this document -->
-   <field name="tags" type="string" index="true" stored="true" multiValued="true" />
+   <field name="tags" type="string" indexed="true" stored="true" multiValued="true" />
    
    <!-- the user that generated this document. Such as the author of an email -->
-   <field name="username" type="string" index="true" stored="true" />
+   <field name="username" type="string" indexed="true" stored="true" />
 
    <!-- if the element has been deleted. The module will cause this to be updated
        when the item has been removed from the world -->
-   <field name="deleted" type="boolean" index="true" stored="true" default="false" />
+   <field name="deleted" type="boolean" indexed="true" stored="true" default="false" />
 
    <!-- the name of the module that inserted this document -->
-   <field name="moduleName" type="string" index="true" stored="true" />
+   <field name="moduleName" type="string" indexed="true" stored="true" />
 
    <!-- the unique ID that the module gave this document -->
-   <field name="moduleId" type="string" index="true" stored="true" />
+   <field name="moduleId" type="string" indexed="true" stored="true" />
 
    <!-- This includes meta information used to determine how to display the
       data to the end user. This is a JSON string in Base64 -->
-   <field name="metaData" type="binary" index="false" stored="true" />
+   <field name="metaData" type="binary" indexed="false" stored="true" />
 
    <!-- the text used to do full-text searching on. Customized for english data -->
-   <field name="data" type="text_en" index="true" stored="true" />
+   <field name="data" type="text_en" indexed="true" stored="true" />
 
 
  </fields>
@@ -166,6 +166,7 @@
        standard package such as org.apache.solr.analysis
     -->
 
+    <fieldType name="uuid" class="solr.UUIDField" indexed="true" />
 
     <!-- The StrField type is not analyzed, but indexed/stored verbatim.
        It supports doc values but in that case the field needs to be
@@ -993,5 +994,10 @@
         <processor class="solr.RunUpdateProcessorFactory" />
     </updateRequestProcessorChain>
 
+    <requestHandler name="/update" class="solr.UpdateRequestHandler">
+        <lst name="defaults">
+            <str name="update.chain">uuid</str>
+        </lst>
+    </requestHandler>
 
 </schema>

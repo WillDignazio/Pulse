@@ -2,7 +2,7 @@
 // element. They are responsible for generating an unique ID `moduleId`
 // that will always represent the same data.
 message IndexRequest {
-    // Special keywords used in searching
+    // Special keywords used in searching.
     repeated string tags = 1;
     
     // The CSH username of the person who generated this index
