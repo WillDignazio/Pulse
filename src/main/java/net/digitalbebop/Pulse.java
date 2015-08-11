@@ -1,6 +1,9 @@
 package net.digitalbebop;
 
 import net.digitalbebop.http.EndpointServer;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
+import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -30,6 +33,8 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
+
+        server.registerEndpoint("/", req -> new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
     }
 
 
