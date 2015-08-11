@@ -2,7 +2,7 @@
 // element. They are responsible for generating an unique ID `moduleId`
 // that will always represent the same data.
 message IndexRequest {
-    // Special tags to search by
+    // Special keywords used in searching
     repeated string tags = 1;
     
     // The CSH username of the person who generated this index
@@ -18,9 +18,15 @@ message IndexRequest {
     
     // The unique ID given to this index record by the module
     required string moduleId = 5;
-    
+
+    // This is for metadata about the actual indexed element. This data will
+    // never be indexed but allow the server to better format the elemtn.
+    optional map<string, string> metaTags = 6;
+
     // The data that will be indexed into Solr for full-text searching
-    required string indexData = 6;
+    // This data is only used for indexing and when never be shown to the end
+    // user
+    required string indexData = 7;
     
     // The data to be stored as what was indexed. This allow end users to 
     // get the raw data that was index. If this is not given, then the 
@@ -30,11 +36,13 @@ message IndexRequest {
     // be the parsed text from the PDF while this will be the PDF itself,
     // This allows end users to dowload the actual data that was indexed
     // and not just a string of the text.
-    optional bytes rawData = 7;
+    optional bytes rawData = 8;
 }
 
 // Tells the server that the given element has been should be marked as
 // deleted.
 message DeleteRequest {
-  // TODO
+    required string moduleName = 1;
+
+    required string moduleId = 2;
 }
