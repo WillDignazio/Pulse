@@ -1,0 +1,40 @@
+// Modules send this message to the server when they want to index a new
+// element. They are responsible for generating an unique ID `moduleId`
+// that will always represent the same data.
+message IndexRequest {
+    // Special tags to search by
+    repeated string tags = 1;
+    
+    // The CSH username of the person who generated this index
+    required string username = 2;
+    
+    // The format to that this data is in. This would be a string such
+    // as pdf, text, movie, etc. that will help the web UI know how
+    // to display the data to the end user.
+    optional string format = 3;
+    
+    // The module's self-reported unique name
+    required string moduleName = 4;
+    
+    // The unique ID given to this index record by the module
+    required string moduleId = 5;
+    
+    // The data that will be indexed into Solr for full-text searching
+    required string indexData = 6;
+    
+    // The data to be stored as what was indexed. This allow end users to 
+    // get the raw data that was index. If this is not given, then the 
+    // indexData will be used as this.
+    //
+    // This is useful if the data being indexed is a PDF. The indexData will 
+    // be the parsed text from the PDF while this will be the PDF itself,
+    // This allows end users to dowload the actual data that was indexed
+    // and not just a string of the text.
+    optional bytes rawData = 7;
+}
+
+// Tells the server that the given element has been should be marked as
+// deleted.
+message DeleteRequest {
+  // TODO
+}
