@@ -33,7 +33,6 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
-
         server.registerEndpoint("/", req -> new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK"));
     }
 

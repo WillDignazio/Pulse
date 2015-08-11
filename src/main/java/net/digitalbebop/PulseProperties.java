@@ -84,4 +84,12 @@ public class PulseProperties extends Properties {
     public final String ServerPort = getProperty(
             ConfigKeys.LISTEN_PORT.toString(), "8080"
     );
+
+    public final String HBaseTable = getProperty(
+            ConfigKeys.HBASE_TABLE.toString(), "pulse"
+    );
+
+    public final String ZookeeperQuorum = getProperty(
+            ConfigKeys.ZOOKEEPER_QUORUM.toString(), "jd-5.ih.csh.rit.edu"
+    );
 }

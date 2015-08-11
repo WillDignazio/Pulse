@@ -106,7 +106,7 @@
       trailing underscores (e.g. _version_) are reserved.
    -->
         
-   <field name="id" type="uuid" indexed="true" stored="true" required="true" multiValued="false" /> 
+   <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
    
    <!-- points to the root document of a block of nested documents. Required for nested
         document support, may be removed otherwise
