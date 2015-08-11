@@ -1,0 +1,21 @@
+{
+ "namespace": "net.digitalbebop.avro",
+ "type": "record",
+ "name": "index",
+ "fields": [
+    {"name": "timestamp", "type": "long"},
+    {"name": "current", "type": "boolean"},
+    {"name": "format", "type": "string"},
+    {"name": "tags", "type": {
+        "type": "array", 
+        "items": "string"
+        }
+    },
+    {"name": "username", "type": "string"},
+    {"name": "deleted", "type": "boolean"},
+    {"name": "moduleName", "type": "string"},
+    {"name": "moduleId", "type": "string"},
+    {"name": "metaData", "type": "string"},
+    {"name": "data", "type": "string"}
+ ]
+}
