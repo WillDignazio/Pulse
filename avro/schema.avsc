@@ -2,20 +2,64 @@
  "namespace": "net.digitalbebop.avro",
  "type": "record",
  "name": "index",
+ "doc": "The data stored in HBase to index for the element",
  "fields": [
-    {"name": "timestamp", "type": "long"},
-    {"name": "current", "type": "boolean"},
-    {"name": "format", "type": "string"},
-    {"name": "tags", "type": {
-        "type": "array", 
-        "items": "string"
-        }
+    {
+        "name": "id", 
+        "type": "string",
+        "doc": "The globally unique ID for this element. It needs to be in the form, moduleName-moduleId-timestamp"
     },
-    {"name": "username", "type": "string"},
-    {"name": "deleted", "type": "boolean"},
-    {"name": "moduleName", "type": "string"},
-    {"name": "moduleId", "type": "string"},
-    {"name": "metaData", "type": "string"},
-    {"name": "data", "type": "string"}
+    {
+        "name": "timestamp", 
+        "type": "long",
+        "doc": "the time that this record was created"
+    },
+    {
+        "name": "current", 
+        "type": "boolean",
+        "doc": "If this record is the most up-to-date instance of the element"
+    },
+    {
+        "name": "format", 
+        "type": "string",
+        "doc": "the format of the raw data. This will be things like pdf, movie, code, etc."
+    },
+    {
+        "name": "tags", 
+        "type": {
+            "type": "array", 
+            "items": "string"
+        },
+        "doc": "keywords used for searching"
+    },
+    {
+        "name": "username", 
+        "type": "string",
+        "doc": "the csh username of the person who generated this record"
+    },
+    {
+        "name": "deleted", 
+        "type": "boolean",
+        "doc": "if the record has been removed by the moduke"
+    },
+    {
+        "name": "moduleName", 
+        "type": "string",
+        "doc": "the unique module name that generated this record"
+    },
+    {
+        "name": "moduleId", 
+        "type": "string",
+        "doc": "the unique ID that the module gave this record"},
+    {
+        "name": "metaData", 
+        "type": "string",
+        "doc": "base 64 encoded JSON blog of metadata about this record. Used in displaying results"
+    },
+    {
+        "name": "data", 
+        "type": "string",
+        "doc": "the english text to search through for this record"
+    }
  ]
 }
