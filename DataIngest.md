@@ -4,18 +4,18 @@
 
 Client modules will send the API server index updates using the protobuf message.
 
-#### Module Path
+#### Index Pipeline
 
 - Module sends request to API server
-- API server sends request to HBase
-- Lily indexer creates index for Solr
-- API server queries Solr for element's UUID
-- element's UUID is returned to the module
+- API server updates HBase
+  - Get the current index element, marks it as outdate, and inserts it back in
+  - Inserts the new index record as the current index
+- Lily indexer runs asynchronously to creates the index for Solr
 
 ## HBase
 
 Data is inserted into HBase as the reslient data storage backend. The row ID is a combination
-of the module name and the unique ID given by the client. This allows easily inserting and
+of the module name and the unique ID given by the module. This allows easily inserting and
 updating records for a given element.
 
 #### Format
@@ -25,9 +25,18 @@ updating records for a given element.
 ###### Column qualifiers: epoch timestamp of insert
 
 The index column family will contain an Avro record that contains all the information that is 
-needed to insert into Solr. The data colum family will contain the raw payload of the item 
-that is indexed. Seperating these two things allows for better performance since only one of 
-them will be accessed at a time. The inddex column family will only be needed when the index
+needed to insert a document into Solr. The column qualifer will be the epoch timestamp with 
+the exception of the newest entry which would have a column qualifer of "current". This make
+it easy to identify the newest entry.
+
+
+The data colum family will contain the raw payload of the item that is indexed. This will
+be queried when the user wants to display stuff to the end user. Since we have the raw data,
+we can do things like generating thumbnails for images, video, pdfs, etc.
+
+
+Seperating these two things allows for better performance since only one of 
+them will be accessed at a time. The index column family will only be needed when the index
 is being generated and the data column family is only needed when the end user wants to see
 the raw payload of the item that was indexed.
 
