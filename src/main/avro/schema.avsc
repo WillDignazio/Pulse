@@ -1,7 +1,7 @@
 {
  "namespace": "net.digitalbebop.avro",
+ "name": "PulseAvroIndex",
  "type": "record",
- "name": "index",
  "doc": "The data stored in HBase to index for the element",
  "fields": [
     {

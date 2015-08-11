@@ -2,11 +2,29 @@ buildscript {
     repositories {
         mavenCentral()
     }
+
+    apply plugin: 'java' // Needed for protobuf
 }
 
-apply plugin: 'java'
-apply plugin: 'eclipse'
-apply plugin: 'idea'
+plugins {
+    id 'java'
+    id 'eclipse'
+    id 'idea'
+
+    id "com.google.protobuf" version "0.6.1"
+    id "com.commercehub.gradle.plugin.avro" version "0.3.4"
+}
+
+repositories {
+    mavenCentral()
+}
+
+protobuf {
+    protoc {
+        // Download from repositories
+        artifact = 'com.google.protobuf:protoc:2.6.1'
+    }
+}
 
 dependencies {
     testCompile 'junit:junit:4.12'
@@ -21,13 +39,11 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5'
     compile 'javax.validation:validation-api:1.1.0.Final'
     compile 'org.slf4j:slf4j-simple:1.6.1'
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
+    compile 'org.apache.avro:avro-tools:1.7.7'
 }
 
 defaultTasks 'build', 'writeClasspath'
-
-repositories {
-    mavenCentral()
-}
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
