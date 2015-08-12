@@ -2,15 +2,15 @@ package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.http.*;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.nio.ch.IOUtil;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
