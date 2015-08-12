@@ -34,16 +34,13 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
-        server.registerEndpoint("/api/index", RequestType.POST,
-                new IndexRequestHandler());
-        server.registerEndpoint("/api/delete", RequestType.POST,
-                new DeleteRequestHandler());
+        server.registerEndpoint("/api/index", RequestType.POST, new IndexRequestHandler());
+        server.registerEndpoint("/api/delete", RequestType.POST, new DeleteRequestHandler());
 
         IndexerHandler indexer = new IndexerHandler();
         server.registerEndpoint("/index", RequestType.POST, indexer);
         server.registerEndpoint("/get_data", RequestType.GET, indexer);
     }
-
 
     public static void main(String[] args) {
         Pulse pulseApp;

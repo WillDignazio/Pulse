@@ -2,7 +2,6 @@ package net.digitalbebop.http.base;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
-import net.digitalbebop.http.base.BaseServer;
 import org.apache.http.*;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
@@ -21,8 +20,6 @@ import java.util.regex.PatternSyntaxException;
 
 public class EndpointServer extends BaseServer {
     private static final Logger logger = LogManager.getLogger(EndpointServer.class);
-
-
 
     private static class EndpointMap {
         private final Pattern _pattern;
@@ -70,16 +67,23 @@ public class EndpointServer extends BaseServer {
     @Override
     public HttpResponse handle(HttpRequest request, byte[] payload) {
         try {
+            final HashMap<String, String> parameters;
+
+            logger.debug("Received request for URI: " + request.getRequestLine().getUri());
             final URI uri = new URI(request.getRequestLine().getUri());
             final String path  = uri.getPath();
             final String query = uri.getQuery();
-            final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
-            final HashMap<String, String> parameters = new HashMap<>(pairs.size());
 
-            for (NameValuePair pair : pairs) {
-                parameters.put(pair.getName(), pair.getValue());
+            if (query != null) {
+                final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
+
+                parameters = new HashMap<>(pairs.size());
+                for (NameValuePair pair : pairs) {
+                    parameters.put(pair.getName(), pair.getValue());
+                }
+            } else {
+                parameters = new HashMap<>();
             }
-
 
             logger.debug("Received request: " + request.getRequestLine());
             for (EndpointMap map : endpointMap) {
@@ -98,11 +102,12 @@ public class EndpointServer extends BaseServer {
                     }
                 }
             }
-            logger.debug("Couldn't match (" + path + ")");
 
+            logger.debug("Couldn't match (" + path + ")");
         } catch(Exception e) {
-            logger.warn("could not parse URI");
+            logger.warn("Could not parse URI: " + e.getMessage(), e);
         }
+
         return notFoundHandler.handleGet(request, new HashMap<>());
     }
 

@@ -1,15 +1,16 @@
 package net.digitalbebop.http.endPoints;
 
-import com.google.inject.Guice;
-import com.google.inject.Injector;
+import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
-import net.digitalbebop.PulseModule;
 import net.digitalbebop.PulseProperties;
 import net.digitalbebop.avro.PulseAvroIndex;
 import net.digitalbebop.hbase.HBaseWrapper;
 import net.digitalbebop.http.base.RequestHandler;
-import org.apache.http.*;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.HttpVersion;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -26,18 +27,19 @@ public class IndexerHandler implements RequestHandler {
     // allows all threads to share the same pool for HBase connections
     private ExecutorService executors = Executors.newCachedThreadPool();
 
-    protected static PulseProperties defaultProperties;
+    protected PulseProperties properties;
 
-    static {
-        Injector injector = Guice.createInjector(new PulseModule());
-        defaultProperties = injector.getInstance(PulseProperties.class);
+    @Inject
+    public void injectPulseProperties(PulseProperties properties) {
+        this.properties = properties;
     }
+
 
     public IndexerHandler() {
         hBaseWrapper = new ThreadLocal<HBaseWrapper>() {
             public HBaseWrapper initialValue() {
-                return new HBaseWrapper(defaultProperties.ZookeeperQuorum,
-                        defaultProperties.HBaseTable, executors);
+                return new HBaseWrapper(properties.ZookeeperQuorum,
+                        properties.HBaseTable, executors);
             }
         };
     }
