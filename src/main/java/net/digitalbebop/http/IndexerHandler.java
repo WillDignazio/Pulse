@@ -9,16 +9,16 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class HBaseHandler implements RequestHandler {
-    private static final Logger logger = LogManager.getLogger(HBaseHandler.class);
+public class IndexerHandler implements RequestHandler {
+    private static final Logger logger = LogManager.getLogger(IndexerHandler.class);
     private HBaseWrapper hBaseWrapper;
 
-    public HBaseHandler(String zKQurum, String tableName) {
-        //hBaseWrapper = new HBaseWrapper(zKQurum, tableName);
+    public IndexerHandler(String zKQurum, String tableName) {
+        hBaseWrapper = new HBaseWrapper(zKQurum, tableName);
     }
 
-
-    public HttpResponse handle(HttpRequest req, byte[] payload) {
+    @Override
+    public HttpResponse handlePost(HttpRequest req, byte[] payload) {
         logger.info("got request");
         logger.info("payload " + payload.length);
         return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");

@@ -89,7 +89,6 @@ abstract class BaseServer {
                                 InputStream contentStream = null;
                                 ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
                                 long len = contentLengthStrategy.determineLength(rawRequest);
-                                logger.info("testing");
                                 if (len > 0) {
                                     if (len == ContentLengthStrategy.CHUNKED) {
                                         contentStream = new ChunkedInputStream(sessionInputBuffer);
@@ -101,7 +100,6 @@ abstract class BaseServer {
                                     payload = IOUtils.toByteArray(contentStream);
                                 }
                             }
-                            logger.info("testing");
                             final HttpResponse rawResponse = handle(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
