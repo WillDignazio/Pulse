@@ -30,14 +30,15 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
-
-        server.registerEndpoint("/index", RequestType.POST,
-                new IndexerHandler(defaultProperties.ZookeeperQuorum, defaultProperties.HBaseTable));
-
         server.registerEndpoint("/api/index", RequestType.POST,
                 new IndexRequestHandler());
         server.registerEndpoint("/api/delete", RequestType.POST,
                 new DeleteRequestHandler());
+
+        IndexerHandler indexer = new IndexerHandler(defaultProperties.ZookeeperQuorum,
+                defaultProperties.HBaseTable);
+        server.registerEndpoint("/index", RequestType.POST, indexer);
+        server.registerEndpoint("/get_data", RequestType.GET, indexer);
     }
 
 
