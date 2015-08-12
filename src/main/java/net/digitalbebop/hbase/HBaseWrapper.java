@@ -2,7 +2,9 @@ package net.digitalbebop.hbase;
 
 import com.stumbleupon.async.Deferred;
 import net.digitalbebop.avro.PulseAvroIndex;
-import org.apache.avro.io.*;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,11 +12,11 @@ import org.hbase.async.GetRequest;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
 
+import javax.validation.constraints.NotNull;
 import java.io.ByteArrayOutputStream;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicBoolean;
-import javax.validation.constraints.NotNull;
 
 public class HBaseWrapper {
     private static final Logger logger = LogManager.getLogger(HBaseWrapper.class);
@@ -26,9 +28,9 @@ public class HBaseWrapper {
     private HBaseClient hBaseClient;
     private String tableName;
 
-    public HBaseWrapper(@NotNull String zkQuorum, @NotNull String tableName) {
+    public HBaseWrapper(@NotNull String zkQuorum, @NotNull String tableName, Executor executor) {
         this.tableName = tableName;
-        hBaseClient = new HBaseClient(zkQuorum, DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
+        hBaseClient = new HBaseClient(zkQuorum, DEFAULT_ZK_DIR, executor);
 
         tableExists(INDEX_COLUMN_FAMILY);
         tableExists(DATA_COLUMN_FAMILY);
@@ -71,7 +73,7 @@ public class HBaseWrapper {
         String rowKey = moduleName + "-" + moduleId;
         GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY,
                 timestamp.toString());
-        return hBaseClient.get(request).join().get(0).value();
+        return hBaseClient.get(request).joinUninterruptibly(3000).get(0).value();
     }
 
     private byte[] compressAvro(PulseAvroIndex index) throws Exception {
@@ -92,8 +94,15 @@ public class HBaseWrapper {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicBoolean fail = new AtomicBoolean(true);
         hBaseClient.ensureTableFamilyExists(tableName, column).addCallbacks(
-                arg -> { latch.countDown(); fail.set(false); return null; },
-                arg -> { latch.countDown(); return null; });
+                arg -> {
+                    latch.countDown();
+                    fail.set(false);
+                    return null;
+                },
+                arg -> {
+                    latch.countDown();
+                    return null;
+                });
 
         try {
             latch.await();
