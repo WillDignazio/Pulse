@@ -2,7 +2,10 @@ package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
-import org.apache.http.*;
+import org.apache.http.HttpEntityEnclosingRequest;
+import org.apache.http.HttpException;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
