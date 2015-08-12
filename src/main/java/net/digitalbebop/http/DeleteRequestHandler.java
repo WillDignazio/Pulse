@@ -1,5 +1,7 @@
 package net.digitalbebop.http;
 
+import com.google.protobuf.InvalidProtocolBufferException;
+import net.digitalbebop.ClientRequests;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
@@ -13,7 +15,19 @@ public class DeleteRequestHandler implements RequestHandler {
 
     @Override
     public HttpResponse handlePost(HttpRequest req, byte[] payload) {
-        logger.info("Handling protobuf POST: " + req.toString());
+        try {
+            ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
+            logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
+        } catch (InvalidProtocolBufferException pe) {
+            logger.warn("Failed to parse payload in Delete handler.");
+            return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST, "Invalid Protobuf");
+        } catch (Exception e) {
+            logger.error("Failed to handle Delete Request: " + e.getMessage(), e);
+            return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_INTERNAL_SERVER_ERROR, "Internal Server Error");
+        }
+
+
+
         return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
     }
 }
