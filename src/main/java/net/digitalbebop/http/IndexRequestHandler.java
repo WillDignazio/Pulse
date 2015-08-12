@@ -9,7 +9,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class IndexRequestHandler implements RequestHandler {
-    private static final Logger logger = LogManager.getLogger(DeleteRequestHandler.class);
+    private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
 
     @Override
     public HttpResponse handlePost(HttpRequest req, byte[] payload) {
