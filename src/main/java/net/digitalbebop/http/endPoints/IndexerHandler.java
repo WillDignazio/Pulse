@@ -1,33 +1,43 @@
-package net.digitalbebop.http;
+package net.digitalbebop.http.endPoints;
 
+import com.google.inject.Guice;
+import com.google.inject.Injector;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
+import net.digitalbebop.PulseModule;
+import net.digitalbebop.PulseProperties;
 import net.digitalbebop.avro.PulseAvroIndex;
 import net.digitalbebop.hbase.HBaseWrapper;
-import org.apache.avro.generic.IndexedRecord;
+import net.digitalbebop.http.base.RequestHandler;
 import org.apache.http.*;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.lang.model.element.Name;
 import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class IndexerHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexerHandler.class);
     private ThreadLocal<HBaseWrapper> hBaseWrapper;
+    // allows all threads to share the same pool for HBase connections
     private ExecutorService executors = Executors.newCachedThreadPool();
 
-    public IndexerHandler(String zKQurum, String tableName) {
+    protected static PulseProperties defaultProperties;
+
+    static {
+        Injector injector = Guice.createInjector(new PulseModule());
+        defaultProperties = injector.getInstance(PulseProperties.class);
+    }
+
+    public IndexerHandler() {
         hBaseWrapper = new ThreadLocal<HBaseWrapper>() {
             public HBaseWrapper initialValue() {
-                return new HBaseWrapper(zKQurum, tableName, executors);
+                return new HBaseWrapper(defaultProperties.ZookeeperQuorum,
+                        defaultProperties.HBaseTable, executors);
             }
         };
     }
@@ -48,8 +58,8 @@ public class IndexerHandler implements RequestHandler {
             String moduleId = params.get("moduleId");
             byte[] data = hBaseWrapper.get().getData(moduleName, moduleId, 0L);
 
-            HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK,
-                    "OK");
+            HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1,
+                    HttpStatus.SC_OK, "OK");
             BasicHttpEntity entity = new BasicHttpEntity();
             entity.setContent(new ByteArrayInputStream(data));
             response.setEntity(entity);
@@ -82,15 +92,12 @@ public class IndexerHandler implements RequestHandler {
      * Inserts a new index into HBase
      */
     @Override
-    public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
-        logger.info("got request");
-
+    public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] data) {
         try {
-            ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(payload);
+            ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(data);
             PulseAvroIndex avroIndex = toAvro(request);
             hBaseWrapper.get().putIndex(avroIndex, request.getRawData().toByteArray());
             return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
-
         } catch (InvalidProtocolBufferException e) {
             logger.warn("Could not parse protocol buffer", e);
             return new BasicHttpResponse(HttpVersion.HTTP_1_1,

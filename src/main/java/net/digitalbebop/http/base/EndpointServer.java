@@ -1,7 +1,8 @@
-package net.digitalbebop.http;
+package net.digitalbebop.http.base;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
+import net.digitalbebop.http.base.BaseServer;
 import org.apache.http.*;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
@@ -9,11 +10,9 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.lang.model.element.Name;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;

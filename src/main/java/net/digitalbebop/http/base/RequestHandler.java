@@ -1,4 +1,4 @@
-package net.digitalbebop.http;
+package net.digitalbebop.http.base;
 
 import org.apache.http.*;
 import org.apache.http.message.BasicHttpResponse;

@@ -1,6 +1,10 @@
 package net.digitalbebop;
 
-import net.digitalbebop.http.*;
+import net.digitalbebop.http.base.EndpointServer;
+import net.digitalbebop.http.base.RequestType;
+import net.digitalbebop.http.endPoints.DeleteRequestHandler;
+import net.digitalbebop.http.endPoints.IndexRequestHandler;
+import net.digitalbebop.http.endPoints.IndexerHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -35,8 +39,7 @@ public class Pulse extends DaemonizedApplication {
         server.registerEndpoint("/api/delete", RequestType.POST,
                 new DeleteRequestHandler());
 
-        IndexerHandler indexer = new IndexerHandler(defaultProperties.ZookeeperQuorum,
-                defaultProperties.HBaseTable);
+        IndexerHandler indexer = new IndexerHandler();
         server.registerEndpoint("/index", RequestType.POST, indexer);
         server.registerEndpoint("/get_data", RequestType.GET, indexer);
     }

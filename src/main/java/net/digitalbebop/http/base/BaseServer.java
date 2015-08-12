@@ -1,4 +1,4 @@
-package net.digitalbebop.http;
+package net.digitalbebop.http.base;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
