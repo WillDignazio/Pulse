@@ -24,6 +24,7 @@ protobuf {
         // Download from repositories
         artifact = 'com.google.protobuf:protoc:2.6.1'
     }
+    generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
 dependencies {
@@ -49,6 +50,14 @@ defaultTasks 'build', 'writeClasspath'
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
+sourceSets {
+    main {
+        java {
+            srcDir 'src/generated/main'
+        }
+    }
+}
+
 version = '1.0'
 jar {
     baseName = 'pulse'
@@ -60,7 +69,7 @@ jar {
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '2.3'
+    gradleVersion = '2.5'
 }
 
 /*
