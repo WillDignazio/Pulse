@@ -2,15 +2,12 @@ package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.http.*;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
-import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import sun.nio.ch.IOUtil;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
@@ -89,7 +86,6 @@ abstract class BaseServer {
                                 InputStream contentStream = null;
                                 ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
                                 long len = contentLengthStrategy.determineLength(rawRequest);
-                                logger.info("testing");
                                 if (len > 0) {
                                     if (len == ContentLengthStrategy.CHUNKED) {
                                         contentStream = new ChunkedInputStream(sessionInputBuffer);
@@ -101,7 +97,6 @@ abstract class BaseServer {
                                     payload = IOUtils.toByteArray(contentStream);
                                 }
                             }
-                            logger.info("testing");
                             final HttpResponse rawResponse = handle(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);

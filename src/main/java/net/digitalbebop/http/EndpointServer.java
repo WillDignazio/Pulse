@@ -47,10 +47,13 @@ public class EndpointServer extends BaseServer {
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
     private PulseProperties properties;
 
-    private static RequestHandler notFoundHandler = (req, payload) -> {
-        HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "Not Found");
-        response.setEntity(new StringEntity("<html><b>404 Not Found</b></html>", Charset.forName("UTF-8")));
-        return response;
+    private static RequestHandler notFoundHandler = new RequestHandler() {
+        @Override
+        public HttpResponse handleGet(HttpRequest req) {
+            HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "Not Found");
+            response.setEntity(new StringEntity("<html><b>404 Not Found</b></html>", Charset.forName("UTF-8")));
+            return response;
+        }
     };
 
     @Inject
@@ -65,19 +68,24 @@ public class EndpointServer extends BaseServer {
     @Override
     public HttpResponse handle(HttpRequest request, byte[] payload) {
         final String requestURI = request.getRequestLine().getUri();
-        final RequestHandler handler;
 
         logger.debug("Received request: " + request.getRequestLine());
         for (EndpointMap map : endpointMap) {
             if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
                     map.getPattern().matcher(requestURI).matches()) {
                 logger.debug("Handling request (" + requestURI + ") with " + map.getHandler().toString());
-                return map.getHandler().handle(request, payload);
+                switch (map.getRequestType()) {
+                    case GET:
+                        return map.getHandler().handleGet(request);
+                    case PUT:
+                        return map.getHandler().handlePut(request, payload);
+                    default:
+                        logger.warn("unimplemented method");
+                }
             }
         }
-
         logger.debug("Couldn't match (" + requestURI + ")");
-        return notFoundHandler.handle(request, payload);
+        return notFoundHandler.handleGet(request);
     }
 
     public void registerEndpoint(@NotNull final String regex,
