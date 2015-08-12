@@ -1,8 +1,6 @@
 package net.digitalbebop;
 
-import net.digitalbebop.http.EndpointServer;
-import net.digitalbebop.http.IndexerHandler;
-import net.digitalbebop.http.RequestType;
+import net.digitalbebop.http.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,8 +30,14 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
+
         server.registerEndpoint("/index", RequestType.POST,
                 new IndexerHandler(defaultProperties.ZookeeperQuorum, defaultProperties.HBaseTable));
+
+        server.registerEndpoint("/api/index", RequestType.POST,
+                new IndexRequestHandler());
+        server.registerEndpoint("/api/delete", RequestType.POST,
+                new DeleteRequestHandler());
     }
 
 

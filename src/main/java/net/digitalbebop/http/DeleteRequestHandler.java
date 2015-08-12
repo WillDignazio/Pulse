@@ -8,8 +8,8 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class ProtobufHandler implements RequestHandler {
-    private static final Logger logger = LogManager.getLogger(ProtobufHandler.class);
+public class DeleteRequestHandler implements RequestHandler {
+    private static final Logger logger = LogManager.getLogger(DeleteRequestHandler.class);
 
     @Override
     public HttpResponse handlePost(HttpRequest req, byte[] payload) {
