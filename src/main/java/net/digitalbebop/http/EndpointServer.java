@@ -2,18 +2,20 @@ package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
+import org.apache.http.*;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import javax.lang.model.element.Name;
 import javax.validation.constraints.NotNull;
 import java.net.URI;
 import java.nio.charset.Charset;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -50,7 +52,7 @@ public class EndpointServer extends BaseServer {
 
     private static RequestHandler notFoundHandler = new RequestHandler() {
         @Override
-        public HttpResponse handleGet(HttpRequest req) {
+        public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
             HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "Not Found");
             response.setEntity(new StringEntity("<html><b>404 Not Found</b></html>", Charset.forName("UTF-8")));
             return response;
@@ -72,6 +74,13 @@ public class EndpointServer extends BaseServer {
             final URI uri = new URI(request.getRequestLine().getUri());
             final String path  = uri.getPath();
             final String query = uri.getQuery();
+            final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
+            final HashMap<String, String> parameters = new HashMap<>(pairs.size());
+
+            for (NameValuePair pair : pairs) {
+                parameters.put(pair.getName(), pair.getValue());
+            }
+
 
             logger.debug("Received request: " + request.getRequestLine());
             for (EndpointMap map : endpointMap) {
@@ -80,13 +89,13 @@ public class EndpointServer extends BaseServer {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
-                            return map.getHandler().handleGet(request);
+                            return map.getHandler().handleGet(request, parameters);
                         case POST:
-                            return map.getHandler().handlePost(request, payload);
+                            return map.getHandler().handlePost(request, parameters, payload);
                         case DELETE:
-                            return map.getHandler().handleDelete(request);
+                            return map.getHandler().handleDelete(request, parameters);
                         case PUT:
-                            return map.getHandler().handlePut(request);
+                            return map.getHandler().handlePut(request, parameters);
                     }
                 }
             }
@@ -95,7 +104,7 @@ public class EndpointServer extends BaseServer {
         } catch(Exception e) {
             logger.warn("could not parse URI");
         }
-        return notFoundHandler.handleGet(request);
+        return notFoundHandler.handleGet(request, new HashMap<>());
     }
 
     public void registerEndpoint(@NotNull final String regex,
