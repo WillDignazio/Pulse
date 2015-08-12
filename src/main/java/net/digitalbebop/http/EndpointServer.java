@@ -20,18 +20,24 @@ import java.util.regex.PatternSyntaxException;
 public class EndpointServer extends BaseServer {
     private static final Logger logger = LogManager.getLogger(EndpointServer.class);
 
+
+
     private static class EndpointMap {
         private final Pattern _pattern;
+        private final RequestType _requestType;
         private final RequestHandler _handler;
 
-        public EndpointMap(@NotNull Pattern pattern, @NotNull RequestHandler handler) {
+        public EndpointMap(@NotNull Pattern pattern,
+                           @NotNull RequestType requestType,
+                           @NotNull RequestHandler handler) {
             this._pattern = pattern;
+            this._requestType = requestType;
             this._handler = handler;
         }
 
-        public Pattern getPattern() {
-            return this._pattern;
-        }
+        public Pattern getPattern() { return this._pattern; }
+
+        public RequestType getRequestType() { return this._requestType; }
 
         public RequestHandler getHandler() {
             return this._handler;
@@ -41,7 +47,7 @@ public class EndpointServer extends BaseServer {
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
     private PulseProperties properties;
 
-    private static RequestHandler notFoundHandler = req -> {
+    private static RequestHandler notFoundHandler = (req, payload) -> {
         HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "Not Found");
         response.setEntity(new StringEntity("<html><b>404 Not Found</b></html>", Charset.forName("UTF-8")));
         return response;
@@ -57,26 +63,29 @@ public class EndpointServer extends BaseServer {
     }
 
     @Override
-    public HttpResponse handle(HttpRequest request) {
+    public HttpResponse handle(HttpRequest request, byte[] payload) {
         final String requestURI = request.getRequestLine().getUri();
         final RequestHandler handler;
 
-        logger.debug("Recieved request: " + request.getRequestLine());
+        logger.debug("Received request: " + request.getRequestLine());
         for (EndpointMap map : endpointMap) {
-            if (map.getPattern().matcher(requestURI).matches()) {
+            if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
+                    map.getPattern().matcher(requestURI).matches()) {
                 logger.debug("Handling request (" + requestURI + ") with " + map.getHandler().toString());
-                return map.getHandler().handle(request);
+                return map.getHandler().handle(request, payload);
             }
         }
 
         logger.debug("Couldn't match (" + requestURI + ")");
-        return notFoundHandler.handle(request);
+        return notFoundHandler.handle(request, payload);
     }
 
-    public void registerEndpoint(@NotNull final String regex, RequestHandler handler) {
+    public void registerEndpoint(@NotNull final String regex,
+                                 RequestType type,
+                                 RequestHandler handler) {
         try {
             Pattern pattern = Pattern.compile(regex);
-            final EndpointMap map = new EndpointMap(pattern, handler);
+            final EndpointMap map = new EndpointMap(pattern, type, handler);
 
             endpointMap.add(map);
         } catch (PatternSyntaxException pe) {

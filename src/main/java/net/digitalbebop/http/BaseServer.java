@@ -1,15 +1,20 @@
 package net.digitalbebop.http;
 
 import com.google.inject.Inject;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.http.*;
+import org.apache.http.entity.ContentLengthStrategy;
+import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
+import org.apache.http.util.EntityUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import sun.nio.ch.IOUtil;
 
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -49,7 +54,7 @@ abstract class BaseServer {
      * @param req {@link HttpRequest} from client
      * @return {@link HttpResponse} to client
      */
-    public abstract HttpResponse handle(HttpRequest req);
+    public abstract HttpResponse handle(HttpRequest req, byte[] payload);
 
     private class ServerWorker implements Runnable {
         @Override
@@ -77,7 +82,27 @@ abstract class BaseServer {
 
                             final DefaultHttpRequestParser parser  = new DefaultHttpRequestParser(sessionInputBuffer);
                             final HttpRequest rawRequest = parser.parse();
-                            final HttpResponse rawResponse = handle(rawRequest);
+
+                            // deals with PUT requests
+                            byte[] payload = new byte[0];
+                            if (rawRequest instanceof HttpEntityEnclosingRequest) {
+                                InputStream contentStream = null;
+                                ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
+                                long len = contentLengthStrategy.determineLength(rawRequest);
+                                logger.info("testing");
+                                if (len > 0) {
+                                    if (len == ContentLengthStrategy.CHUNKED) {
+                                        contentStream = new ChunkedInputStream(sessionInputBuffer);
+                                    } else if (len == ContentLengthStrategy.IDENTITY) {
+                                        contentStream = new IdentityInputStream(sessionInputBuffer);
+                                    } else {
+                                        contentStream = new ContentLengthInputStream(sessionInputBuffer, len);
+                                    }
+                                    payload = IOUtils.toByteArray(contentStream);
+                                }
+                            }
+                            logger.info("testing");
+                            final HttpResponse rawResponse = handle(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
                             msgWriter.write(rawResponse);
