@@ -8,7 +8,7 @@ import org.apache.http.message.BasicHttpResponse;
 import org.apache.http.protocol.HTTP;
 
 /**
- * Interface to
+ * Interface to the different supported HTTP methods
  */
 public interface RequestHandler {
 

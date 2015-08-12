@@ -12,6 +12,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
+import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
@@ -67,26 +68,33 @@ public class EndpointServer extends BaseServer {
 
     @Override
     public HttpResponse handle(HttpRequest request, byte[] payload) {
-        final String requestURI = request.getRequestLine().getUri();
+        try {
+            final URI uri = new URI(request.getRequestLine().getUri());
+            final String path  = uri.getPath();
+            final String query = uri.getQuery();
 
-        logger.debug("Received request: " + request.getRequestLine());
-        for (EndpointMap map : endpointMap) {
-            if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
-                    map.getPattern().matcher(requestURI).matches()) {
-                logger.debug("Handling request (" + requestURI + ") with " + map.getHandler().toString());
-                switch (map.getRequestType()) {
-                    case GET:
-                        return map.getHandler().handleGet(request);
-                    case POST:
-                        return map.getHandler().handlePost(request, payload);
-                    case DELETE:
-                        return map.getHandler().handleDelete(request);
-                    case PUT:
-                        return map.getHandler().handlePut(request);
+            logger.debug("Received request: " + request.getRequestLine());
+            for (EndpointMap map : endpointMap) {
+                if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
+                        map.getPattern().matcher(path).matches()) {
+                    logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
+                    switch (map.getRequestType()) {
+                        case GET:
+                            return map.getHandler().handleGet(request);
+                        case POST:
+                            return map.getHandler().handlePost(request, payload);
+                        case DELETE:
+                            return map.getHandler().handleDelete(request);
+                        case PUT:
+                            return map.getHandler().handlePut(request);
+                    }
                 }
             }
+            logger.debug("Couldn't match (" + path + ")");
+
+        } catch(Exception e) {
+            logger.warn("could not parse URI");
         }
-        logger.debug("Couldn't match (" + requestURI + ")");
         return notFoundHandler.handleGet(request);
     }
 
