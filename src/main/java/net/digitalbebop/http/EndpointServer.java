@@ -77,10 +77,12 @@ public class EndpointServer extends BaseServer {
                 switch (map.getRequestType()) {
                     case GET:
                         return map.getHandler().handleGet(request);
+                    case POST:
+                        return map.getHandler().handlePost(request, payload);
+                    case DELETE:
+                        return map.getHandler().handleDelete(request);
                     case PUT:
-                        return map.getHandler().handlePut(request, payload);
-                    default:
-                        logger.warn("unimplemented method");
+                        return map.getHandler().handlePut(request);
                 }
             }
         }

@@ -18,7 +18,7 @@ public class IndexerHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handlePut(HttpRequest req, byte[] payload) {
+    public HttpResponse handlePost(HttpRequest req, byte[] payload) {
         logger.info("got request");
         logger.info("payload " + payload.length);
         return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
