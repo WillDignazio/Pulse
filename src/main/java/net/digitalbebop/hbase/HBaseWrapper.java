@@ -46,16 +46,17 @@ public class HBaseWrapper {
      */
     public void putIndex(PulseAvroIndex index, byte[] rawData) throws Exception {
         logger.debug("putting new index for " + index.getModuleName() + ", " + index.getModuleId());
-        String rowKey = index.getModuleName() + "-" + index.getModuleId();
+        String currentRowKey = index.getModuleName() + "-" + index.getModuleId() + "-current";
+        String oldRowKey = index.getModuleName() + "-" + index.getModuleId() + "-" + index.getTimestamp();
 
-        PutRequest currentIndex = new PutRequest(tableName.getBytes(), rowKey.getBytes(),
+        PutRequest currentIndex = new PutRequest(tableName.getBytes(), currentRowKey.getBytes(),
                 INDEX_COLUMN_FAMILY.getBytes(), CURRENT_QUALIFIER.getBytes(), compressAvro(index));
         index.put("current", false);
-        PutRequest oldIndex = new PutRequest(tableName.getBytes(), rowKey.getBytes(),
-                INDEX_COLUMN_FAMILY.getBytes(), index.getTimestamp().toString().getBytes(),
+        PutRequest oldIndex = new PutRequest(tableName.getBytes(), oldRowKey.getBytes(),
+                INDEX_COLUMN_FAMILY.getBytes(), "index".getBytes(),
                 compressAvro(index));
-        PutRequest dataRequest = new PutRequest(tableName.getBytes(), rowKey.getBytes(),
-                DATA_COLUMN_FAMILY.getBytes(), index.getTimestamp().toString().getBytes(), rawData);
+        PutRequest dataRequest = new PutRequest(tableName.getBytes(), oldRowKey.getBytes(),
+                DATA_COLUMN_FAMILY.getBytes(), "data".getBytes(), rawData);
 
         Deferred dataPut = hBaseClient.put(dataRequest);
         Deferred currentPut = hBaseClient.put(currentIndex);
@@ -72,7 +73,7 @@ public class HBaseWrapper {
      */
     public byte[] getData(String moduleName, String moduleId, Long timestamp) throws Exception {
         logger.debug("getting data for " + moduleName + ", " + moduleId + ", " + timestamp);
-        String rowKey = moduleName + "-" + moduleId;
+        String rowKey = moduleName + "-" + moduleId + "-" + timestamp;
         GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY, timestamp.toString());
         return hBaseClient.get(request).joinUninterruptibly(3000).get(0).value();
     }

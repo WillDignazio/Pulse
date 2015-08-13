@@ -91,6 +91,7 @@ public class IndexerHandler implements RequestHandler {
         index.setTags(request.getTagsList());
         index.setTimestamp(timestamp);
         index.setUsername(request.getUsername());
+        logger.debug("Solr ID" + index.getId());
         return index;
     }
 
@@ -100,7 +101,20 @@ public class IndexerHandler implements RequestHandler {
     @Override
     public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] data) {
         try {
-            ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(data);
+            //ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(data);
+            ClientRequests.IndexRequest.Builder builder = ClientRequests.IndexRequest.newBuilder();
+            builder.setIndexData("index data");
+            builder.setMetaTags("meta tags");
+            builder.setModuleId("module id");
+            builder.setModuleName("module name");
+            builder.setRawData(ByteString.copyFrom("raw data".getBytes()));
+            List<String> tags = new ArrayList<>();
+            tags.add("tag 1");
+            tags.add("tag 2");
+            builder.addAllTags(tags);
+            builder.setUsername("jd");
+            ClientRequests.IndexRequest request = builder.build();
+
             PulseAvroIndex avroIndex = toAvro(request);
             hBaseWrapper.get().putIndex(avroIndex, request.getRawData().toByteArray());
             return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
