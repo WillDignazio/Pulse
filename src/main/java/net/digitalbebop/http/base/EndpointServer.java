@@ -73,18 +73,24 @@ public class EndpointServer extends BaseServer {
             final URI uri = new URI(request.getRequestLine().getUri());
             final String path  = uri.getPath();
             final String query = uri.getQuery();
-            final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
-            final HashMap<String, String> parameters = new HashMap<>(pairs.size());
+            final String method = request.getRequestLine().getMethod();
 
-            for (NameValuePair pair : pairs) {
-                parameters.put(pair.getName(), pair.getValue());
+            HashMap<String, String> parameters;
+            if (query != null) {
+                final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
+                parameters = new HashMap<>(pairs.size());
+
+                for (NameValuePair pair : pairs) {
+                    parameters.put(pair.getName(), pair.getValue());
+                }
+            } else {
+                parameters = new HashMap<>(0);
             }
 
 
             logger.debug("Received request: " + request.getRequestLine());
             for (EndpointMap map : endpointMap) {
-                if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
-                        map.getPattern().matcher(path).matches()) {
+                if (map.getRequestType().toString().equals(method) && map.getPattern().matcher(path).matches()) {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
@@ -98,10 +104,10 @@ public class EndpointServer extends BaseServer {
                     }
                 }
             }
-            logger.debug("Couldn't match (" + path + ")");
+            logger.debug("Couldn't match " + method + " (" + path + ")");
 
         } catch(Exception e) {
-            logger.warn("could not parse URI");
+            logger.warn("could not parse URI", e);
         }
         return notFoundHandler.handleGet(request, new HashMap<>());
     }

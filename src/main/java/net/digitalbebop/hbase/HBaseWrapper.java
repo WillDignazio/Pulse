@@ -2,12 +2,15 @@ package net.digitalbebop.hbase;
 
 import com.stumbleupon.async.Deferred;
 import net.digitalbebop.avro.PulseAvroIndex;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.*;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hbase.async.GetRequest;
 import org.hbase.async.HBaseClient;
+import org.hbase.async.KeyValue;
 import org.hbase.async.PutRequest;
 
 import java.io.ByteArrayOutputStream;
@@ -47,7 +50,7 @@ public class HBaseWrapper {
 
         PutRequest currentIndex = new PutRequest(tableName.getBytes(), rowKey.getBytes(),
                 INDEX_COLUMN_FAMILY.getBytes(), CURRENT_QUALIFIER.getBytes(), compressAvro(index));
-        index.setCurrent(false);
+        index.put("current", false);
         PutRequest oldIndex = new PutRequest(tableName.getBytes(), rowKey.getBytes(),
                 INDEX_COLUMN_FAMILY.getBytes(), index.getTimestamp().toString().getBytes(),
                 compressAvro(index));
@@ -70,15 +73,14 @@ public class HBaseWrapper {
     public byte[] getData(String moduleName, String moduleId, Long timestamp) throws Exception {
         logger.debug("getting data for " + moduleName + ", " + moduleId + ", " + timestamp);
         String rowKey = moduleName + "-" + moduleId;
-        GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY,
-                timestamp.toString());
+        GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY, timestamp.toString());
         return hBaseClient.get(request).joinUninterruptibly(3000).get(0).value();
     }
 
     private byte[] compressAvro(PulseAvroIndex index) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
-        DatumWriter<PulseAvroIndex> writer = new SpecificDatumWriter<>(index.getSchema());
+        SpecificDatumWriter<PulseAvroIndex> writer = new SpecificDatumWriter<>(index.getSchema());
         writer.write(index, encoder);
         encoder.flush();
         out.close();

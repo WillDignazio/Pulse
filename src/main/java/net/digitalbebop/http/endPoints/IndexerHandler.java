@@ -2,6 +2,7 @@ package net.digitalbebop.http.endPoints;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
+import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.PulseModule;
@@ -9,6 +10,9 @@ import net.digitalbebop.PulseProperties;
 import net.digitalbebop.avro.PulseAvroIndex;
 import net.digitalbebop.hbase.HBaseWrapper;
 import net.digitalbebop.http.base.RequestHandler;
+import org.apache.avro.generic.GenericData;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.http.*;
 import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.message.BasicHttpResponse;
@@ -16,7 +20,9 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -77,7 +83,7 @@ public class IndexerHandler implements RequestHandler {
         index.setCurrent(true);
         index.setData(request.getIndexData());
         index.setDeleted(false);
-        // index.setFormat();
+        index.setFormat("pdf");
         index.setId(request.getModuleName() + "-" + request.getModuleId() + "-" + timestamp);
         index.setMetaData(request.getMetaTags());
         index.setModuleId(request.getModuleId());
@@ -85,6 +91,7 @@ public class IndexerHandler implements RequestHandler {
         index.setTags(request.getTagsList());
         index.setTimestamp(timestamp);
         index.setUsername(request.getUsername());
+        logger.debug("Solr ID" + index.getId());
         return index;
     }
 
@@ -94,7 +101,20 @@ public class IndexerHandler implements RequestHandler {
     @Override
     public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] data) {
         try {
-            ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(data);
+            //ClientRequests.IndexRequest request = ClientRequests.IndexRequest.parseFrom(data);
+            ClientRequests.IndexRequest.Builder builder = ClientRequests.IndexRequest.newBuilder();
+            builder.setIndexData("index data");
+            builder.setMetaTags("meta tags");
+            builder.setModuleId("module id");
+            builder.setModuleName("module name");
+            builder.setRawData(ByteString.copyFrom("raw data".getBytes()));
+            List<String> tags = new ArrayList<>();
+            tags.add("tag 1");
+            tags.add("tag 2");
+            builder.addAllTags(tags);
+            builder.setUsername("jd");
+            ClientRequests.IndexRequest request = builder.build();
+
             PulseAvroIndex avroIndex = toAvro(request);
             hBaseWrapper.get().putIndex(avroIndex, request.getRawData().toByteArray());
             return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
