@@ -66,6 +66,7 @@ public class EndpointServer extends BaseServer {
 
     @Override
     public HttpResponse handle(HttpRequest request, byte[] payload) {
+        long startTime = System.currentTimeMillis();
         try {
             final HashMap<String, String> parameters;
 
@@ -73,10 +74,9 @@ public class EndpointServer extends BaseServer {
             final URI uri = new URI(request.getRequestLine().getUri());
             final String path  = uri.getPath();
             final String query = uri.getQuery();
-
+            final String method = request.getRequestLine().getMethod();
             if (query != null) {
                 final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
-
                 parameters = new HashMap<>(pairs.size());
                 for (NameValuePair pair : pairs) {
                     parameters.put(pair.getName(), pair.getValue());
@@ -87,8 +87,7 @@ public class EndpointServer extends BaseServer {
 
             logger.debug("Received request: " + request.getRequestLine());
             for (EndpointMap map : endpointMap) {
-                if (map.getRequestType().toString().equals(request.getRequestLine().getMethod()) &&
-                        map.getPattern().matcher(path).matches()) {
+                if (map.getRequestType().toString().equals(method) && map.getPattern().matcher(path).matches()) {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
@@ -102,13 +101,18 @@ public class EndpointServer extends BaseServer {
                     }
                 }
             }
-
-            logger.debug("Couldn't match (" + path + ")");
+            logger.debug("Couldn't match " + method + " (" + path + ")");
+            return notFoundHandler.handleGet(request, new HashMap<>());
         } catch(Exception e) {
             logger.warn("Could not parse URI: " + e.getMessage(), e);
+            return notFoundHandler.handleGet(request, new HashMap<>());
+        } finally {
+            long endTime = System.currentTimeMillis();
+            logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
+                    (endTime - startTime) + "ms");
         }
 
-        return notFoundHandler.handleGet(request, new HashMap<>());
+
     }
 
     public void registerEndpoint(@NotNull final String regex,

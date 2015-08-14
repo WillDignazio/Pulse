@@ -43,6 +43,7 @@ dependencies {
     compile 'com.google.protobuf:protobuf-java:2.6.1'
     compile 'org.apache.avro:avro-tools:1.7.7'
     compile 'org.hbase:asynchbase:1.6.0'
+    compile 'org.apache.solr:solr-solrj:5.2.1'
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -55,17 +56,39 @@ sourceSets {
         java {
             srcDir 'src/generated/main'
         }
+        proto {
+            // needed so that AsyncHBase's messages get built with 2.6.1
+            srcDir 'build/extracted-include-protos/main'
+        }
     }
 }
 
 version = '1.0'
+def jarTitle = 'Pulse Search Engine'
+def mainClass = 'net.digitalbebop.Pulse'
+
 jar {
     baseName = 'pulse'
     manifest {
-        attributes 'Implementation-Title': 'Pulse Search Engine',
+        attributes 'Implementation-Title': jarTitle,
                    'Implementation-Version': version,
-                   'Main-Class': 'net.digitalbebop.Pulse'
+                   'Main-Class': mainClass
     }
+}
+
+task fatJar(type: Jar) {
+    baseName = 'pulse-all'
+    from {
+        configurations.compile.collect {
+            it.isDirectory() ? it : zipTree(it)
+        }
+    }
+    manifest {
+        attributes 'Implementation-Title': jarTitle,
+                   'Implementation-Version': version,
+                   'Main-Class': mainClass
+    }
+    with jar
 }
 
 task wrapper(type: Wrapper) {
