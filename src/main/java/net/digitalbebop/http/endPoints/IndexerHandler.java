@@ -84,7 +84,6 @@ public class IndexerHandler implements RequestHandler {
         index.setData(request.getIndexData());
         index.setDeleted(false);
         index.setFormat("pdf");
-        index.setId(request.getModuleName() + "-" + request.getModuleId() + "-" + timestamp);
         index.setMetaData(request.getMetaTags());
         index.setModuleId(request.getModuleId());
         index.setModuleName(request.getModuleName());
@@ -105,8 +104,8 @@ public class IndexerHandler implements RequestHandler {
             ClientRequests.IndexRequest.Builder builder = ClientRequests.IndexRequest.newBuilder();
             builder.setIndexData("index data");
             builder.setMetaTags("meta tags");
-            builder.setModuleId("module id");
-            builder.setModuleName("module name");
+            builder.setModuleId("module_id");
+            builder.setModuleName("module_name");
             builder.setRawData(ByteString.copyFrom("raw data".getBytes()));
             List<String> tags = new ArrayList<>();
             tags.add("tag 1");

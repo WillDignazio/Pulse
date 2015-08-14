@@ -23,15 +23,16 @@ import javax.validation.constraints.NotNull;
 public class HBaseWrapper {
     private static final Logger logger = LogManager.getLogger(HBaseWrapper.class);
     public static final String DEFAULT_ZK_DIR = "/hbase";
-    public static final String INDEX_COLUMN_FAMILY = "index";
-    public static final String DATA_COLUMN_FAMILY = "data";
-    public static final String CURRENT_QUALIFIER = "current";
+    public static final byte[] INDEX_COLUMN_FAMILY = "index".getBytes();
+    public static final byte[] DATA_COLUMN_FAMILY = "data".getBytes();
+    public static final byte[] CURRENT_QUALIFIER = "current".getBytes();
+    public static final byte[] DATA_QUALIFER = "data".getBytes();
 
     private HBaseClient hBaseClient;
-    private String tableName;
+    private byte[] tableName;
 
     public HBaseWrapper(@NotNull String zkQuorum, @NotNull String tableName, Executor executor) {
-        this.tableName = tableName;
+        this.tableName = tableName.getBytes();
         hBaseClient = new HBaseClient(zkQuorum, DEFAULT_ZK_DIR, executor);
 
         tableExists(INDEX_COLUMN_FAMILY);
@@ -46,25 +47,38 @@ public class HBaseWrapper {
      */
     public void putIndex(PulseAvroIndex index, byte[] rawData) throws Exception {
         logger.debug("putting new index for " + index.getModuleName() + ", " + index.getModuleId());
-        String currentRowKey = index.getModuleName() + "-" + index.getModuleId() + "-current";
-        String oldRowKey = index.getModuleName() + "-" + index.getModuleId() + "-" + index.getTimestamp();
+        String currentRowKey = index.getModuleName() + "::" + index.getModuleId();
+        String oldRowKey = currentRowKey + "::" + index.getTimestamp();
 
-        PutRequest currentIndex = new PutRequest(tableName.getBytes(), currentRowKey.getBytes(),
-                INDEX_COLUMN_FAMILY.getBytes(), CURRENT_QUALIFIER.getBytes(), compressAvro(index));
+        /** Updates the record set as current record */
+        index.setId(index.getModuleName() + "::" + index.getModuleId());
+        index.put("current", true);
+        byte[] indexBytes = compressAvro(index);
+        PutRequest currentIndex = new PutRequest(tableName, currentRowKey.getBytes(),
+                INDEX_COLUMN_FAMILY, CURRENT_QUALIFIER, indexBytes);
+        PutRequest currentData = new PutRequest(tableName, currentRowKey.getBytes(),
+                DATA_COLUMN_FAMILY, "data".getBytes(), rawData);
+
+        /** Inserts the entry marked as old to keep history of changes */
+        index.setId(index.getModuleName() + "::" + index.getModuleId() + "::" + index.getTimestamp());
         index.put("current", false);
-        PutRequest oldIndex = new PutRequest(tableName.getBytes(), oldRowKey.getBytes(),
-                INDEX_COLUMN_FAMILY.getBytes(), "index".getBytes(),
-                compressAvro(index));
-        PutRequest dataRequest = new PutRequest(tableName.getBytes(), oldRowKey.getBytes(),
-                DATA_COLUMN_FAMILY.getBytes(), "data".getBytes(), rawData);
+        PutRequest oldIndex = new PutRequest(tableName, currentRowKey.getBytes(),
+                INDEX_COLUMN_FAMILY, CURRENT_QUALIFIER, indexBytes);
+        PutRequest oldData = new PutRequest(tableName, oldRowKey.getBytes(),
+                DATA_COLUMN_FAMILY, "data".getBytes(), rawData);
 
-        Deferred dataPut = hBaseClient.put(dataRequest);
-        Deferred currentPut = hBaseClient.put(currentIndex);
-        Deferred oldPut = hBaseClient.put(oldIndex);
 
-        dataPut.joinUninterruptibly();
-        currentPut.joinUninterruptibly();
-        oldPut.joinUninterruptibly();
+        Deferred currentIndexD = hBaseClient.put(currentIndex);
+        Deferred oldIndexD = hBaseClient.put(oldIndex);
+        currentIndexD.joinUninterruptibly();
+        oldIndexD.joinUninterruptibly();
+
+        /*
+        Deferred currendDataD = hBaseClient.put(currentData);
+        Deferred oldDataD = hBaseClient.put(oldData);
+        currendDataD.joinUninterruptibly();
+        oldDataD.joinUninterruptibly();
+        */
     }
 
     /**
@@ -73,8 +87,8 @@ public class HBaseWrapper {
      */
     public byte[] getData(String moduleName, String moduleId, Long timestamp) throws Exception {
         logger.debug("getting data for " + moduleName + ", " + moduleId + ", " + timestamp);
-        String rowKey = moduleName + "-" + moduleId + "-" + timestamp;
-        GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY, timestamp.toString());
+        String rowKey = moduleName + "::" + moduleId + "::" + timestamp;
+        GetRequest request = new GetRequest(tableName, rowKey.getBytes(), DATA_COLUMN_FAMILY, DATA_QUALIFER);
         return hBaseClient.get(request).joinUninterruptibly(3000).get(0).value();
     }
 
@@ -85,14 +99,16 @@ public class HBaseWrapper {
         writer.write(index, encoder);
         encoder.flush();
         out.close();
-        return out.toByteArray();
+        byte[] arr = out.toByteArray();
+        logger.debug("compressing avro to size " + arr.length);
+        return arr;
     }
 
     /**
      * Checks to see if the table and the given column family exists, throws RuntimeException
      * otherwise
      */
-    private void tableExists(String column) throws RuntimeException {
+    private void tableExists(byte[] column) throws RuntimeException {
         final CountDownLatch latch = new CountDownLatch(1);
         final AtomicBoolean fail = new AtomicBoolean(true);
         hBaseClient.ensureTableFamilyExists(tableName, column).addCallbacks(
