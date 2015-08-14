@@ -31,13 +31,13 @@ public class DataWrapper {
 
             // inserts the old version of the index
             index.setCurrent(false);
-            index.setId(index.getModuleName() + "::" + index.getModuleId() + "::" + index.getTimestamp());
+            index.setId(index.getModuleName() + "-" + index.getModuleId() + "-" + index.getTimestamp());
             hBaseWrapper.putIndex(index, false);
             solrWrapper.index(index);
 
             // insets the current version of the index
             index.setCurrent(true);
-            index.setId(index.getModuleName() + "::" + index.getModuleId());
+            index.setId(index.getModuleName() + "-" + index.getModuleId());
             hBaseWrapper.putIndex(index, true);
             solrWrapper.index(index);
 
@@ -47,7 +47,7 @@ public class DataWrapper {
     }
 
     public void delete(ClientRequests.DeleteRequest request) {
-        // TODO
+        solrWrapper.delete(request.getModuleName(), request.getModuleId());
     }
 
     public SolrDocumentList search() {
@@ -73,5 +73,4 @@ public class DataWrapper {
         index.setUsername(request.getUsername());
         return index;
     }
-
 }

@@ -131,7 +131,7 @@ public class HBaseWrapper {
     }
 
     private byte[] generateRowKey(String moduleName, String moduleId) {
-        return (moduleName + "::" + moduleId).getBytes();
+        return (moduleName + "-" + moduleId).getBytes();
     }
 
     /**

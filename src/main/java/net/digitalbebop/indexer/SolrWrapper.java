@@ -2,6 +2,8 @@ package net.digitalbebop.indexer;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
@@ -13,6 +15,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 
@@ -68,6 +71,24 @@ public class SolrWrapper {
         }
     }
 
+    public void delete(String moduleName, String moduleId) {
+        try {
+            SolrQuery query = new SolrQuery();
+            String id = moduleName + "-" + moduleId;
+            query.setFilterQueries("id:" + id);
+            SolrDocumentList results = client.query(query).getResults();
+            if (results.size() == 1) {
+                SolrInputDocument doc = copyDocument(results.get(0));
+                doc.setField("deleted", true);
+                client.add(doc, flushTime);
+            } else {
+                logger.warn("Could not find document with id: " + id);
+            }
+        } catch (SolrServerException | IOException e) {
+            logger.error("could not delete Solr document");
+        }
+    }
+
     public SolrDocumentList search() { // TODO add more
         try {
             SolrQuery query = new SolrQuery();
@@ -79,4 +100,13 @@ public class SolrWrapper {
         }
     }
 
+    private SolrInputDocument copyDocument(SolrDocument doc) {
+        SolrInputDocument newDoc = new SolrInputDocument();
+        Iterator<Map.Entry<String, Object>> itr = doc.iterator();
+        while (itr.hasNext()) {
+            Map.Entry<String, Object> entry = itr.next();
+            newDoc.addField(entry.getKey(), entry.getValue());
+        }
+        return newDoc;
+    }
 }
