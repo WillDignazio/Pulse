@@ -21,23 +21,7 @@ public class DataWrapper {
         solrWrapper = new SolrWrapper();
     }
 
-    private PulseAvroIndex toAvro(ClientRequests.IndexRequest request) {
-        long timestamp = System.currentTimeMillis();
-        PulseAvroIndex index = new PulseAvroIndex();
-        index.setData(request.getIndexData());
-        index.setDeleted(false); // TODO fix
-        index.setFormat("pdf"); // TODO fix
-        index.setMetaData(request.getMetaTags());
-        index.setModuleId(request.getModuleId());
-        index.setModuleName(request.getModuleName());
-        index.setTags(request.getTagsList());
-        index.setTimestamp(timestamp);
-        index.setUsername(request.getUsername());
-        return index;
-    }
-
     public void index(ClientRequests.IndexRequest request) {
-        long start = System.currentTimeMillis();
         try {
             PulseAvroIndex index = toAvro(request);
             byte[] payload = request.getRawData().toByteArray();
@@ -60,7 +44,10 @@ public class DataWrapper {
         } catch (Exception e) {
             logger.error("Error indexing request", e);
         }
-        logger.debug("Index time: " + (System.currentTimeMillis() - start) + "ms");
+    }
+
+    public void delete(ClientRequests.DeleteRequest request) {
+        // TODO
     }
 
     public SolrDocumentList search() {
@@ -71,4 +58,20 @@ public class DataWrapper {
             throws Exception {
         return hBaseWrapper.getData(moduleName, moduleId, timestamp);
     }
+
+    private PulseAvroIndex toAvro(ClientRequests.IndexRequest request) {
+        long timestamp = System.currentTimeMillis();
+        PulseAvroIndex index = new PulseAvroIndex();
+        index.setData(request.getIndexData());
+        index.setDeleted(false); // TODO fix
+        index.setFormat("pdf"); // TODO fix
+        index.setMetaData(request.getMetaTags());
+        index.setModuleId(request.getModuleId());
+        index.setModuleName(request.getModuleName());
+        index.setTags(request.getTagsList());
+        index.setTimestamp(timestamp);
+        index.setUsername(request.getUsername());
+        return index;
+    }
+
 }

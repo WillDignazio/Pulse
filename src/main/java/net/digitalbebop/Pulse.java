@@ -6,11 +6,9 @@ import net.digitalbebop.http.base.RequestType;
 import net.digitalbebop.http.endPoints.DeleteRequestHandler;
 import net.digitalbebop.http.endPoints.GetDataRequestHandler;
 import net.digitalbebop.http.endPoints.IndexRequestHandler;
+import net.digitalbebop.http.messages.Ok;
+import net.digitalbebop.http.messages.Response;
 import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -43,8 +41,8 @@ public class Pulse extends DaemonizedApplication {
         }
         server.registerEndpoint("/", RequestType.GET, new RequestHandler() {
             @Override
-            public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
-                return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_OK, "OK");
+            public Response handleGet(HttpRequest req, HashMap<String, String> params) {
+                return new Ok();
             }
         });
 

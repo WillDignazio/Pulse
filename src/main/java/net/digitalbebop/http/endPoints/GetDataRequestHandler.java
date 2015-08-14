@@ -1,18 +1,16 @@
 package net.digitalbebop.http.endPoints;
 
+import java.util.HashMap;
+
 import net.digitalbebop.http.base.RequestHandler;
+import net.digitalbebop.http.messages.BadRequest;
+import net.digitalbebop.http.messages.Ok;
+import net.digitalbebop.http.messages.Response;
+import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
-import org.apache.http.HttpStatus;
-import org.apache.http.HttpVersion;
-import org.apache.http.entity.BasicHttpEntity;
-import org.apache.http.message.BasicHttpResponse;
+import org.apache.http.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-
-import java.io.ByteArrayInputStream;
-import java.util.HashMap;
 
 public class GetDataRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
@@ -28,7 +26,7 @@ public class GetDataRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+    public Response handleGet(HttpRequest req, HashMap<String, String> params) {
         try {
             if (params.containsKey("moduleName") && params.containsKey("moduleId") &&
                     params.containsKey("timestamp")) {
@@ -37,20 +35,13 @@ public class GetDataRequestHandler implements RequestHandler {
                 Long timestamp = Long.parseLong(params.get("timestamp"));
 
                 byte[] bytes = dataWrapper.get().getRawData(moduleName, moduleId, timestamp);
-                BasicHttpEntity entity = new BasicHttpEntity();
-                entity.setContent(new ByteArrayInputStream(bytes));
-                HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1,
-                        HttpStatus.SC_OK, "OK");
-                response.setEntity(entity);
-                return response;
+                return new Ok(bytes);
             } else {
-                return new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_BAD_REQUEST,
-                        "'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
+                return new BadRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
         } catch (Exception e) {
             logger.error("Error getting data from HBase");
-            return new BasicHttpResponse(HttpVersion.HTTP_1_1,
-                    HttpStatus.SC_INTERNAL_SERVER_ERROR, "internal error");
+            return new ServerError();
         }
     }
 }

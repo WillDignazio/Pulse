@@ -2,10 +2,10 @@ package net.digitalbebop.http.base;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
+import net.digitalbebop.http.messages.NotFound;
+import net.digitalbebop.http.messages.Response;
 import org.apache.http.*;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.message.BasicHttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -48,10 +48,8 @@ public class EndpointServer extends BaseServer {
 
     private static RequestHandler notFoundHandler = new RequestHandler() {
         @Override
-        public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
-            HttpResponse response = new BasicHttpResponse(HttpVersion.HTTP_1_1, HttpStatus.SC_NOT_FOUND, "Not Found");
-            response.setEntity(new StringEntity("<html><b>404 Not Found</b></html>", Charset.forName("UTF-8")));
-            return response;
+        public Response handleGet(HttpRequest req, HashMap<String, String> params) {
+            return new NotFound();
         }
     };
 
@@ -86,26 +84,27 @@ public class EndpointServer extends BaseServer {
             }
 
             logger.debug("Received request: " + request.getRequestLine());
+            logger.debug("payload size: " + payload.length);
             for (EndpointMap map : endpointMap) {
                 if (map.getRequestType().toString().equals(method) && map.getPattern().matcher(path).matches()) {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
-                            return map.getHandler().handleGet(request, parameters);
+                            return map.getHandler().handleGet(request, parameters).getHttpResponse();
                         case POST:
-                            return map.getHandler().handlePost(request, parameters, payload);
+                            return map.getHandler().handlePost(request, parameters, payload).getHttpResponse();
                         case DELETE:
-                            return map.getHandler().handleDelete(request, parameters);
+                            return map.getHandler().handleDelete(request, parameters).getHttpResponse();
                         case PUT:
-                            return map.getHandler().handlePut(request, parameters);
+                            return map.getHandler().handlePut(request, parameters).getHttpResponse();
                     }
                 }
             }
             logger.debug("Couldn't match " + method + " (" + path + ")");
-            return notFoundHandler.handleGet(request, new HashMap<>());
+            return notFoundHandler.handleGet(request, new HashMap<>()).getHttpResponse();
         } catch(Exception e) {
             logger.warn("Could not parse URI: " + e.getMessage(), e);
-            return notFoundHandler.handleGet(request, new HashMap<>());
+            return notFoundHandler.handleGet(request, new HashMap<>()).getHttpResponse();
         } finally {
             long endTime = System.currentTimeMillis();
             logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
