@@ -4,6 +4,7 @@ buildscript {
     }
 
     apply plugin: 'java' // Needed for protobuf
+    apply from: 'gradle/aot.gradle'
 }
 
 plugins {
@@ -27,6 +28,10 @@ protobuf {
     generatedFilesBaseDir = "$projectDir/src/generated"
 }
 
+configurations { // Needs to go before dependencies
+    quasar
+}
+
 dependencies {
     testCompile 'junit:junit:4.12'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.3'
@@ -45,6 +50,12 @@ dependencies {
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
+
+    compile 'co.paralleluniverse:quasar-core:0.7.2:jdk8'
+    compile 'co.paralleluniverse:quasar-actors:0.7.2'
+    compile 'co.paralleluniverse:quasar-reactive-streams:0.7.2'
+
+    quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8"
 }
 
 defaultTasks 'build', 'writeClasspath'
