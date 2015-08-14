@@ -74,9 +74,6 @@ public class PulseProperties extends Properties {
     public final String PulsePIDPath = getProperty(
             ConfigKeys.PID_FILE.toString(), "/tmp");
 
-    public final String SolrAddress = getProperty(
-            ConfigKeys.SOLR_ADDRESS.toString(), "127.0.0.1:8983/solr");
-
     public final String ServerAddress = getProperty(
             ConfigKeys.LISTEN_ADDRRES.toString(), "127.0.0.1"
     );
@@ -91,5 +88,13 @@ public class PulseProperties extends Properties {
 
     public final String ZookeeperQuorum = getProperty(
             ConfigKeys.ZOOKEEPER_QUORUM.toString(), "jd-5.ih.csh.rit.edu"
+    );
+
+    public final String SolrCollection = getProperty(
+            ConfigKeys.SOLR_COLLECTION.toString(), "pulse"
+    );
+
+    public final String solrFlushtime = getProperty(
+            ConfigKeys.SOLR_FLUSH_TIME.toString(), "100"
     );
 }

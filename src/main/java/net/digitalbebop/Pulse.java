@@ -24,7 +24,6 @@ public class Pulse extends DaemonizedApplication {
     public Pulse() {
         super("pulse");
 
-        logger.info("Pulse Solr instance address: " + defaultProperties.SolrAddress);
         try {
             logger.info("Initializing server...");
 
