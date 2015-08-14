@@ -44,6 +44,7 @@ dependencies {
     compile 'org.apache.avro:avro-tools:1.7.7'
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
+    compile 'org.json:json:20141113'
 }
 
 defaultTasks 'build', 'writeClasspath'

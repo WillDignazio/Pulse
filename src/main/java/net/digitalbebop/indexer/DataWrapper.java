@@ -5,6 +5,8 @@ import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.solr.common.SolrDocumentList;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 /**
  * Wraps around all interactions with HBase and Solr to keep track of connections
@@ -59,12 +61,22 @@ public class DataWrapper {
         return hBaseWrapper.getData(moduleName, moduleId, timestamp);
     }
 
+    private String getFormat(String metaData) {
+        try {
+            JSONObject obj = new JSONObject(metaData);
+            return obj.getString("format");
+        } catch (JSONException e) {
+            logger.error("Could not get format from metadata: " + metaData, e);
+            return "";
+        }
+    }
+
     private PulseAvroIndex toAvro(ClientRequests.IndexRequest request) {
         long timestamp = System.currentTimeMillis();
         PulseAvroIndex index = new PulseAvroIndex();
         index.setData(request.getIndexData());
         index.setDeleted(false); // TODO fix
-        index.setFormat("pdf"); // TODO fix
+        index.setFormat(getFormat(request.getMetaTags())); // TODO fix
         index.setMetaData(request.getMetaTags());
         index.setModuleId(request.getModuleId());
         index.setModuleName(request.getModuleName());
