@@ -1,5 +1,6 @@
 package net.digitalbebop.http;
 
+import co.paralleluniverse.fibers.SuspendExecution;
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
 import net.digitalbebop.http.messages.NotFound;
@@ -10,6 +11,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -113,6 +115,12 @@ public class EndpointServer extends BaseServer {
 
 
     }
+
+    @Override
+    public void init() throws SuspendExecution, IOException {
+        super.init();
+    }
+
 
     public void registerEndpoint(@NotNull final String regex,
                                  RequestType type,

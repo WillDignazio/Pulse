@@ -34,15 +34,27 @@ fi
 launch_pulse()
 {
     fn_path="$PULSE_HOME/build/runtime.classpath"
+    quasar_path="$PULSE_HOME/build/quasar-core.path"
 
     if [ -f "$fn_path" ]; then
-        fn_classpath_content=$(cat "$PULSE_HOME/build/runtime.classpath")
+        fn_classpath_content=$(cat "$fn_path")
     else
         echo "Unable to find runtime.classpath, maybe run gradle writeClasspath?"
+	exit 1
+    fi
+
+    if [ -f "$quasar_path" ]; then
+	quasar_path_content=$(cat "$quasar_path")
+    else
+	echo "Unable to find quasar.path, maybe run gradle writeClasspath?"
+	exit 1
     fi
 
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
-    JVM_OPTS="$JVM_OPTS -Dco.paralleluniverse.fibers.verifyInstrumentation -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
+    JVM_OPTS+=" -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
+    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation"
+    JVM_OPTS+=" -javaagent:$quasar_path_content"
+
     echo $JVM_OPTS
     "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.Pulse
 }

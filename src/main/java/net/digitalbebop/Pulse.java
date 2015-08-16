@@ -1,5 +1,7 @@
 package net.digitalbebop;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.Suspendable;
 import net.digitalbebop.http.EndpointServer;
 
 import net.digitalbebop.http.endPoints.DeleteRequestHandler;
@@ -13,6 +15,7 @@ import net.digitalbebop.http.RequestType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
 import java.util.HashMap;
 
 public class Pulse extends DaemonizedApplication {
@@ -28,11 +31,24 @@ public class Pulse extends DaemonizedApplication {
 
             server = new EndpointServer("127.0.0.1", 8080);
             registerEndpoints();
-            server.init();
 
             logger.info("Initialized server: " + server.toString());
         } catch (Exception e) {
-            logger.error("Setup exception: " + e);
+            logger.error("Setup exception: " + e, e);
+        }
+    }
+
+    @Override
+    @Suspendable
+    public void init() {
+        super.init();
+
+        try {
+            server.init();
+        } catch (SuspendExecution se) {
+            throw new AssertionError("Suspend execution thrown.");
+        } catch (IOException e) {
+            logger.error("Error initializing server: " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -53,7 +69,7 @@ public class Pulse extends DaemonizedApplication {
         server.registerEndpoint("/api/get_data", RequestType.GET, new GetDataRequestHandler());
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws SuspendExecution {
         Pulse pulseApp;
 
         logger.info("Starting Pulse application....");

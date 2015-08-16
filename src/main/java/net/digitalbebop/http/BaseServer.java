@@ -5,6 +5,7 @@ import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.io.ChannelGroup;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
+import co.paralleluniverse.strands.SuspendableCallable;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -66,13 +67,14 @@ abstract class BaseServer {
             final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
             final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
 
-
-
             sessionOutputBuffer.bind(fos);
             sessionInputBuffer.bind(fis);
+            logger.debug("Bound output buffers.");
 
             final DefaultHttpRequestParser parser  = new DefaultHttpRequestParser(sessionInputBuffer);
+            logger.debug("Created request parser: " + parser.toString());
             final HttpRequest rawRequest = parser.parse();
+            logger.debug("Parsed message:\n" + rawRequest.toString());
 
             // deals with PUT requests
             byte[] payload = new byte[0];
@@ -96,7 +98,7 @@ abstract class BaseServer {
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
 
-            logger.debug(rawResponse.toString());
+            logger.debug("Raw response: " + rawResponse.toString());
             sessionOutputBuffer.flush();
 
             if (rawResponse.getEntity() != null) {
@@ -126,37 +128,39 @@ abstract class BaseServer {
             return;
         }
 
-        serverFiber = new Fiber<Void>(() -> {
-            try {
-                logger.info("Waiting for connections");
-                channelGroup = ChannelGroup.withThreadPool(executor);
-                serverChannel = FiberServerSocketChannel.open(channelGroup).bind(address);
-                System.out.println("Opened server channel.");
+        serverFiber = new Fiber<Void>(new SuspendableCallable<Void>() {
+            @Override
+            public Void run() throws SuspendExecution, InterruptedException {
+                try {
+                    serverChannel = FiberServerSocketChannel.open(null).bind(address);
+                    logger.info("Waiting for connections");
 
-                for (;;) {
-                    if(shutdown.get()) {
-                        logger.info("Server was shutdown, exiting server routine.");
-                        break;
+                    for (;;) {
+                        if (shutdown.get()) {
+                            logger.info("Server was shutdown, exiting server routine.");
+                            break;
+                        }
+
+                        FiberSocketChannel ch = serverChannel.accept();
+                        logger.info("Accepted from: " + ch.toString());
+
+                        new Fiber<>(() -> {
+                            try {
+                                fiberServerRoutine(ch);
+                            } catch (IOException e) {
+                                logger.info("Failed to serve accepted connection: " + e.getLocalizedMessage(), e);
+                            }
+                        }).start();
                     }
 
-                    FiberSocketChannel ch = serverChannel.accept();
-                    logger.info("Accepted from: " + ch.toString());
-
-                    new Fiber<>(() -> {
-                        try {
-                            fiberServerRoutine(ch);
-                        } catch (IOException e) {
-                            logger.info("Failed to serve accepted connection: " + e.getLocalizedMessage(), e);
-                        }
-                    }).start();
+                    serverChannel.close();
+                } catch (IOException e) {
+                    logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
+                    shutdown.set(true);
                 }
-                serverChannel.close();
-            } catch (IOException e) {
-                logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
-                shutdown.set(true);
-            }
 
-            return null;
+                return null;
+            }
         });
 
         logger.info("Starting base server (fiber)");

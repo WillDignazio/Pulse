@@ -4,6 +4,7 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
+import org.apache.commons.lang.NotImplementedException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
@@ -22,28 +23,28 @@ class FiberSocketChannelInputStream extends InputStream {
     private int _amount = 0;
 
     public FiberSocketChannelInputStream(FiberSocketChannel channel) throws IOException {
+        logger.debug("Initialized input stream for channel: " + channel.toString());
         this._channel = channel;
     }
 
     private int fillBuffer() throws SuspendExecution {
+        logger.debug("Filling buffer.");
         try {
             return new Fiber<>(() -> {
-                if (_amount <= 0) {
-                    try {
-                        bin.clear();
-                        _amount = _channel.read(bin);
-                        if (_amount == -1) {
-                            return -1;
-                        }
-
-                        bin.flip();
-                        return _amount;
-                    } catch (IOException ioe) {
-                        logger.error("Failed to get a buffer from the channel: " + ioe.getLocalizedMessage(), ioe);
+                try {
+                    bin.clear();
+                    _amount = _channel.read(bin);
+                    if (_amount == -1) {
                         return -1;
                     }
-                } else {
+
+                    bin.flip();
+
+                    logger.debug("Filled: " + _amount);
                     return _amount;
+                } catch (IOException ioe) {
+                    logger.error("Failed to get a buffer from the channel: " + ioe.getLocalizedMessage(), ioe);
+                    return -1;
                 }
             }).start().get();
         } catch (ExecutionException ee) {
@@ -57,10 +58,50 @@ class FiberSocketChannelInputStream extends InputStream {
 
     @Override
     @Suspendable
+    public long skip(long n) {
+        logger.debug("Skipping: " + n + " bytes");
+        throw new NotImplementedException("skip");
+    }
+
+    @Override
+    @Suspendable
+    public int available() {
+        logger.debug("Asked for how much was available: " + _amount);
+        return _amount;
+    }
+
+    @Override
+    @Suspendable
+    public void close() throws IOException {
+        _channel.close();
+    }
+
+    @Override
+    @Suspendable
+    public void mark(int readlimit) {
+        throw new NotImplementedException("mark");
+    }
+
+    @Override
+    @Suspendable
+    public boolean markSupported() {
+        return false;
+    }
+
+    @Override
+    @Suspendable
+    public void reset() throws IOException {
+        throw new NotImplementedException("reset");
+    }
+
+    @Override
+    @Suspendable
     public int read(byte[] bytes) throws IOException {
         if (bytes == null) {
             throw new IllegalArgumentException("output bytes must not be null");
         }
+
+        logger.debug("Attempting to read up to: " + bytes.length + " bytes into client.");
 
         try {
             return new Fiber<>(getClass().getName() + "-read-bytes", () -> {
@@ -75,6 +116,7 @@ class FiberSocketChannelInputStream extends InputStream {
                     --_amount;
                 }
 
+                logger.debug("Read in " + amount + " bytes of data.");
                 return amount;
             }).start().get();
         } catch (InterruptedException ie) {
@@ -89,12 +131,13 @@ class FiberSocketChannelInputStream extends InputStream {
     @Override
     @Suspendable
     public int read(byte[] buffer, int off, int len) {
+        logger.debug("Attempting to read: " + len + " bytes into " + buffer.length + " sized buffer");
+
         try {
             return new Fiber<>(() -> {
                 int idx = 0;
 
-                if (buffer == null)
-                    throw new NullPointerException("Buffer is null");
+
 
                 if ((buffer.length - off) < len)
                     throw new IndexOutOfBoundsException("Length is greater than buffer.length - offset");
@@ -127,6 +170,7 @@ class FiberSocketChannelInputStream extends InputStream {
     @Override
     @Suspendable
     public int read() throws IOException {
+        logger.debug("Reading in a byte from channel.");
         try {
             return new Fiber<>(getClass().getName() + "-read", () -> {
                 if (_amount <= 0)

@@ -4,7 +4,7 @@ buildscript {
     }
 
     apply plugin: 'java' // Needed for protobuf
-    //apply from: 'gradle/aot.gradle'
+//    apply from: 'gradle/aot.gradle'
 }
 
 plugins {
@@ -57,7 +57,30 @@ dependencies {
     compile 'co.paralleluniverse:quasar-actors:0.7.2'
     compile 'co.paralleluniverse:quasar-reactive-streams:0.7.2'
 
-    quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8"
+    quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
+}
+
+// Enable javaagent for fibers on test code
+tasks.withType(Test) {
+    systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    systemProperty 'co.paralleluniverse.fibers.detectRunawayFibers', 'true'
+    jvmArgs "-javaagent:${configurations.quasar.singleFile}"
+}
+
+classes {
+    doFirst {
+        println "Excuting scanSuspendables..."
+        ant.taskdef(
+                name: 'scanSuspendables', classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+                classpath: "build/classes/main:build/resources/main:${configurations.quasar.asPath}:${configurations.runtime.asPath}")
+        ant.scanSuspendables(
+                auto: false,
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+                append: true) {
+            fileset(dir: sourceSets.main.output.classesDir)
+        }
+    }
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -80,24 +103,6 @@ sourceSets {
         java {
             srcDir 'src/generated/main'
         }
-    }
-}
-
-classes {
-    doFirst {
-        ant.taskdef(
-                name:'scanSuspendables',
-                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
-                classpath: "build/classes/main:build/resources/main:build/classes/test:${configurations.runtime.asPath}")
-        ant.scanSuspendables(
-                auto:true,
-                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
-                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables-supers") {
-            fileset(dir: sourceSets.main.output.classesDir)
-        }
-
-        println "Suspendables Super file: $sourceSets.main.output.resourcesDir/META-INF/suspendables-supers"
-        println "Suspendables file: $sourceSets.main.output.resourcesDir/META-INF/suspendables"
     }
 }
 
@@ -141,5 +146,8 @@ task writeClasspath(dependsOn: build) << {
     new File(buildDir.absolutePath + "/runtime.classpath").withWriter {
         out -> out.writeLine(sourceSets.main.runtimeClasspath.asPath +
                              ":" + jar.archivePath);
+    }
+    new File(buildDir.absolutePath + "/quasar-core.path").withWriter {
+        out -> out.writeLine(configurations.quasar.asPath);
     }
 }

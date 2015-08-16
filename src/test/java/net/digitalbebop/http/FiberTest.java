@@ -16,7 +16,7 @@ import java.util.concurrent.ExecutionException;
 
 public class FiberTest {
 
-    private void writeToServer(String host, int port, byte[] data) throws IOException {
+    private void writeToServer(String host, int port, byte[] data) throws SuspendExecution, IOException {
         Socket sock = new Socket(host, port);
         if (!sock.isConnected()) {
             throw new RuntimeException("Could not write to server");
@@ -28,7 +28,7 @@ public class FiberTest {
         stream.close();
     }
 
-    private int readFromServer(String host, int port, byte[] buffer) throws IOException {
+    private int readFromServer(String host, int port, byte[] buffer) throws SuspendExecution, IOException {
         Socket sock = new Socket(host, port);
         if (!sock.isConnected()) {
             throw new RuntimeException("Could not read from server");
