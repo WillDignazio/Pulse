@@ -142,14 +142,22 @@ abstract class BaseServer {
                     FiberSocketChannel ch = serverChannel.accept();
                     logger.info("Accepted from: " + ch.toString());
 
-                    fiberServerRoutine(ch);
+                    new Fiber<>(() -> {
+                        try {
+                            fiberServerRoutine(ch);
+                        } catch (IOException e) {
+                            logger.info("Failed to serve accepted connection: " + e.getLocalizedMessage(), e);
+                        }
+                    }).start();
                 }
                 serverChannel.close();
             } catch (IOException e) {
                 logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
                 shutdown.set(true);
             }
-        }); // Not started, just initialized
+
+            return null;
+        });
 
         logger.info("Starting base server (fiber)");
         serverFiber.start();

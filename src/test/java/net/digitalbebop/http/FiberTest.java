@@ -74,8 +74,9 @@ public class FiberTest {
         new Fiber<Void>(() -> {
             byte[] testData = { 0, 1, 2, 3, 4, 5 };
 
+            FiberServerSocketChannel channel = null;
             try {
-                FiberServerSocketChannel channel = FiberServerSocketChannel.open().bind(new InetSocketAddress("127.0.0.1", 5555));
+                 channel = FiberServerSocketChannel.open().bind(new InetSocketAddress("127.0.0.1", 5555));
 
                 writeToServer("127.0.0.1", 5555, testData);
 
@@ -92,6 +93,12 @@ public class FiberTest {
                 child.close();
                 channel.close();
             } catch (IOException e) {
+                if (channel != null) {
+                    try {
+                        channel.close();
+                    } catch (Exception ignored) {
+                    }
+                }
                 throw new RuntimeException(e);
             }
         }).start().get();
@@ -122,6 +129,12 @@ public class FiberTest {
 
                         System.out.println("Client read in echo, data matched.");
                     } catch (IOException e) {
+                        if (channel != null) {
+                            try {
+                                channel.close();
+                            } catch (Exception ignored) {
+                            }
+                        }
                         throw new RuntimeException(e);
                     }
                 }).start();
