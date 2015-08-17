@@ -22,7 +22,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
-import java.net.SocketOption;
 import java.nio.channels.Channels;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -145,9 +144,6 @@ abstract class BaseServer {
 
                     new Fiber<>(() -> {
                         try {
-                            for (SocketOption opt : ch.supportedOptions()) {
-                                System.out.println("Supported options: " + opt.toString());
-                            }
                             fiberServerRoutine(ch);
                         } catch (IOException e) {
                             logger.info("Failed to serve accepted connection: " + e.getLocalizedMessage(), e);
