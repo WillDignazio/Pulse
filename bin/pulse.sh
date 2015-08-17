@@ -52,8 +52,8 @@ launch_pulse()
 
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
     JVM_OPTS+=" -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
-    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation"
     JVM_OPTS+=" -javaagent:$quasar_path_content"
+    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
     echo $JVM_OPTS
     "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.Pulse
