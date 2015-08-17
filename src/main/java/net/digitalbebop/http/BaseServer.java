@@ -1,10 +1,11 @@
 package net.digitalbebop.http;
 
 import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.FiberForkJoinScheduler;
+import co.paralleluniverse.fibers.FiberScheduler;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
-import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 abstract class BaseServer {
     private static Logger logger = LogManager.getLogger(BaseServer.class);
 
+    private static final int DEFAULT_FIBER_PARALLELISM = 4;
     private static final int SESSION_BUFFER_SIZE = 100*1024; // 100KB
     private SocketAddress address;
 
@@ -36,12 +38,16 @@ abstract class BaseServer {
 
     private final HttpTransportMetricsImpl transMetricImpl = new HttpTransportMetricsImpl();
 
-    private Fiber serverFiber;
+    private final FiberScheduler fiberScheduler;
     private FiberServerSocketChannel serverChannel;
 
-    @Inject
     public BaseServer(@NotNull String serverAddress, @NotNull int port) {
+        this(serverAddress, port, DEFAULT_FIBER_PARALLELISM);
+    }
+
+    public BaseServer(@NotNull String serverAddress, @NotNull int port, int parallelism) {
         address = new InetSocketAddress(serverAddress, port);
+        fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
     /**
@@ -54,9 +60,6 @@ abstract class BaseServer {
     public abstract HttpResponse handle(HttpRequest req, byte[] payload);
 
     private void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, IOException {
-//        FiberSocketChannelInputStream fis = new FiberSocketChannelInputStream(ch);
-//        FiberSocketChannelOutputStream fos = new FiberSocketChannelOutputStream(ch);
-
         try {
             final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
             final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
@@ -128,19 +131,19 @@ abstract class BaseServer {
             return;
         }
 
-        serverFiber = new Fiber<Void>(() -> {
+        Fiber serverFiber = new Fiber<Void>(() -> {
             try {
                 serverChannel = FiberServerSocketChannel.open(null).bind(address);
                 logger.info("Waiting for connections");
 
-                for (;;) {
+                for (; ; ) {
                     if (shutdown.get()) {
                         logger.info("Server was shutdown, exiting server routine.");
                         break;
                     }
 
                     FiberSocketChannel ch = serverChannel.accept();
-                    logger.info("Accepted from: " + ch.toString());
+                    logger.debug("Accepted from: " + ch.toString());
 
                     new Fiber<>(() -> {
                         try {
