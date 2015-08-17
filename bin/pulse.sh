@@ -42,7 +42,7 @@ launch_pulse()
     fi
 
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
-    JVM_OPTS="$JVM_OPTS -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
+    JVM_OPTS="$JVM_OPTS -Dco.paralleluniverse.fibers.verifyInstrumentation -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
     echo $JVM_OPTS
     "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.Pulse
 }

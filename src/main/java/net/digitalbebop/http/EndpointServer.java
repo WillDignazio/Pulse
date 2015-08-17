@@ -1,4 +1,4 @@
-package net.digitalbebop.http.base;
+package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;

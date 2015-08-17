@@ -73,6 +73,30 @@ sourceSets {
             srcDir 'build/extracted-include-protos/main'
         }
     }
+
+    test {
+        java {
+            srcDir 'src/generated/main'
+        }
+    }
+}
+
+classes {
+    doFirst {
+        ant.taskdef(
+                name:'scanSuspendables',
+                classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+                classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
+        ant.scanSuspendables(
+                auto:true,
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables-supers") {
+            fileset(dir: sourceSets.main.output.classesDir)
+        }
+
+        println "Suspendables Super file: $sourceSets.main.output.resourcesDir/META-INF/suspendables-supers"
+        println "Suspendables file: $sourceSets.main.output.resourcesDir/META-INF/suspendables"
+    }
 }
 
 version = '1.0'

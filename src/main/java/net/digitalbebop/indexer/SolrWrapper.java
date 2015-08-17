@@ -1,10 +1,5 @@
 package net.digitalbebop.indexer;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import net.digitalbebop.PulseModule;
@@ -18,6 +13,11 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+
+import java.io.IOException;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.Map;
 
 /**
  * Wraps around all actions with Solr. All insert document requests are performed asynchronously
@@ -99,7 +99,7 @@ public class SolrWrapper {
             return new SolrDocumentList();
         }
     }
-
+    
     private SolrInputDocument copyDocument(SolrDocument doc) {
         SolrInputDocument newDoc = new SolrInputDocument();
         Iterator<Map.Entry<String, Object>> itr = doc.iterator();

@@ -1,13 +1,10 @@
-package net.digitalbebop.http.base;
+package net.digitalbebop.http;
 
 import co.paralleluniverse.fibers.Fiber;
-import co.paralleluniverse.fibers.FiberExecutorScheduler;
 import co.paralleluniverse.fibers.SuspendExecution;
-import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.fibers.io.ChannelGroup;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
-import co.paralleluniverse.strands.SuspendableRunnable;
 import com.google.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
@@ -23,12 +20,9 @@ import org.apache.logging.log4j.Logger;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketAddress;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,7 +40,6 @@ abstract class BaseServer {
     private ServerSocket serverSocket = null;
 
     private final ExecutorService executor = Executors.newCachedThreadPool();
-    private final FiberExecutorScheduler fiberScheduler = new FiberExecutorScheduler("base-server", executor);
     private Fiber serverFiber;
     private ChannelGroup channelGroup;
     private FiberServerSocketChannel serverChannel;
@@ -54,32 +47,6 @@ abstract class BaseServer {
     @Inject
     public BaseServer(@NotNull String serverAddress, @NotNull int port) {
         address = new InetSocketAddress(serverAddress, port);
-        serverFiber = new Fiber("BaseServer", fiberScheduler, new SuspendableRunnable() {
-            @Override
-            public void run() throws SuspendExecution, InterruptedException {
-                try {
-                    logger.info("Waiting for connections");
-                    channelGroup = ChannelGroup.withThreadPool(executor);
-                    serverChannel = FiberServerSocketChannel.open(channelGroup).bind(address);
-
-                    for (;;) {
-                        if(shutdown.get()) {
-                            logger.info("Server was shutdown, exiting server routine.");
-                            break;
-                        }
-
-                        FiberSocketChannel ch = serverChannel.accept();
-                        logger.info("Accepted from: " + ch.toString());
-
-                        fiberServerRoutine(ch);
-                    }
-                    serverChannel.close();
-                } catch (IOException e) {
-                    logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
-                    shutdown.set(true);
-                }
-            }
-        }); // Not started, just initialized
     }
 
     /**
@@ -91,13 +58,18 @@ abstract class BaseServer {
      */
     public abstract HttpResponse handle(HttpRequest req, byte[] payload);
 
-    private void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution {
+    private void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, IOException {
+        FiberSocketChannelInputStream fis = new FiberSocketChannelInputStream(ch);
+        FiberSocketChannelOutputStream fos = new FiberSocketChannelOutputStream(ch);
+
         try {
             final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
             final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
 
-            sessionOutputBuffer.bind(sos);
-            sessionInputBuffer.bind(sock.getInputStream());
+
+
+            sessionOutputBuffer.bind(fos);
+            sessionInputBuffer.bind(fis);
 
             final DefaultHttpRequestParser parser  = new DefaultHttpRequestParser(sessionInputBuffer);
             final HttpRequest rawRequest = parser.parse();
@@ -128,12 +100,12 @@ abstract class BaseServer {
             sessionOutputBuffer.flush();
 
             if (rawResponse.getEntity() != null) {
-                rawResponse.getEntity().writeTo(sock.getOutputStream());
+                rawResponse.getEntity().writeTo(fos);
             }
 
             sessionOutputBuffer.flush();
-            sos.close();
-            sock.close();
+            fis.close();
+            ch.close();
         } catch (HttpException | IOException e) {
             logger.error("Error processing request: " + e.getMessage(), e);
         }
@@ -143,7 +115,7 @@ abstract class BaseServer {
         return initialized.get();
     }
 
-    public void init() throws IOException {
+    public void init() throws IOException, SuspendExecution {
         if(!initialized.compareAndSet(false, true)) {
             logger.error("Server has already been initialized.");
             return;
@@ -154,7 +126,32 @@ abstract class BaseServer {
             return;
         }
 
+        serverFiber = new Fiber<Void>(() -> {
+            try {
+                logger.info("Waiting for connections");
+                channelGroup = ChannelGroup.withThreadPool(executor);
+                serverChannel = FiberServerSocketChannel.open(channelGroup).bind(address);
+                System.out.println("Opened server channel.");
+
+                for (;;) {
+                    if(shutdown.get()) {
+                        logger.info("Server was shutdown, exiting server routine.");
+                        break;
+                    }
+
+                    FiberSocketChannel ch = serverChannel.accept();
+                    logger.info("Accepted from: " + ch.toString());
+
+                    fiberServerRoutine(ch);
+                }
+                serverChannel.close();
+            } catch (IOException e) {
+                logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
+                shutdown.set(true);
+            }
+        }); // Not started, just initialized
+
+        logger.info("Starting base server (fiber)");
         serverFiber.start();
-       // executor.submit(worker);
     }
 }

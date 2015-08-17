@@ -1,14 +1,15 @@
 package net.digitalbebop;
 
-import net.digitalbebop.http.base.EndpointServer;
-import net.digitalbebop.http.base.RequestHandler;
-import net.digitalbebop.http.base.RequestType;
+import net.digitalbebop.http.EndpointServer;
+
 import net.digitalbebop.http.endPoints.DeleteRequestHandler;
 import net.digitalbebop.http.endPoints.GetDataRequestHandler;
 import net.digitalbebop.http.endPoints.IndexRequestHandler;
 import net.digitalbebop.http.messages.Ok;
 import net.digitalbebop.http.messages.Response;
 import org.apache.http.HttpRequest;
+import net.digitalbebop.http.RequestHandler;
+import net.digitalbebop.http.RequestType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -39,6 +40,7 @@ public class Pulse extends DaemonizedApplication {
         if (server.isInitialized()) {
             throw new IllegalStateException("Server not initialized.");
         }
+
         server.registerEndpoint("/", RequestType.GET, new RequestHandler() {
             @Override
             public Response handleGet(HttpRequest req, HashMap<String, String> params) {

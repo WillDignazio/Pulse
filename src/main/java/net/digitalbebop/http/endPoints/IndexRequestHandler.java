@@ -10,7 +10,7 @@ import net.digitalbebop.http.messages.Response;
 import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
-import net.digitalbebop.http.base.RequestHandler;
+import net.digitalbebop.http.RequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 

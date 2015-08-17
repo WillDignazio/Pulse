@@ -1,10 +1,10 @@
-package net.digitalbebop.http.base;
-
-import java.util.HashMap;
+package net.digitalbebop.http;
 
 import net.digitalbebop.http.messages.NotFound;
 import net.digitalbebop.http.messages.Response;
 import org.apache.http.HttpRequest;
+
+import java.util.HashMap;
 
 /**
  * Interface to the different supported HTTP methods
