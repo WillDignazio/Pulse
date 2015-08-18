@@ -1,4 +1,4 @@
-package net.digitalbebop.http.messages;
+package net.digitalbebop.http;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.HttpVersion;

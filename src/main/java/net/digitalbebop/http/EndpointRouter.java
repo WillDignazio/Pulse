@@ -1,10 +1,11 @@
-package net.digitalbebop.http.base;
+package net.digitalbebop.http;
 
 import com.google.inject.Inject;
 import net.digitalbebop.PulseProperties;
 import net.digitalbebop.http.messages.NotFound;
-import net.digitalbebop.http.messages.Response;
-import org.apache.http.*;
+import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URLEncodedUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,8 +19,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
-public class EndpointServer extends BaseServer {
-    private static final Logger logger = LogManager.getLogger(EndpointServer.class);
+class EndpointRouter implements HttpRouter {
+    private static final Logger logger = LogManager.getLogger(EndpointRouter.class);
+
+    private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
+    private PulseProperties properties;
 
     private static class EndpointMap {
         private final Pattern _pattern;
@@ -43,9 +47,6 @@ public class EndpointServer extends BaseServer {
         }
     }
 
-    private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
-    private PulseProperties properties;
-
     private static RequestHandler notFoundHandler = new RequestHandler() {
         @Override
         public Response handleGet(HttpRequest req, HashMap<String, String> params) {
@@ -58,12 +59,10 @@ public class EndpointServer extends BaseServer {
         this.properties = properties;
     }
 
-    public EndpointServer(@NotNull String address, int port) {
-        super(address, port);
-    }
+    public EndpointRouter() {}
 
     @Override
-    public HttpResponse handle(HttpRequest request, byte[] payload) {
+    public HttpResponse route(HttpRequest request, byte[] payload) {
         long startTime = System.currentTimeMillis();
         try {
             final HashMap<String, String> parameters;
@@ -73,6 +72,7 @@ public class EndpointServer extends BaseServer {
             final String path  = uri.getPath();
             final String query = uri.getQuery();
             final String method = request.getRequestLine().getMethod();
+
             if (query != null) {
                 final List<NameValuePair> pairs = URLEncodedUtils.parse(query, Charset.defaultCharset());
                 parameters = new HashMap<>(pairs.size());

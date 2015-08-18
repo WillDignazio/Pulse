@@ -1,12 +1,16 @@
 package net.digitalbebop;
 
-import com.google.inject.Binder;
-import com.google.inject.Module;
+import com.google.inject.AbstractModule;
 import com.google.inject.Singleton;
+import net.digitalbebop.http.HttpModule;
 
-public class PulseModule implements Module {
+public class PulseModule extends AbstractModule {
     @Override
-    public void configure(Binder binder) {
-        binder.bind(PulseProperties.class).in(Singleton.class);
+    public void configure() {
+        install(new HttpModule());
+
+        bind(PulseProperties.class).in(Singleton.class);
+        bind(App.class).to(PulseApp.class);
+        bind(AppBootstrapper.class);
     }
 }

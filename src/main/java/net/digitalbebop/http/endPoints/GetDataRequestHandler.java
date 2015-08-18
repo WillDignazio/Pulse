@@ -2,10 +2,10 @@ package net.digitalbebop.http.endPoints;
 
 import java.util.HashMap;
 
-import net.digitalbebop.http.base.RequestHandler;
+import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.messages.BadRequest;
 import net.digitalbebop.http.messages.Ok;
-import net.digitalbebop.http.messages.Response;
+import net.digitalbebop.http.Response;
 import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.*;

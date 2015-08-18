@@ -22,7 +22,7 @@ public class PulseProperties extends Properties {
          * Because we haven't had a chance to setup our logging facilities yet,
          * we're going to configure a basic logging setup until we bring in our own.
          */
-        logger.info("Initializing Pulse property instance.");
+        logger.info("Initializing PulseApp property instance.");
         bootstrapConfiguration();
     }
 

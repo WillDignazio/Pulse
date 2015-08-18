@@ -66,7 +66,7 @@ sourceSets {
 
 version = '1.0'
 def jarTitle = 'Pulse Search Engine'
-def mainClass = 'net.digitalbebop.Pulse'
+def mainClass = 'net.digitalbebop.AppBootstrapper'
 
 jar {
     baseName = 'pulse'

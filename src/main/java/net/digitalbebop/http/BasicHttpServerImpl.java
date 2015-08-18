@@ -1,6 +1,8 @@
-package net.digitalbebop.http.base;
+package net.digitalbebop.http;
 
 import com.google.inject.Inject;
+import net.digitalbebop.http.annotations.Address;
+import net.digitalbebop.http.annotations.Port;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
@@ -12,19 +14,18 @@ import org.apache.http.impl.io.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.validation.constraints.NotNull;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-abstract class BaseServer {
-    private static Logger logger = LogManager.getLogger(BaseServer.class);
+public class BasicHttpServerImpl implements HttpServer {
+    private static Logger logger = LogManager.getLogger(BasicHttpServerImpl.class);
 
     private static final int SESSION_BUFFER_SIZE = 100*1024; // 100KB
     private final ExecutorService executor = Executors.newCachedThreadPool();
@@ -34,27 +35,25 @@ abstract class BaseServer {
     private final AtomicBoolean initialized = new AtomicBoolean(false);
 
     private final HttpTransportMetricsImpl transMetricImpl = new HttpTransportMetricsImpl();
+
+    private final String serverAddress;
+    private final int serverPort;
     private ServerSocket serverSocket = null;
 
+    private HttpRouter handler;
+
     @Inject
-    public BaseServer(@NotNull String serverAddress, @NotNull int port) {
-        try {
-            InetAddress address = InetAddress.getByName(serverAddress);
-            this.serverSocket = new ServerSocket(port, 100, address);
-        } catch (IOException e) {
-            logger.error("Failed to initialize BaseServer instance", e);
-            shutdown.set(true);
-        }
+    private void getRouter(HttpRouter handler) {
+        this.handler = handler;
     }
 
-    /**
-     * Handle a recieved HTTP request, this is a raw transfer from the {@link BaseServer}
-     * socket connection. The response from this call will be written back to the socket
-     * connection from which the request was received.
-     * @param req {@link HttpRequest} from client
-     * @return {@link HttpResponse} to client
-     */
-    public abstract HttpResponse handle(HttpRequest req, byte[] payload);
+    @Inject
+    public BasicHttpServerImpl(@Address String serverAddress,
+                               @Port Integer port) {
+        System.out.println("Configured instance of BasicHttpServerImpl");
+        this.serverAddress = serverAddress;
+        this.serverPort = port;
+    }
 
     private class ServerWorker implements Runnable {
         @Override
@@ -100,7 +99,8 @@ abstract class BaseServer {
                                     payload = IOUtils.toByteArray(contentStream);
                                 }
                             }
-                            final HttpResponse rawResponse = handle(rawRequest, payload);
+
+                            final HttpResponse rawResponse = handler.route(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
                             msgWriter.write(rawResponse);
@@ -137,8 +137,18 @@ abstract class BaseServer {
         }
 
         if (shutdown.get()) {
-            logger.error("This BaseServer instance is shutdown.");
+            logger.error("This BasicHttpServerImpl instance is shutdown.");
             return;
+        }
+
+        try {
+            InetSocketAddress address = new InetSocketAddress(serverAddress, serverPort);
+            serverSocket = new ServerSocket();
+            serverSocket.bind(address);
+
+        } catch (IOException e) {
+            logger.error("Failed to initialize BasicHttpServerImpl instance", e);
+            shutdown.set(true);
         }
 
         executor.submit(worker);

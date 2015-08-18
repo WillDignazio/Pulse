@@ -20,7 +20,7 @@ import org.hbase.async.PutRequest;
 
 /**
  * Wraps around all the HBase actions. This keeps its own thread pool to allow for asynchronous
- * put requests. All properties are set through Pulse's configuration.
+ * put requests. All properties are set through PulseApp's configuration.
  */
 public class HBaseWrapper {
     private static final Logger logger = LogManager.getLogger(HBaseWrapper.class);
