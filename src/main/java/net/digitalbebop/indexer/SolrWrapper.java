@@ -1,14 +1,7 @@
 package net.digitalbebop.indexer;
 
-import java.io.IOException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.Map;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import net.digitalbebop.PulseModule;
-import net.digitalbebop.PulseProperties;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -19,35 +12,32 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
 
+import java.io.IOException;
+import java.util.Date;
+import java.util.Map;
+
 /**
  * Wraps around all actions with Solr. All insert document requests are performed asynchronously
  * with a configurable flush time.
  */
-public class SolrWrapper {
+class SolrWrapper {
     private static final Logger logger = LogManager.getLogger(SolrWrapper.class);
     private CloudSolrClient client;
     private int flushTime;
 
-    protected static PulseProperties defaultProperties;
+    @Inject
+    public SolrWrapper(@Named("zookeeperQuorum") String quorum,
+                       @Named("solrCollection") String collection,
+                       @Named("solrFlushtime") Integer flushTime) {
+        client = new CloudSolrClient(quorum + "/solr");
+        client.setDefaultCollection(collection);
 
-    /*
-     * Make sure to initialize any base objects here, critically, we must
-     * configure all dependency injections transparently from all deriving classes.
-     */
-    static {
-        Injector injector = Guice.createInjector(new PulseModule());
-        defaultProperties = injector.getInstance(PulseProperties.class);
-    }
-
-    public SolrWrapper() {
-        client = new CloudSolrClient(defaultProperties.ZookeeperQuorum + "/solr");
-        client.setDefaultCollection(defaultProperties.SolrCollection);
         try {
-            flushTime = Integer.parseInt(defaultProperties.solrFlushtime);
+            this.flushTime = flushTime;
         } catch (NumberFormatException e) {
-            logger.error("Could not parse solr flush time: " + defaultProperties.solrFlushtime +
+            logger.error("Could not parse solr flush time: " + flushTime +
                     ", using default 100 ms", e);
-            flushTime = 100;
+            this.flushTime = 100;
         }
     }
 
@@ -102,9 +92,7 @@ public class SolrWrapper {
 
     private SolrInputDocument copyDocument(SolrDocument doc) {
         SolrInputDocument newDoc = new SolrInputDocument();
-        Iterator<Map.Entry<String, Object>> itr = doc.iterator();
-        while (itr.hasNext()) {
-            Map.Entry<String, Object> entry = itr.next();
+        for (Map.Entry<String, Object> entry : doc) {
             newDoc.addField(entry.getKey(), entry.getValue());
         }
         return newDoc;

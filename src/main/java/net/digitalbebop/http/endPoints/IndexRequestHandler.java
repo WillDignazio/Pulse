@@ -1,18 +1,19 @@
 package net.digitalbebop.http.endPoints;
 
-import java.util.HashMap;
-
+import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
+import net.digitalbebop.http.RequestHandler;
+import net.digitalbebop.http.Response;
 import net.digitalbebop.http.messages.BadRequest;
 import net.digitalbebop.http.messages.Ok;
-import net.digitalbebop.http.messages.Response;
 import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
-import net.digitalbebop.http.base.RequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+
+import java.util.HashMap;
 
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
@@ -20,9 +21,11 @@ public class IndexRequestHandler implements RequestHandler {
 
     public IndexRequestHandler() {
         dataWrapper = new ThreadLocal<DataWrapper>() {
+            @Inject DataWrapper wrapper;
+
             @Override
             public DataWrapper initialValue() {
-                return new DataWrapper();
+                return wrapper;
             }
         };
     }

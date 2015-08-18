@@ -1,5 +1,6 @@
 package net.digitalbebop.indexer;
 
+import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
@@ -14,13 +15,15 @@ import org.json.JSONObject;
  */
 public class DataWrapper {
     private static final Logger logger = LogManager.getLogger(DataWrapper.class);
-    private HBaseWrapper hBaseWrapper;
-    private SolrWrapper solrWrapper;
 
+    private final HBaseWrapper hBaseWrapper;
+    private final SolrWrapper solrWrapper;
 
-    public DataWrapper() {
-        hBaseWrapper = new HBaseWrapper();
-        solrWrapper = new SolrWrapper();
+    @Inject
+    public DataWrapper(HBaseWrapper hBaseWrapper,
+                       SolrWrapper solrWrapper) {
+        this.hBaseWrapper = hBaseWrapper;
+        this.solrWrapper = solrWrapper;
     }
 
     public void index(ClientRequests.IndexRequest request) {

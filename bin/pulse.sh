@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Pulse Bootstrapping Scripts
+## PulseApp Bootstrapping Scripts
 ##
 VERSION="1.0"
 
@@ -44,7 +44,7 @@ launch_pulse()
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
     JVM_OPTS="$JVM_OPTS -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
     echo $JVM_OPTS
-    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.Pulse
+    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.AppBootstrapper
 }
 
 launch_pulse

@@ -12,7 +12,7 @@ import java.util.Map;
 import java.util.Properties;
 
 @Singleton
-public class PulseProperties extends Properties {
+class PulseProperties extends Properties {
     private final Logger logger = LogManager.getLogger(PulseProperties.class);
 
     public PulseProperties() {
@@ -22,7 +22,7 @@ public class PulseProperties extends Properties {
          * Because we haven't had a chance to setup our logging facilities yet,
          * we're going to configure a basic logging setup until we bring in our own.
          */
-        logger.info("Initializing Pulse property instance.");
+        logger.info("Initializing PulseApp property instance.");
         bootstrapConfiguration();
     }
 
@@ -41,25 +41,25 @@ public class PulseProperties extends Properties {
             config.addConfiguration(new PropertiesConfiguration(pulseConfigFilepath));
 
             /* Add in environment variables */
-            for(PulseEnvironmentKeys key : Arrays.asList(PulseEnvironmentKeys.values())) {
+            for (PulseEnvironmentKeys key : Arrays.asList(PulseEnvironmentKeys.values())) {
                 this.
-                setProperty(key.name(), envVars.get(key.name()));
+                        setProperty(key.name(), envVars.get(key.name()));
                 logger.debug("Set: " + key);
             }
 
             Iterator<String> iter = config.getKeys();
-            while(iter.hasNext()) {
+            while (iter.hasNext()) {
                 String key = iter.next();
                 Object o = config.getProperty(key);
 
-                if(o instanceof String) {
+                if (o instanceof String) {
                     setProperty(key, (String) o);
                 } else {
                     try {
                         String valstr = o.toString();
                         logger.warn("Property \"" + key + "\" was converted to a string: " + valstr);
                         setProperty(key, valstr);
-                    } catch(Exception e) {
+                    } catch (Exception e) {
                         logger.error("Failed to parse property \"" + key + "\"", e);
                         throw new IllegalArgumentException(e);
                     }
@@ -70,31 +70,4 @@ public class PulseProperties extends Properties {
             throw new RuntimeException(e);
         }
     }
-
-    public final String PulsePIDPath = getProperty(
-            ConfigKeys.PID_FILE.toString(), "/tmp");
-
-    public final String ServerAddress = getProperty(
-            ConfigKeys.LISTEN_ADDRRES.toString(), "127.0.0.1"
-    );
-
-    public final String ServerPort = getProperty(
-            ConfigKeys.LISTEN_PORT.toString(), "8080"
-    );
-
-    public final String HBaseTable = getProperty(
-            ConfigKeys.HBASE_TABLE.toString(), "pulse"
-    );
-
-    public final String ZookeeperQuorum = getProperty(
-            ConfigKeys.ZOOKEEPER_QUORUM.toString(), "jd-5.ih.csh.rit.edu"
-    );
-
-    public final String SolrCollection = getProperty(
-            ConfigKeys.SOLR_COLLECTION.toString(), "pulse"
-    );
-
-    public final String solrFlushtime = getProperty(
-            ConfigKeys.SOLR_FLUSH_TIME.toString(), "100"
-    );
 }

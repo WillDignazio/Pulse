@@ -1,43 +1,45 @@
 package net.digitalbebop;
 
 import com.google.inject.Guice;
+import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.name.Named;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import javax.validation.constraints.NotNull;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.nio.channels.FileLock;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Application {
-    private static final Logger logger = LogManager.getLogger(Application.class);
+class AppBootstrapper {
+    private static final Logger logger = LogManager.getLogger(AppBootstrapper.class);
 
-    protected static PulseProperties defaultProperties;
-    private final String appName;
-    private final File pidFile;
+    private static ExecutorService executor = Executors.newCachedThreadPool();
 
-    /*
-     * Make sure to initialize any base objects here, critically, we must
-     * configure all dependency injections transparently from all deriving classes.
-     */
-    static {
-        Injector injector = Guice.createInjector(new PulseModule());
-        defaultProperties = injector.getInstance(PulseProperties.class);
+    private App app;
+    private File pidFile;
+    private AtomicBoolean shutdown = new AtomicBoolean(false);
+
+    private final String pidPath;
+
+    @Inject
+    public AppBootstrapper(@Named("pidPath") String pidPath) {
+        this.pidPath = pidPath;
     }
 
-    public Application(@NotNull String name) {
-        appName = name;
-        pidFile = getPIDFile();
-        Runtime.getRuntime().addShutdownHook(new Thread(new ApplicationShutdownTask()));
+    @Inject
+    public void getApp(App app) {
+        this.app = app;
     }
 
     /**
-     * This task will be run at Application exit, and will do various cleanup duties.
+     * This task will be run at AppBootstrapper exit, and will do various cleanup duties.
      * Any work that needs to be done when the application closes under normal conditions
      * should be encapsulated under this task.
      */
@@ -55,10 +57,6 @@ public class Application {
         }
     }
 
-    public String getApplicationName() {
-        return appName;
-    }
-
     /**
      * Retrieves a pid file for the application, if there is a already a PID file
      * for this application, we check that it is locked. If the PID file is not locked,
@@ -66,11 +64,7 @@ public class Application {
      * @return PID File descriptor
      */
     private File getPIDFile() {
-        final String pidPath = defaultProperties.PulsePIDPath + "/" + appName + ".pid";
-        final File pidFile = new File(pidPath);
-        final FileLock pidLock;
-
-        logger.info("PID File for application will reside in " + pidPath);
+        final File pidFile = new File(pidPath + "/pulse.pid");
 
         /*
          * XXX: We need to make this platform independent/checkable later, presumably this won't
@@ -82,7 +76,7 @@ public class Application {
 
         try {
             if(pidFile.exists()) {
-                logger.warn("PID file for application \"" + appName + "\" already exists.");
+                logger.warn("PID file for application already exists.");
             } else {
                 logger.info("PID file did not exist, creating one at " + pidFile.getAbsolutePath());
                 if(!pidFile.createNewFile()) {
@@ -108,5 +102,34 @@ public class Application {
         }
 
         return pidFile;
+    }
+
+    private void init() {
+        pidFile = getPIDFile();
+        Runtime.getRuntime().addShutdownHook(new Thread(new ApplicationShutdownTask()));
+
+        logger.info("Initializing main application.");
+        executor.execute(() -> {
+            app.init();
+
+            for (;;) {
+                if (shutdown.get()) {
+                    logger.info("Application recieved shutdown.");
+                    break;
+                }
+
+                try {
+                    Thread.sleep(5000);
+                } catch (Exception ignored) {}
+            }
+        });
+    }
+
+    public static void main(String[] args) throws Exception {
+        Injector injector = Guice.createInjector(new PulseModule());
+        AppBootstrapper bootstrapper = injector.getInstance(AppBootstrapper.class);
+
+        logger.info("Bootstrapping application....");
+        bootstrapper.init();
     }
 }

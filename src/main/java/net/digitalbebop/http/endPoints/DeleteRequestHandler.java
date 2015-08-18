@@ -1,14 +1,15 @@
 package net.digitalbebop.http.endPoints;
 
+import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.messages.BadRequest;
 import net.digitalbebop.http.messages.Ok;
-import net.digitalbebop.http.messages.Response;
+import net.digitalbebop.http.Response;
 import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
-import net.digitalbebop.http.base.RequestHandler;
+import net.digitalbebop.http.RequestHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -20,9 +21,11 @@ public class DeleteRequestHandler implements RequestHandler {
 
     public DeleteRequestHandler() {
         dataWrapper = new ThreadLocal<DataWrapper>() {
+            @Inject DataWrapper wrapper;
+
             @Override
             public DataWrapper initialValue() {
-                return new DataWrapper();
+                return wrapper;
             }
         };
     }
