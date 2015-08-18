@@ -12,6 +12,7 @@ public final class Response {
     private static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
     private static final HttpResponse okResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
     private static final HttpResponse notFoundResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");
+    private static final HttpResponse serverErrorResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, "server error");
 
     public static HttpResponse badRequest(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, message);
@@ -36,7 +37,7 @@ public final class Response {
     }
 
     public static HttpResponse serverError() {
-        return serverError("server error");
+        return serverErrorResponse;
     }
 
 }
