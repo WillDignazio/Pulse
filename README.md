@@ -11,10 +11,10 @@ Add the following line to your bashrc:
 
 ## Building
 
-   gradle idea	# For IDEA Intellij
-   gradle build
-   gradle writeClasspath
+    gradle idea	# For IDEA Intellij
+    gradle build
+    gradle writeClasspath
 
 ## Running
 
-./bin/pulse.sh
+    ./bin/pulse.sh
