@@ -2,13 +2,11 @@ package net.digitalbebop.http.endPoints;
 
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
-import net.digitalbebop.http.messages.BadRequest;
-import net.digitalbebop.http.messages.Ok;
-import net.digitalbebop.http.messages.Response;
-import net.digitalbebop.http.messages.ServerError;
+import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
 import net.digitalbebop.http.RequestHandler;
+import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -28,18 +26,18 @@ public class DeleteRequestHandler implements RequestHandler {
     }
 
     @Override
-    public Response handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
+    public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
         try {
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
             logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
             dataWrapper.get().delete(deleteRequest);
-            return new Ok();
+            return Response.ok();
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Delete handler.");
-            return new BadRequest("Invalid Protobuf");
+            return Response.badRequest("Invalid Protobuf");
         } catch (Exception e) {
             logger.error("Failed to handle Delete Request: " + e.getMessage(), e);
-            return new ServerError();
+            return Response.serverError();
         }
     }
 }
