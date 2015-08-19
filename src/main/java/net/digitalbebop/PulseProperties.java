@@ -42,9 +42,7 @@ class PulseProperties extends Properties {
 
             /* Add in environment variables */
             for (PulseEnvironmentKeys key : Arrays.asList(PulseEnvironmentKeys.values())) {
-                this.
-                        setProperty(key.name(), envVars.get(key.name()));
-                logger.debug("Set: " + key);
+                this.setProperty(key.name(), envVars.get(key.name()));
             }
 
             Iterator<String> iter = config.getKeys();

@@ -21,7 +21,7 @@ public class PulseApp implements App {
 
     @Override
     public void init() {
-        logger.info("Initializing pulse instance!");
+        logger.info("Initializing pulse instance.");
         try {
             server.init();
         } catch (IOException ioe ) {

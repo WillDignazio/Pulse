@@ -1,4 +1,4 @@
-package net.digitalbebop.http.endPoints;
+package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
 import net.digitalbebop.http.RequestHandler;

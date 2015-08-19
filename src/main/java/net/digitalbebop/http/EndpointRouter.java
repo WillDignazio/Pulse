@@ -1,8 +1,8 @@
 package net.digitalbebop.http;
 
-import net.digitalbebop.http.endPoints.DeleteRequestHandler;
-import net.digitalbebop.http.endPoints.GetDataRequestHandler;
-import net.digitalbebop.http.endPoints.IndexRequestHandler;
+import net.digitalbebop.http.handlers.DeleteRequestHandler;
+import net.digitalbebop.http.handlers.GetDataRequestHandler;
+import net.digitalbebop.http.handlers.IndexRequestHandler;
 import net.digitalbebop.http.messages.NotFound;
 import net.digitalbebop.http.messages.Ok;
 import org.apache.http.HttpRequest;

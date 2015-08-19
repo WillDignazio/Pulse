@@ -100,13 +100,11 @@ public class BasicHttpServerImpl implements HttpServer {
                                 }
                             }
 
-                            logger.info("Deffering to router");
                             final HttpResponse rawResponse = router.route(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
                             msgWriter.write(rawResponse);
 
-                            logger.debug("Raw Response: " + rawResponse.toString());
                             sessionOutputBuffer.flush();
 
                             if (rawResponse.getEntity() != null) {
