@@ -3,11 +3,9 @@ package net.digitalbebop.http.handlers;
 import com.google.inject.Inject;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.http.messages.BadRequest;
-import net.digitalbebop.http.messages.Ok;
-import net.digitalbebop.http.messages.ServerError;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -29,7 +27,7 @@ public class GetDataRequestHandler implements RequestHandler {
     }
 
     @Override
-    public Response handleGet(HttpRequest req, HashMap<String, String> params) {
+    public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
         try {
             if (params.containsKey("moduleName") && params.containsKey("moduleId") &&
                     params.containsKey("timestamp")) {
@@ -38,13 +36,13 @@ public class GetDataRequestHandler implements RequestHandler {
                 Long timestamp = Long.parseLong(params.get("timestamp"));
 
                 byte[] bytes = dataWrapper.get().getRawData(moduleName, moduleId, timestamp);
-                return new Ok(bytes);
+                return Response.ok(bytes);
             } else {
-                return new BadRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
+                return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
         } catch (Exception e) {
             logger.error("Error getting data from HBase");
-            return new ServerError();
+            return Response.serverError();
         }
     }
 }

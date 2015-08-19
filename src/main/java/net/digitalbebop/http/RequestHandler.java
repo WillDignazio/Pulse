@@ -1,7 +1,7 @@
 package net.digitalbebop.http;
 
-import net.digitalbebop.http.messages.NotFound;
 import org.apache.http.HttpRequest;
+import org.apache.http.HttpResponse;
 
 import java.util.HashMap;
 
@@ -10,19 +10,19 @@ import java.util.HashMap;
  */
 public interface RequestHandler {
 
-    default Response handleGet(HttpRequest req, HashMap<String, String> params) {
-        return new NotFound();
+    default HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+        return Response.notFound();
     }
 
-    default Response handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
-        return new NotFound();
+    default HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
+        return Response.notFound();
     }
 
-    default Response handleDelete(HttpRequest req, HashMap<String, String> params) {
-        return new NotFound();
+    default HttpResponse handleDelete(HttpRequest req, HashMap<String, String> params) {
+        return Response.notFound();
     }
 
-    default Response handlePut(HttpRequest req, HashMap<String, String> params) {
-        return new NotFound();
+    default HttpResponse handlePut(HttpRequest req, HashMap<String, String> params) {
+        return Response.notFound();
     }
 }

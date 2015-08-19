@@ -3,8 +3,6 @@ package net.digitalbebop.http;
 import net.digitalbebop.http.handlers.DeleteRequestHandler;
 import net.digitalbebop.http.handlers.GetDataRequestHandler;
 import net.digitalbebop.http.handlers.IndexRequestHandler;
-import net.digitalbebop.http.messages.NotFound;
-import net.digitalbebop.http.messages.Ok;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -48,12 +46,7 @@ class EndpointRouter implements HttpRouter {
         }
     }
 
-    private static RequestHandler notFoundHandler = new RequestHandler() {
-        @Override
-        public Response handleGet(HttpRequest req, HashMap<String, String> params) {
-            return new NotFound();
-        }
-    };
+    private static RequestHandler notFoundHandler = new RequestHandler() {};
 
     public EndpointRouter() {}
 
@@ -86,22 +79,22 @@ class EndpointRouter implements HttpRouter {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
-                            return map.getHandler().handleGet(request, parameters).getHttpResponse();
+                            return map.getHandler().handleGet(request, parameters);
                         case POST:
-                            return map.getHandler().handlePost(request, parameters, payload).getHttpResponse();
+                            return map.getHandler().handlePost(request, parameters, payload);
                         case DELETE:
-                            return map.getHandler().handleDelete(request, parameters).getHttpResponse();
+                            return map.getHandler().handleDelete(request, parameters);
                         case PUT:
-                            return map.getHandler().handlePut(request, parameters).getHttpResponse();
+                            return map.getHandler().handlePut(request, parameters);
                     }
                 }
             }
 
             logger.debug("Couldn't match " + method + " (" + path + ")");
-            return notFoundHandler.handleGet(request, new HashMap<>()).getHttpResponse();
+            return notFoundHandler.handleGet(request, new HashMap<>());
         } catch(Exception e) {
             logger.warn("Could not parse URI: " + e.getMessage(), e);
-            return notFoundHandler.handleGet(request, new HashMap<>()).getHttpResponse();
+            return notFoundHandler.handleGet(request, new HashMap<>());
         } finally {
             long endTime = System.currentTimeMillis();
             logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
@@ -130,8 +123,8 @@ class EndpointRouter implements HttpRouter {
 
         registerEndpoint("/", RequestType.GET, new RequestHandler() {
             @Override
-            public Response handleGet(HttpRequest req, HashMap<String, String> params) {
-                return new Ok();
+            public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+                return Response.ok();
             }
         });
 
