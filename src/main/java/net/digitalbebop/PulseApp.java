@@ -5,6 +5,8 @@ import net.digitalbebop.http.HttpServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+
 public class PulseApp implements App {
     private static Logger logger = LogManager.getLogger(PulseApp.class);
 
@@ -20,11 +22,11 @@ public class PulseApp implements App {
     @Override
     public void init() {
         logger.info("Initializing pulse instance!");
-//        try {
-//            //server.init();
-//        } catch (IOException ioe ) {
-//            logger.error("Failed to initialize server: " + ioe.getLocalizedMessage(), ioe);
-//            throw new RuntimeException(ioe);
-//        }
+        try {
+            server.init();
+        } catch (IOException ioe ) {
+            logger.error("Failed to initialize server: " + ioe.getLocalizedMessage(), ioe);
+            throw new RuntimeException(ioe);
+        }
     }
 }

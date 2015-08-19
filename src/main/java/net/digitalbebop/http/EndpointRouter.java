@@ -1,8 +1,10 @@
 package net.digitalbebop.http;
 
-import com.google.inject.Inject;
-import net.digitalbebop.PulseProperties;
+import net.digitalbebop.http.endPoints.DeleteRequestHandler;
+import net.digitalbebop.http.endPoints.GetDataRequestHandler;
+import net.digitalbebop.http.endPoints.IndexRequestHandler;
 import net.digitalbebop.http.messages.NotFound;
+import net.digitalbebop.http.messages.Ok;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -23,7 +25,6 @@ class EndpointRouter implements HttpRouter {
     private static final Logger logger = LogManager.getLogger(EndpointRouter.class);
 
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
-    private PulseProperties properties;
 
     private static class EndpointMap {
         private final Pattern _pattern;
@@ -53,11 +54,6 @@ class EndpointRouter implements HttpRouter {
             return new NotFound();
         }
     };
-
-    @Inject
-    public void injectPulseProperties(PulseProperties properties) {
-        this.properties = properties;
-    }
 
     public EndpointRouter() {}
 
@@ -100,6 +96,7 @@ class EndpointRouter implements HttpRouter {
                     }
                 }
             }
+
             logger.debug("Couldn't match " + method + " (" + path + ")");
             return notFoundHandler.handleGet(request, new HashMap<>()).getHttpResponse();
         } catch(Exception e) {
@@ -125,5 +122,23 @@ class EndpointRouter implements HttpRouter {
         } catch (PatternSyntaxException pe) {
             throw new IllegalArgumentException("Given endpoint URI is a valid regex string.");
         }
+    }
+
+    @Override
+    public void init() {
+        logger.info("Configuring endpoints");
+
+        registerEndpoint("/", RequestType.GET, new RequestHandler() {
+            @Override
+            public Response handleGet(HttpRequest req, HashMap<String, String> params) {
+                return new Ok();
+            }
+        });
+
+        registerEndpoint("/api/index", RequestType.POST, new IndexRequestHandler());
+        registerEndpoint("/api/delete", RequestType.POST, new DeleteRequestHandler());
+        registerEndpoint("/api/get_data", RequestType.GET, new GetDataRequestHandler());
+
+        logger.info("Finished configuring endpoints");
     }
 }

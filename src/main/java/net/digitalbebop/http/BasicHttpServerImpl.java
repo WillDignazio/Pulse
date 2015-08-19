@@ -40,17 +40,16 @@ public class BasicHttpServerImpl implements HttpServer {
     private final int serverPort;
     private ServerSocket serverSocket = null;
 
-    private HttpRouter handler;
+    private HttpRouter router;
 
     @Inject
-    private void getRouter(HttpRouter handler) {
-        this.handler = handler;
+    private void getRouter(HttpRouter router) {
+        this.router = router;
     }
 
     @Inject
     public BasicHttpServerImpl(@Address String serverAddress,
                                @Port Integer port) {
-        System.out.println("Configured instance of BasicHttpServerImpl");
         this.serverAddress = serverAddress;
         this.serverPort = port;
     }
@@ -58,6 +57,8 @@ public class BasicHttpServerImpl implements HttpServer {
     private class ServerWorker implements Runnable {
         @Override
         public void run() {
+            logger.debug("Started worker");
+
             for(;;) {
                 final Socket sock;
 
@@ -100,19 +101,22 @@ public class BasicHttpServerImpl implements HttpServer {
                                 }
                             }
 
-                            final HttpResponse rawResponse = handler.route(rawRequest, payload);
+                            logger.info("Deffering to router");
+                            final HttpResponse rawResponse = router.route(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
                             msgWriter.write(rawResponse);
 
-                            logger.debug(rawResponse.toString());
+                            logger.debug("Raw Response: " + rawResponse.toString());
                             sessionOutputBuffer.flush();
 
                             if (rawResponse.getEntity() != null) {
                                 rawResponse.getEntity().writeTo(sock.getOutputStream());
                             }
 
+                            sos.flush();
                             sessionOutputBuffer.flush();
+                            
                             sos.close();
                             sock.close();
                         } catch (HttpException | IOException e) {
@@ -146,9 +150,12 @@ public class BasicHttpServerImpl implements HttpServer {
             serverSocket = new ServerSocket();
             serverSocket.bind(address);
 
+            logger.info("Bound server socket, initializing router");
+            router.init();
         } catch (IOException e) {
             logger.error("Failed to initialize BasicHttpServerImpl instance", e);
             shutdown.set(true);
+            return;
         }
 
         executor.submit(worker);
