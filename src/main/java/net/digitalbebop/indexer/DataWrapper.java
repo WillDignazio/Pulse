@@ -26,10 +26,14 @@ public class DataWrapper {
     public void index(ClientRequests.IndexRequest request) {
         try {
             PulseAvroIndex index = toAvro(request);
-            byte[] payload = request.getRawData().toByteArray();
+            byte[] payload;
+            if (request.hasRawData()) {
+                payload = request.getRawData().toByteArray();
+            } else {
+                payload = request.getIndexData().getBytes();
+            }
             // inserts the raw data
-            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(),
-                    index.getTimestamp(), payload);
+            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), payload);
 
             // inserts the old version of the index
             index.setCurrent(false);
@@ -72,17 +76,28 @@ public class DataWrapper {
     }
 
     private PulseAvroIndex toAvro(ClientRequests.IndexRequest request) {
-        long timestamp = System.currentTimeMillis();
         PulseAvroIndex index = new PulseAvroIndex();
         index.setData(request.getIndexData());
         index.setDeleted(false); // TODO fix
-        index.setFormat(getFormat(request.getMetaTags())); // TODO fix
-        index.setMetaData(request.getMetaTags());
+        index.setFormat(getFormat(request.getMetaTags()));
+        if (request.hasMetaTags()) {
+            index.setMetaData(request.getMetaTags());
+        } else {
+            index.setMetaData("");
+        }
         index.setModuleId(request.getModuleId());
         index.setModuleName(request.getModuleName());
         index.setTags(request.getTagsList());
-        index.setTimestamp(timestamp);
-        index.setUsername(request.getUsername());
+        if (request.hasTimestamp()) {
+            index.setTimestamp(request.getTimestamp());
+        } else {
+            index.setTimestamp(System.currentTimeMillis());
+        }
+        if (request.hasUsername()) {
+            index.setUsername(request.getUsername());
+        } else {
+            index.setUsername("");
+        }
         return index;
     }
 }
