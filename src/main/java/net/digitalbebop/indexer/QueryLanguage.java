@@ -9,7 +9,7 @@ import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
 
 abstract class Expr {
-    public abstract String toSolr();
+    public abstract String toString();
 }
 
 class And extends Expr {
@@ -22,8 +22,8 @@ class And extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
-        return left.toSolr() + " AND " + right.toSolr();
+    public String toString() {
+        return left + " AND " + right;
     }
 }
 
@@ -36,8 +36,8 @@ class Or extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
-        return left.toSolr() + " OR " + right.toSolr();
+    public String toString() {
+        return left + " OR " + right;
     }
 }
 
@@ -50,7 +50,7 @@ class Equals extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
+    public String toString() {
         return left + ":" + right;
     }
 }
@@ -64,7 +64,7 @@ class LessThan extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
+    public String toString() {
         return left + ":[* TO " + right + "]";
 
     }
@@ -79,7 +79,7 @@ class GreaterThan extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
+    public String toString() {
         return left + ":[" + right + " TO *]";
     }
 }
@@ -93,7 +93,7 @@ class In extends Expr {
         this.right = right;
     }
 
-    public String toSolr() {
+    public String toString() {
         return left + ":*" + right + "*";
     }
 }
@@ -105,7 +105,7 @@ class Str extends Expr {
         this.str = str;
     }
 
-    public String toSolr() {
+    public String toString() {
         return str;
     }
 }
@@ -144,14 +144,14 @@ public final class QueryLanguage {
             string("in").then(in));
 
     final static Parser<Character, Expr> elem = alphaNum.bind(
-            left -> binOp.bind(
-                    op -> alphaNum.bind(
-                            right -> eof.then(retn(op.apply(new Str(left), new Str(right)))))));
+            left -> wspaces.then(binOp.bind(
+                    op -> wspaces.then(alphaNum.bind(
+                            right -> eof.then(retn(op.apply(new Str(left), new Str(right)))))))));
 
     final static Parser<Character, Expr> structured = elem.bind(
-            left -> joinOp.bind(
-                    op -> query.bind(
-                            right -> eof.then(retn(op.apply(left, right))))));
+            left -> wspace.then(joinOp.bind(
+                    op -> wspaces.then(query.bind(
+                            right -> eof.then(retn(op.apply(left, right))))))));
 
     final static Parser<Character, Expr> string = alphaNum.bind(str -> eof.then(retn(new Str(str))));
 
