@@ -45,6 +45,7 @@ dependencies {
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
+    compile 'org.javafp:parsecj:0.2'
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -105,4 +106,8 @@ task writeClasspath(dependsOn: build) << {
         out -> out.writeLine(sourceSets.main.runtimeClasspath.asPath +
                              ":" + jar.archivePath);
     }
+}
+
+task getHomeDir << {
+    println gradle.gradleHomeDir
 }
