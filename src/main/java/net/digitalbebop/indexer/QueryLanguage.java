@@ -94,7 +94,7 @@ class In extends Expr {
     }
 
     public String toString() {
-        return left + ":*" + right + "*";
+        return right + ":*" + left + "*";
     }
 }
 
@@ -102,7 +102,7 @@ class Str extends Expr {
     private String str;
 
     public Str(String str) {
-        this.str = str;
+        this.str = str.trim();
     }
 
     public String toString() {
@@ -114,8 +114,7 @@ class Str extends Expr {
 /**
  * Lexical Syntax:
  *
- * query      ::= structured | string | nil
- * structured ::= elem join query
+ * query      ::= elem joinOp query | string
  * elem       ::= string binOp string
  * joinOp     ::= 'AND' | 'OR'
  * binOp      ::= '=' | '>' | '<' | 'in'
@@ -125,37 +124,64 @@ public final class QueryLanguage {
     // Forward declare expr to allow for circular references.
     final static org.javafp.parsecj.Parser.Ref<Character, Expr> query = Parser.ref();
 
-    final static Parser<Character, BinaryOperator<Expr>> add = retn((l, r) -> new And(l, r));
+    final static Parser<Character, BinaryOperator<Expr>> add = retn((l, r) -> {
+        System.out.println("---------------and test");
+        return new And(l, r);
+    });
     final static Parser<Character, BinaryOperator<Expr>> or = retn((l, r) -> new Or(l, r));
     final static Parser<Character, BinaryOperator<Expr>> equals = retn((l, r) -> new Equals(l, r));
     final static Parser<Character, BinaryOperator<Expr>> lessThan = retn((l, r) -> new LessThan(l, r));
     final static Parser<Character, BinaryOperator<Expr>> greaterThan = retn((l, r) -> new GreaterThan(l, r));
     final static Parser<Character, BinaryOperator<Expr>> in = retn((l, r) -> new In(l, r));
-
-    final static Parser<Character, Void> eof = eof();
+    // TODO replace with StringBuilder
+    final static BinaryOperator<String> combine = ((l, r) -> l + " " + r);
 
     final static Parser<Character, BinaryOperator<Expr>> joinOp = choice(
             string("AND").then(add),
             string("OR").then(or));
     final static Parser<Character, BinaryOperator<Expr>> binOp = choice(
             string("=").then(equals),
-            string(">").then(lessThan),
-            string("<").then(greaterThan),
+            string(">").then(greaterThan),
+            string("<").then(lessThan),
             string("in").then(in));
 
     final static Parser<Character, Expr> elem = alphaNum.bind(
-            left -> wspaces.then(binOp.bind(
-                    op -> wspaces.then(alphaNum.bind(
-                            right -> eof.then(retn(op.apply(new Str(left), new Str(right)))))))));
+            left -> skipMany(space).then(binOp.bind(
+                    op -> skipMany(space).then(alphaNum.bind(
+                            right -> retn(op.apply(new Str(left), new Str(right))))))));
 
     final static Parser<Character, Expr> structured = elem.bind(
-            left -> wspace.then(joinOp.bind(
-                    op -> wspaces.then(query.bind(
-                            right -> eof.then(retn(op.apply(left, right))))))));
+            left -> skipMany(space).then(joinOp.bind(
+                    op -> skipMany(space).then(query.bind(
+                            right -> retn(op.apply(left, right)))))));
 
-    final static Parser<Character, Expr> string = alphaNum.bind(str -> eof.then(retn(new Str(str))));
+    final static Parser<Character, Void> eof = eof();
+
+    final static Parser<Character, Expr> end = eof.then(retn(new Str("")));
+
+    final static Parser.Ref<Character, Expr> string = Parser.ref();
 
     public static void init() {
-        query.set(choice(structured, string));
+
+        string.set((end).or(alphaNum.bind(
+                str -> skipMany(space).then(string.bind(
+                        str1 -> retn(new Str(str + " " + str1)))))));
+
+        /*
+        query.set(elem.bind(
+                e -> skipMany(space).then(joinOp.bind(
+                        op -> skipMany(space).then(elem.bind(
+                                e1 -> retn(op.apply(e, e1))
+                        ))
+                ))
+        ));
+        */
+
+        query.set(elem.bind(
+                e -> skipMany(space).then(joinOp.bind(
+                        op -> skipMany(space).then(elem.bind(
+                                e1 -> retn(op.apply(e, e1))
+                        ).or(string))))));
+
     }
 }
