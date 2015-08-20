@@ -1,6 +1,7 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.RequestHandler;
@@ -15,17 +16,12 @@ import java.util.HashMap;
 
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
-    private ThreadLocal<DataWrapper> dataWrapper;
 
-    public IndexRequestHandler() {
-        dataWrapper = new ThreadLocal<DataWrapper>() {
-            @Inject DataWrapper wrapper;
+    private final DataWrapper dataWrapper;
 
-            @Override
-            public DataWrapper initialValue() {
-                return wrapper;
-            }
-        };
+    @Inject
+    public IndexRequestHandler(Provider<DataWrapper> provider) {
+        dataWrapper = provider.get();
     }
 
     @Override
@@ -33,7 +29,7 @@ public class IndexRequestHandler implements RequestHandler {
         try {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
-            dataWrapper.get().index(indexRequest);
+            dataWrapper.index(indexRequest);
             return Response.ok();
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);

@@ -1,6 +1,7 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.DataWrapper;
@@ -13,17 +14,11 @@ import java.util.HashMap;
 
 public class GetDataRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
-    private ThreadLocal<DataWrapper> dataWrapper;
+    private DataWrapper dataWrapper;
 
-    public GetDataRequestHandler() {
-        dataWrapper =  new ThreadLocal<DataWrapper>() {
-            @Inject DataWrapper wrapper;
-
-            @Override
-            public DataWrapper initialValue() {
-                return wrapper;
-            }
-        };
+    @Inject
+    public GetDataRequestHandler(Provider<DataWrapper> provider) {
+        dataWrapper = provider.get();
     }
 
     @Override
@@ -35,7 +30,7 @@ public class GetDataRequestHandler implements RequestHandler {
                 String moduleId = params.get("moduleId");
                 Long timestamp = Long.parseLong(params.get("timestamp"));
 
-                byte[] bytes = dataWrapper.get().getRawData(moduleName, moduleId, timestamp);
+                byte[] bytes = dataWrapper.getRawData(moduleName, moduleId, timestamp);
                 return Response.ok(bytes);
             } else {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");

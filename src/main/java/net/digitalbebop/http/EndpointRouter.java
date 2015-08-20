@@ -1,5 +1,6 @@
 package net.digitalbebop.http;
 
+import com.google.inject.Inject;
 import net.digitalbebop.http.handlers.DeleteRequestHandler;
 import net.digitalbebop.http.handlers.GetDataRequestHandler;
 import net.digitalbebop.http.handlers.IndexRequestHandler;
@@ -23,6 +24,10 @@ class EndpointRouter implements HttpRouter {
     private static final Logger logger = LogManager.getLogger(EndpointRouter.class);
 
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
+
+    @Inject DeleteRequestHandler deleteRequestHandler;
+    @Inject GetDataRequestHandler getDataRequestHandler;
+    @Inject IndexRequestHandler indexRequestHandler;
 
     private static class EndpointMap {
         private final Pattern _pattern;
@@ -128,9 +133,9 @@ class EndpointRouter implements HttpRouter {
             }
         });
 
-        registerEndpoint("/api/index", RequestType.POST, new IndexRequestHandler());
-        registerEndpoint("/api/delete", RequestType.POST, new DeleteRequestHandler());
-        registerEndpoint("/api/get_data", RequestType.GET, new GetDataRequestHandler());
+        registerEndpoint("/api/index", RequestType.POST,indexRequestHandler);
+        registerEndpoint("/api/delete", RequestType.POST, deleteRequestHandler);
+        registerEndpoint("/api/get_data", RequestType.GET, getDataRequestHandler);
 
         logger.info("Finished configuring endpoints");
     }

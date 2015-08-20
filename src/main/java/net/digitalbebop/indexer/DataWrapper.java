@@ -1,6 +1,5 @@
 package net.digitalbebop.indexer;
 
-import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
@@ -19,11 +18,13 @@ public class DataWrapper {
     private final HBaseWrapper hBaseWrapper;
     private final SolrWrapper solrWrapper;
 
-    @Inject
     public DataWrapper(HBaseWrapper hBaseWrapper,
                        SolrWrapper solrWrapper) {
         this.hBaseWrapper = hBaseWrapper;
         this.solrWrapper = solrWrapper;
+
+        if (this.hBaseWrapper == null || this.solrWrapper == null)
+            throw new IllegalStateException("Uninitialized wrappers.");
     }
 
     public void index(ClientRequests.IndexRequest request) {
