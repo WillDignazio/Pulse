@@ -34,13 +34,13 @@ public class DeleteRequestHandler implements RequestHandler {
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
             logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
             dataWrapper.get().delete(deleteRequest);
-            return Response.ok();
+            return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Delete handler.");
             return Response.badRequest("Invalid Protobuf");
         } catch (Exception e) {
             logger.error("Failed to handle Delete Request: " + e.getMessage(), e);
-            return Response.serverError();
+            return Response.serverError;
         }
     }
 }

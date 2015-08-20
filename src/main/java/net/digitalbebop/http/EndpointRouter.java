@@ -124,7 +124,7 @@ class EndpointRouter implements HttpRouter {
         registerEndpoint("/", RequestType.GET, new RequestHandler() {
             @Override
             public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
-                return Response.ok();
+                return Response.ok;
             }
         });
 
