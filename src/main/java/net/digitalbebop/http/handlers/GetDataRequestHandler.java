@@ -37,7 +37,7 @@ public class GetDataRequestHandler implements RequestHandler {
             }
         } catch (Exception e) {
             logger.error("Error getting data from HBase");
-            return Response.serverError();
+            return Response.serverError;
         }
     }
 }

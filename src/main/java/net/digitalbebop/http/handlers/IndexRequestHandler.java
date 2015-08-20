@@ -30,7 +30,8 @@ public class IndexRequestHandler implements RequestHandler {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             dataWrapper.index(indexRequest);
-            return Response.ok();
+            dataWrapper.index(indexRequest);
+            return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
             return Response.badRequest("Invalid Protobuf");

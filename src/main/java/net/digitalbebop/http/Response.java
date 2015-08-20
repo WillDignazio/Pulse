@@ -9,21 +9,13 @@ import org.apache.http.message.BasicHttpResponse;
 
 public final class Response {
 
-    private static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
-    private static final HttpResponse okResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
-    private static final HttpResponse notFoundResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");
-    private static final HttpResponse serverErrorResponse = new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, "server error");
+    public static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
+    public static final HttpResponse ok = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
+    public static final HttpResponse notFound = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");
+    public static final HttpResponse serverError = new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, "server error");
 
     public static HttpResponse badRequest(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, message);
-    }
-
-    public static HttpResponse notFound() {
-        return notFoundResponse;
-    }
-
-    public static HttpResponse ok() {
-        return okResponse;
     }
 
     public static HttpResponse ok(byte[] payload) {
@@ -35,9 +27,4 @@ public final class Response {
     public static HttpResponse serverError(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, message);
     }
-
-    public static HttpResponse serverError() {
-        return serverErrorResponse;
-    }
-
 }
