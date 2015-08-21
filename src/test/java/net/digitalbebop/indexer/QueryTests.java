@@ -2,54 +2,53 @@ package net.digitalbebop.indexer;
 
 import static org.junit.Assert.*;
 import org.javafp.parsecj.State;
-import org.junit.Before;
 import org.junit.Test;
 
 public class QueryTests {
 
-    @Before
-    public void before() {
-        QueryLanguage.init();
+    @Test
+    public void simpleToken() throws Exception {
+        Token token = new Token("test", "value");
+        assertEquals(token, QueryLanguage.token.parse(State.of("test:value")).getResult());
     }
 
     @Test
-    public void stringTest() throws Exception {
-        assertEquals("teststring", QueryLanguage.string.parse(State.of("teststring")).getResult().toString());
+    public void tokenWithSpace() throws Exception {
+        Token token = new Token("test", "value");
+        assertEquals(token, QueryLanguage.token.parse(State.of("test : value")).getResult());
     }
 
     @Test
-    public void stringWhiteSpaceTest() throws Exception {
-        assertEquals("test string one", QueryLanguage.string.parse(State.of("test string one")).getResult().toString());
-
-        assertEquals("test string", QueryLanguage.string.parse(State.of("test string")).getResult().toString());
-
-        assertEquals("test string", QueryLanguage.string.parse(State.of("test      string")).getResult().toString());
+    public void multiToken() throws Exception {
+        And and = new And(new Token("test1", "value"), new Token("test2", "value"));
+        assertEquals(and, QueryLanguage.query.parse(State.of("test1:value test2:value")).getResult());
     }
 
     @Test
-    public void elemTest() throws Exception {
-        assertEquals("key:value", QueryLanguage.elem.parse(State.of("key = value")).getResult().toString());
-
-        assertEquals("key:[value TO *]", QueryLanguage.elem.parse(State.of("key > value")).getResult().toString());
-
-        assertEquals("key:[* TO value]", QueryLanguage.elem.parse(State.of("key < value")).getResult().toString());
-
-        assertEquals("value:*key*", QueryLanguage.elem.parse(State.of("key in value")).getResult().toString());
+    public void simpleString() throws Exception {
+        assertEquals(new Str("simpleStr"), QueryLanguage.query.parse(State.of("simpleStr")).getResult());
     }
 
     @Test
-    public void elemNoWhiteSpaceTest() throws Exception {
-        assertEquals("key:value", QueryLanguage.elem.parse(State.of("key=value")).getResult().toString());
-
-        assertEquals("key:[value TO *]", QueryLanguage.elem.parse(State.of("key>value")).getResult().toString());
-
-        assertEquals("key:[* TO value]", QueryLanguage.elem.parse(State.of("key<value")).getResult().toString());
+    public void stringWithSpace() throws Exception {
+        assertEquals(new Str("str1 str2"), QueryLanguage.query.parse(State.of("str1 str2")).getResult());
     }
 
     @Test
-    public void structuredTest() throws Exception {
-        assertEquals("key:value AND key1:value1", QueryLanguage.query.parse(State.of("key = value AND key1 = value1")).getResult().toString());
+    public void simpleCombination() throws Exception {
+        And and = new And(new Token("field", "value"), new Str("strstr"));
+        assertEquals(and, QueryLanguage.query.parse(State.of("field:value, strstr")).getResult());
+    }
 
-        assertEquals("key:value AND random", QueryLanguage.query.parse(State.of("key = value AND random")).getResult().toString());
+    @Test
+    public void combination() throws Exception {
+        And and = new And(new Token("field", "value"), new Str("str str"));
+        assertEquals(and, QueryLanguage.query.parse(State.of("field:value, str str")).getResult());
+    }
+
+    @Test
+    public void multiCombination() throws Exception {
+        And and = new And(new And(new Token("field2", "value2"), new Token("field", "value")), new Str("str str"));
+        assertEquals(and, QueryLanguage.query.parse(State.of("field2:value2 field: value, str str")).getResult());
     }
 }
