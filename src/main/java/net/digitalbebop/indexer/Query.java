@@ -166,9 +166,12 @@ public final class Query {
 
     final static Parser<Character, Expr> query = choice(
             tokens.bind(
-                    tks -> or(chr(',').then(
-                            wspaces.then(
-                                    string.bind(
-                                            str -> retn((Expr) new And(tks, new Str(str)))))).attempt(), retn(tks))).attempt(),
-            string.bind(str -> retn(new Str(str))));
+                    tks -> or(
+                            chr(',').then( // attempts to parse the rest of the search string
+                                    wspaces.then(
+                                            string.bind(
+                                                    str -> retn((Expr) new And(tks, new Str(str)))))).attempt(),
+                            retn(tks))).attempt(),
+                            string.bind(
+                                    str -> retn(new Str(str))));
 }

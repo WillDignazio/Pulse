@@ -54,7 +54,7 @@ public class QueryTests {
 
     @Test
     public void tokenMix() throws Exception {
-        And and = new And(new Token("tag", "general"), new InToken("test", "value"));
-        assertEquals(and, Query.query.parse(State.of("tag : general test :: value")).getResult());
+        And and = new And(new And(new Token("tag", "general"), new InToken("test", "value")), new Str("very long string of some kind"));
+        assertEquals(and, Query.query.parse(State.of("tag : general test :: value, very long string of some kind")).getResult());
     }
 }
