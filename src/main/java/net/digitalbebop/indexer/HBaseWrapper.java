@@ -1,16 +1,10 @@
 package net.digitalbebop.indexer;
 
-import java.io.ByteArrayOutputStream;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicBoolean;
-
-import com.google.inject.Guice;
-import com.google.inject.Injector;
-import net.digitalbebop.PulseModule;
-import net.digitalbebop.PulseProperties;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import net.digitalbebop.avro.PulseAvroIndex;
-import org.apache.avro.io.*;
+import org.apache.avro.io.BinaryEncoder;
+import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -18,11 +12,16 @@ import org.hbase.async.GetRequest;
 import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
 
+import java.io.ByteArrayOutputStream;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /**
  * Wraps around all the HBase actions. This keeps its own thread pool to allow for asynchronous
- * put requests. All properties are set through Pulse's configuration.
+ * put requests. All properties are set through PulseApp's configuration.
  */
-public class HBaseWrapper {
+class HBaseWrapper {
     private static final Logger logger = LogManager.getLogger(HBaseWrapper.class);
     private static final String DEFAULT_ZK_DIR = "/hbase";
     private static final byte[] INDEX_COLUMN_FAMILY = "index".getBytes();
@@ -32,17 +31,11 @@ public class HBaseWrapper {
     private HBaseClient hBaseClient;
     private byte[] tableName;
 
-    protected static PulseProperties defaultProperties;
-
-    static {
-        Injector injector = Guice.createInjector(new PulseModule());
-        defaultProperties = injector.getInstance(PulseProperties.class);
-    }
-
-    public HBaseWrapper() {
-        this.tableName = defaultProperties.HBaseTable.getBytes();
-        hBaseClient = new HBaseClient(defaultProperties.ZookeeperQuorum,
-                DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
+    @Inject
+    public HBaseWrapper(@Named("hbaseTable") String hbaseTable,
+                        @Named("zookeeperQuorum") String quorum) {
+        this.tableName = hbaseTable.getBytes();
+        hBaseClient = new HBaseClient(quorum, DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
 
         //tableExists(INDEX_COLUMN_FAMILY);
         //tableExists(DATA_COLUMN_FAMILY);

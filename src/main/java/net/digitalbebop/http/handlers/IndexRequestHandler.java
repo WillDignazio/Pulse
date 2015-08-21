@@ -1,28 +1,27 @@
-package net.digitalbebop.http.endPoints;
+package net.digitalbebop.http.handlers;
 
-import java.util.HashMap;
-
+import com.google.inject.Inject;
+import com.google.inject.Provider;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
+import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.DataWrapper;
 import org.apache.http.HttpRequest;
-import net.digitalbebop.http.RequestHandler;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.HashMap;
+
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
-    private ThreadLocal<DataWrapper> dataWrapper;
 
-    public IndexRequestHandler() {
-        dataWrapper = new ThreadLocal<DataWrapper>() {
-            @Override
-            public DataWrapper initialValue() {
-                return new DataWrapper();
-            }
-        };
+    private final DataWrapper dataWrapper;
+
+    @Inject
+    public IndexRequestHandler(Provider<DataWrapper> provider) {
+        dataWrapper = provider.get();
     }
 
     @Override
@@ -30,14 +29,12 @@ public class IndexRequestHandler implements RequestHandler {
         try {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
-            dataWrapper.get().index(indexRequest);
-            return Response.ok();
+            dataWrapper.index(indexRequest);
+            dataWrapper.index(indexRequest);
+            return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
             return Response.badRequest("Invalid Protobuf");
-        } catch (Exception e) {
-            logger.error("Failed to handle Index Request: " + e.getMessage(), e);
-            return Response.serverError();
         }
 
     }

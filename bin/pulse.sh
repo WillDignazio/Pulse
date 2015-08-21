@@ -1,6 +1,6 @@
 #!/bin/bash
 ##
-## Pulse Bootstrapping Scripts
+## PulseApp Bootstrapping Scripts
 ##
 VERSION="1.0"
 
@@ -56,7 +56,7 @@ launch_pulse()
 #    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
     echo $JVM_OPTS
-    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.Pulse
+    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.AppBootstrapper
 }
 
 launch_pulse
