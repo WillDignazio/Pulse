@@ -2,8 +2,6 @@ package net.digitalbebop.indexer;
 
 import org.javafp.parsecj.*;
 
-import java.util.function.BinaryOperator;
-
 import static org.javafp.parsecj.Combinators.*;
 import static org.javafp.parsecj.Text.*;
 
@@ -12,16 +10,11 @@ abstract class Expr {
 
     @Override
     public boolean equals(Object other) {
-        if (other instanceof Expr) {
-            return toString().equals(other.toString());
-        } else {
-            return false;
-        }
+        return other instanceof Expr && toString().equals(other.toString());
     }
 }
 
 class And extends Expr {
-
     private Expr left;
     private Expr right;
 
@@ -39,7 +32,7 @@ class Str extends Expr {
     private String str;
 
     public Str(String str) {
-        this.str = str.trim();
+        this.str = str;
     }
 
     public String toString() {
@@ -48,8 +41,8 @@ class Str extends Expr {
 }
 
 class Token extends Expr {
-    private String field;
-    private String value;
+    protected String field;
+    protected String value;
 
     public Token(String f, String v) {
         field = f;
@@ -57,21 +50,32 @@ class Token extends Expr {
     }
 
     public String toString() {
-        return field + ":*" + value + "*";
+        return field + ":" + value + "";
     }
 }
 
+class InToken extends Token {
+
+    public InToken(String field, String value) {
+        super(field, value);
+    }
+
+    public String toString() {
+        return field + ":*" + value + "*";
+    }
+}
 
 /**
  * Lexical Syntax:
  *
  * query  ::= tokens ',' | string
- * tokens ::= alphaNum ':' alphaNum tokens | nil
+ * tokens ::= alphaNum types alphaNum tokens | nil
+ * types  ::= ':' | '::'
  */
-public final class QueryLanguage {
+public final class Query {
 
     /** Copied from [[org.javafp.parsecj.Text.alphaNum]] to allow for periods '.' as well */
-    public static final Parser<Character, String> alphaNum =
+    private static final Parser<Character, String> alphaNum =
             state -> {
                 if (state.end()) {
                     return ConsumedT.empty(endOfInput(state, "alphaNum"));
@@ -109,7 +113,7 @@ public final class QueryLanguage {
             };
 
     /** Copied from [[org.javafp.parsecj.Text.alphaNum]] to allow for periods '.' and spaces ' ' as well */
-    public static final Parser<Character, String> string =
+    private static final Parser<Character, String> string =
             state -> {
                 if (state.end()) {
                     return ConsumedT.empty(endOfInput(state, "alphaNum"));
@@ -146,11 +150,16 @@ public final class QueryLanguage {
                 );
             };
 
-    final static Parser<Character, Expr> token = alphaNum.bind(
+
+    private final static Parser<Character, Expr> token = alphaNum.bind(
             field -> wspaces.then(
-                    chr(':').then(
-                            wspaces.then(alphaNum.bind(
-                                    value -> retn((Expr) new Token(field, value)))))));
+                    or(
+                            chr(':').then(
+                                    wspaces.then(alphaNum.bind(
+                                            value -> retn((Expr) new Token(field, value))))).attempt(),
+                            string("::").then(
+                                    wspaces.then(alphaNum.bind(
+                                            value -> retn((Expr) new InToken(field, value))))).attempt())));
 
     private final static Parser<Character, Expr> tokens = token.sepBy(wspace).bind(
             tks -> retn(tks.foldl1(And::new))).attempt();
