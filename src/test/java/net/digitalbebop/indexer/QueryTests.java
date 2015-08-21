@@ -51,4 +51,10 @@ public class QueryTests {
         And and = new And(new And(new Token("field2", "value2"), new Token("field", "value")), new Str("str str"));
         assertEquals(and, QueryLanguage.query.parse(State.of("field2:value2 field: value, str str")).getResult());
     }
+
+    @Test
+    public void tokenWithPeriod() throws Exception {
+        Token token = new Token("tag", "csh.general");
+        assertEquals(token, QueryLanguage.query.parse(State.of("tag : csh.general")).getResult());
+    }
 }
