@@ -34,7 +34,7 @@ public class IndexRequestHandler implements RequestHandler {
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
-            return Response.badRequest("Invalid Protobuf");
+            return Response.badProtobuf;
         }
 
     }

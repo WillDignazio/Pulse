@@ -13,6 +13,7 @@ public final class Response {
     public static final HttpResponse ok = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
     public static final HttpResponse notFound = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");
     public static final HttpResponse serverError = new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, "server error");
+    public static final HttpResponse badProtobuf = new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, "invalid protocol buffer");
 
     public static HttpResponse badRequest(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, message);
