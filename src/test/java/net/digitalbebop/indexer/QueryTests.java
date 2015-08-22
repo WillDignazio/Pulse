@@ -8,7 +8,7 @@ public class QueryTests {
 
     @Test
     public void multiToken() throws Exception {
-        String answer = "test1:value AND test2:value";
+        String answer = "test1:value test2:value";
         assertEquals(answer, Query.query.parse(State.of("test1=value test2=value")).getResult());
     }
 
@@ -24,19 +24,19 @@ public class QueryTests {
 
     @Test
     public void simpleCombination() throws Exception {
-        String answer = "field:value AND strstr";
+        String answer = "field:value strstr";
         assertEquals(answer, Query.query.parse(State.of("field=value, strstr")).getResult());
     }
 
     @Test
     public void combination() throws Exception {
-        String answer = "field:value AND str str";
+        String answer = "field:value str str";
         assertEquals(answer, Query.query.parse(State.of("field=value, str str")).getResult());
     }
 
     @Test
     public void multiCombination() throws Exception {
-        String answer = "field2:value2 AND field:value AND str str";
+        String answer = "field2:value2 field:value str str";
         assertEquals(answer, Query.query.parse(State.of("field2=value2 field= value, str str"))
                 .getResult());
     }
@@ -55,7 +55,7 @@ public class QueryTests {
 
     @Test
     public void tokenMix() throws Exception {
-        String answer = "tag:general AND test:*value* AND very long string of some kind";
+        String answer = "tag:general test:*value* very long string of some kind";
         assertEquals(answer,
                 Query.query.parse(
                         State.of("tag = general test ~ value, very long string of some kind"))

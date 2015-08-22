@@ -131,19 +131,12 @@ public final class Query {
             builder = new StringBuilder();
             return builder.append(expr);
         } else {
-            builder.append(" AND ");
-            return builder.append(expr);
+            return builder.append(" " + expr);
         }
     });
 
     private final static Parser<Character, StringBuilder> tokens = token.sepBy(wspace).bind(
             tks -> retn(tks.foldl(combine, null))).attempt();
-
-    private static String addString(StringBuilder builder, String str) {
-        builder.append(" AND ");
-        builder.append(str);
-        return builder.toString();
-    }
 
     final static Parser<Character, String> query = choice(
             tokens.bind(
@@ -151,7 +144,7 @@ public final class Query {
                             chr(',').then( // attempts to parse the rest of the search string
                                     wspaces.then(
                                             string.bind(
-                                                    str -> retn(addString(tks, str))))).attempt(),
+                                                    str -> retn(tks.append(" " + str).toString())))).attempt(),
                             retn(tks.toString()))).attempt(),
             string.bind(
                     str -> retn(str)));
