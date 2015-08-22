@@ -45,6 +45,7 @@ dependencies {
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
+    compile 'org.javafp:parsecj:0.2'
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -104,5 +105,32 @@ task writeClasspath(dependsOn: build) << {
     new File(buildDir.absolutePath + "/runtime.classpath").withWriter {
         out -> out.writeLine(sourceSets.main.runtimeClasspath.asPath +
                              ":" + jar.archivePath);
+    }
+}
+
+test {
+    // enable TestNG support (default is JUnit)
+    useJUnit()
+
+    testSrcDirs = ['src/test/java']
+
+    // show standard out and standard error of the test JVM(s) on the console
+    testLogging.showStandardStreams = true
+
+    // set heap size for the test JVM(s)
+    minHeapSize = "128m"
+    maxHeapSize = "512m"
+
+    // set JVM arguments for the test JVM(s)
+    jvmArgs '-XX:MaxPermSize=256m'
+
+    // listen to events in the test execution lifecycle
+    beforeTest { descriptor ->
+        logger.lifecycle("Running test: " + descriptor)
+    }
+
+    // listen to standard out and standard error of the test JVM(s)
+    onOutput { descriptor, event ->
+        logger.lifecycle("Test: " + descriptor + " produced standard out/err: " + event.message )
     }
 }
