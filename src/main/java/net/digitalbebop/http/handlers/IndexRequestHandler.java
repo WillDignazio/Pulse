@@ -20,7 +20,7 @@ public class IndexRequestHandler implements RequestHandler {
 
     @Inject
     public IndexRequestHandler(IndexConduit conduit) {
-        logger.info("Using conduit: " + conduit);
+        logger.info("Initializing IndexRequestHandler, conduit: " + conduit);
         this.conduit = conduit;
     }
 

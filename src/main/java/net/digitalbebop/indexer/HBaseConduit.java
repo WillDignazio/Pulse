@@ -1,5 +1,6 @@
 package net.digitalbebop.indexer;
 
+import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
@@ -17,6 +18,7 @@ public class HBaseConduit implements IndexConduit {
     private final HBaseWrapper hBaseWrapper;
     private final SolrWrapper solrWrapper;
 
+    @Inject
     public HBaseConduit(HBaseWrapper hBaseWrapper,
                         SolrWrapper solrWrapper) {
         this.hBaseWrapper = hBaseWrapper;

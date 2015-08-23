@@ -34,6 +34,8 @@ class HBaseWrapper {
     @Inject
     public HBaseWrapper(@Named("hbaseTable") String hbaseTable,
                         @Named("zookeeperQuorum") String quorum) {
+
+        logger.info("Initializing HBaseWrapper instance");
         this.tableName = hbaseTable.getBytes();
         hBaseClient = new HBaseClient(quorum, DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
 
