@@ -1,12 +1,11 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.indexer.HBaseConduit;
+import net.digitalbebop.indexer.IndexConduit;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -17,11 +16,12 @@ import java.util.HashMap;
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
 
-    private final HBaseConduit conduit;
+    private final IndexConduit conduit;
 
     @Inject
-    public IndexRequestHandler(Provider<HBaseConduit> provider) {
-        conduit = provider.get();
+    public IndexRequestHandler(IndexConduit conduit) {
+        logger.info("Using conduit: " + conduit);
+        this.conduit = conduit;
     }
 
     @Override

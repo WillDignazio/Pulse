@@ -8,5 +8,7 @@ public class IndexerModule extends AbstractModule {
         bind(SolrWrapper.class);
         bind(HBaseWrapper.class);
         bind(HBaseConduit.class).toProvider(HBaseConduitProvider.class);
+
+        bind(IndexConduit.class).to(HBaseConduit.class);
     }
 }
