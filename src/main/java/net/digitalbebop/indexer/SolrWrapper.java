@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -80,23 +81,26 @@ public class SolrWrapper {
         }
     }
 
-    public SolrDocumentList search(String searchStr, int offset, int limit) { // TODO add more
+    public QueryResponse search(String searchStr, int offset, int limit) { // TODO add more
         try {
             searchStr = "current:true " + Query.query.parse(State.of(searchStr)).getResult();
             logger.debug("searching with: " + searchStr);
             SolrQuery query = new SolrQuery();
             query.setQuery(searchStr);
-            query.setHighlight(true);
             query.setRows(limit);
             query.setStart(offset);
-            query.set("q.op", "AND");
-            return client.query(query).getResults();
+            //query.set("q.op", "AND");
+            query.setHighlight(true);
+            query.setHighlightSnippets(1);
+            query.setHighlightFragsize(200);
+            query.setParam("hl.fl", "data");
+            return client.query(query);
         } catch (SolrServerException | IOException e) {
             logger.error("Could not search Solr documents", e);
         } catch (Exception e) {
             logger.error("Could not parse query", e);
         }
-        return new SolrDocumentList();
+        return null;
     }
 
     private SolrInputDocument copyDocument(SolrDocument doc) {

@@ -10,13 +10,19 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.noggit.JSONUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
@@ -61,7 +67,40 @@ public class SearchRequestHandler implements RequestHandler {
                 }
             }
         }
-        SolrDocumentList docs = solrWrapper.search(search, offset, limit);
-        return Response.ok(JSONUtil.toJSON(docs).getBytes());
+        QueryResponse response = solrWrapper.search(search, offset, limit);
+        SolrDocumentList docs = response.getResults();
+
+        /** replaces the data section with the highlighted snippets */
+        for (SolrDocument doc : docs) {
+            doc.remove("data");
+            String id = (String) doc.getFieldValue("id");
+            if (response.getHighlighting().get(id) != null) {
+                Map<String, List<String>> forDoc = response.getHighlighting().get(id);
+                if (forDoc != null) {
+                    List<String> words = forDoc.get("data");
+                    if (words != null) {
+                        doc.setField("data", words.toString());
+                    }
+                }
+            }
+        }
+        // TODO replace with own StringBuilder implementation
+        return Response.ok(toJson(docs).toString(2).getBytes());
+    }
+
+    private JSONArray toJson(SolrDocumentList docs) {
+        JSONArray arr = new JSONArray();
+        for (SolrDocument doc : docs) {
+            arr.put(toJson(doc));
+        }
+        return arr;
+    }
+
+    private JSONObject toJson(SolrDocument doc) {
+        JSONObject obj = new JSONObject();
+        for (Map.Entry<String, Object> entry : doc.entrySet()) {
+            obj.put(entry.getKey(), entry.getValue());
+        }
+        return obj;
     }
 }
