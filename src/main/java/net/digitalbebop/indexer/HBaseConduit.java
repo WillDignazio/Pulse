@@ -4,7 +4,6 @@ import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.solr.common.SolrDocumentList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,14 +11,14 @@ import org.json.JSONObject;
  * Wraps around all interactions with HBase and Solr to keep track of connections
  * and to provide a nice interface to it all
  */
-public class DataWrapper {
-    private static final Logger logger = LogManager.getLogger(DataWrapper.class);
+public class HBaseConduit implements IndexConduit {
+    private static final Logger logger = LogManager.getLogger(HBaseConduit.class);
 
     private final HBaseWrapper hBaseWrapper;
     private final SolrWrapper solrWrapper;
 
-    public DataWrapper(HBaseWrapper hBaseWrapper,
-                       SolrWrapper solrWrapper) {
+    public HBaseConduit(HBaseWrapper hBaseWrapper,
+                        SolrWrapper solrWrapper) {
         this.hBaseWrapper = hBaseWrapper;
         this.solrWrapper = solrWrapper;
 

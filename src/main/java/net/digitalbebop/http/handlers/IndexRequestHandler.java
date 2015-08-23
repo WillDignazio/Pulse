@@ -6,7 +6,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.indexer.DataWrapper;
+import net.digitalbebop.indexer.HBaseConduit;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -17,11 +17,11 @@ import java.util.HashMap;
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
 
-    private final DataWrapper dataWrapper;
+    private final HBaseConduit conduit;
 
     @Inject
-    public IndexRequestHandler(Provider<DataWrapper> provider) {
-        dataWrapper = provider.get();
+    public IndexRequestHandler(Provider<HBaseConduit> provider) {
+        conduit = provider.get();
     }
 
     @Override
@@ -29,7 +29,7 @@ public class IndexRequestHandler implements RequestHandler {
         try {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
-            dataWrapper.index(indexRequest);
+            conduit.index(indexRequest);
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
