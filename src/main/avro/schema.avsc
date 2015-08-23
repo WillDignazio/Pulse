@@ -34,13 +34,13 @@
     },
     {
         "name": "username", 
-        "type": "string",
+        "type": ["string", "null"],
         "doc": "the csh username of the person who generated this record"
     },
     {
         "name": "deleted", 
         "type": "boolean",
-        "doc": "if the record has been removed by the moduke"
+        "doc": "if the record has been removed by the module"
     },
     {
         "name": "moduleName", 
@@ -53,13 +53,18 @@
         "doc": "the unique ID that the module gave this record"},
     {
         "name": "metaData", 
-        "type": "string",
-        "doc": "base 64 encoded JSON blog of metadata about this record. Used in displaying results"
+        "type": ["string", "null"],
+        "doc": "JSON blog of metadata about this record. Used in displaying results"
     },
     {
         "name": "data", 
         "type": "string",
         "doc": "the english text to search through for this record"
+    },
+    {
+        "name":"location",
+        "type":["string", "null"],
+        "doc":"the URL location of where the data resides"
     }
  ]
 }

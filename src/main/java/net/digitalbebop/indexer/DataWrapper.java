@@ -86,8 +86,6 @@ public class DataWrapper {
         index.setFormat(getFormat(request.getMetaTags()));
         if (request.hasMetaTags()) {
             index.setMetaData(request.getMetaTags());
-        } else {
-            index.setMetaData("");
         }
         index.setModuleId(request.getModuleId());
         index.setModuleName(request.getModuleName());
@@ -99,8 +97,9 @@ public class DataWrapper {
         }
         if (request.hasUsername()) {
             index.setUsername(request.getUsername());
-        } else {
-            index.setUsername("");
+        }
+        if (request.hasLocation()) {
+            index.setLocation(request.getLocation());
         }
         return index;
     }

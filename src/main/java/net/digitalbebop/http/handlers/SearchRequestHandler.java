@@ -15,11 +15,9 @@ import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.noggit.JSONUtil;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +69,6 @@ public class SearchRequestHandler implements RequestHandler {
 
         /** replaces the data section with the highlighted snippets */
         for (SolrDocument doc : docs) {
-            doc.remove("data");
             String id = (String) doc.getFieldValue("id");
             if (response.getHighlighting().get(id) != null) {
                 Map<String, List<String>> forDoc = response.getHighlighting().get(id);
@@ -79,8 +76,20 @@ public class SearchRequestHandler implements RequestHandler {
                     List<String> words = forDoc.get("data");
                     if (words != null && words.size() != 0) {
                         doc.setField("data", words.get(0));
+                    } else {
+                        String data = doc.getFieldValue("data").toString();
+                        int length = Math.min(200, data.length());
+                        doc.setField("data", data.substring(0, length));
                     }
+                } else {
+                    String data = doc.getFieldValue("data").toString();
+                    int length = Math.min(200, data.length());
+                    doc.setField("data", data.substring(0, length));
                 }
+            } else {
+                String data = doc.getFieldValue("data").toString();
+                int length = Math.min(200, data.length());
+                doc.setField("data", data.substring(0, length));
             }
         }
         // TODO replace with own StringBuilder implementation
@@ -98,7 +107,11 @@ public class SearchRequestHandler implements RequestHandler {
     private JSONObject toJson(SolrDocument doc) {
         JSONObject obj = new JSONObject();
         for (Map.Entry<String, Object> entry : doc.entrySet()) {
-            obj.put(entry.getKey(), entry.getValue());
+            if (entry.getKey().equals("metaData")) {
+                obj.put(entry.getKey(), new JSONObject(entry.getValue().toString()));
+            } else {
+                obj.put(entry.getKey(), entry.getValue());
+            }
         }
         return obj;
     }

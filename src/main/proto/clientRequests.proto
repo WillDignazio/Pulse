@@ -11,7 +11,7 @@ message IndexRequest {
     // Special keywords used in searching.
     repeated string tags = 1;
     
-    // The CSH username of the person who generated this index
+    // The CSH username of the person who generated this. index
     optional string username = 2;
     
     // The module's self-reported unique name
@@ -43,6 +43,10 @@ message IndexRequest {
     // then the current timestamp will be used. This is useful when doing a backfill and the
     // element needs to have its original timestamp associated with it.
     optional int64 timestamp = 8;
+
+    // the URL location of where the data is located. This is given to the user when they click
+    // on a search result. So for example: the news module would provide a link to webnews for this.
+    optional string location = 9;
 }
 
 // Tells the server that the given element has been should be marked as

@@ -139,16 +139,25 @@
    <field name="moduleName" type="string" indexed="true" stored="true" />
 
    <!-- the unique ID that the module gave this document -->
-   <field name="moduleId" type="string" indexed="true" stored="true" />
+   <field name="moduleId" type="string" indexed="false" stored="true" />
 
-   <!-- This includes meta information used to determine how to display the
+   <!-- this includes meta information used to determine how to display the
       data to the end user. This is a JSON string in Base64 -->
-   <field name="metaData" type="binary" indexed="false" stored="true" />
+   <field name="metaData" type="string" indexed="false" stored="true" />
 
-   <!-- the text used to do full-text searching on. Customized for english data -->
-   <field name="data" type="text_en" indexed="true" stored="true" />
+   <!-- the text used to do full-text searching on. Not customized so that it
+      can work with highlighting -->
+   <field name="data" type="text_general" indexed="false" stored="true" />
 
+   <!-- the URL location of where this element resides --> 
+   <field name="location" type="string" indexed="false" stored="true" />
 
+   <!-- catch all used for searching when no fields are provided -->
+   <field name="text" type="text_general" indexed="true" stored="false" multiValued="true" />
+
+   <copyField source="username" dest="text" />
+   <copyField source="tags" dest="text" />
+   <copyField source="data" dest="text" />
  </fields>
 
 
@@ -156,6 +165,9 @@
       Unless this field is marked with required="false", it will be a required field
    -->
  <uniqueKey>id</uniqueKey>
+
+
+ <defaultSearchField>text</defaultSearchField>
 
   <types>
     <!-- field type definitions. The "name" attribute is

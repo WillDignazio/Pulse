@@ -57,6 +57,7 @@ public class SolrWrapper {
             newDoc.addField("tags", index.getTags());
             newDoc.addField("timestamp", new Date(index.getTimestamp()));
             newDoc.addField("username", index.getUsername());
+            newDoc.addField("location", index.getLocation());
             client.add(newDoc, flushTime);
         } catch (SolrServerException | IOException e) {
             logger.error("Could not upload Solr document", e);
@@ -83,7 +84,7 @@ public class SolrWrapper {
 
     public QueryResponse search(String searchStr, int offset, int limit) { // TODO add more
         try {
-            searchStr = "current:true " + Query.query.parse(State.of(searchStr)).getResult();
+            searchStr = "current:true AND " + Query.query.parse(State.of(searchStr)).getResult();
             logger.debug("searching with: " + searchStr);
             SolrQuery query = new SolrQuery();
             query.setQuery(searchStr);
@@ -94,6 +95,7 @@ public class SolrWrapper {
             query.setHighlightSnippets(1);
             query.setHighlightFragsize(200);
             query.setParam("hl.fl", "data");
+            query.setParam("hl.maxAnalyzedChars", "-1");
             return client.query(query);
         } catch (SolrServerException | IOException e) {
             logger.error("Could not search Solr documents", e);
