@@ -28,7 +28,6 @@ protobuf {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.3'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.3'
     compile group: 'com.google.inject', name: 'guice', version: '4.0'
@@ -47,6 +46,9 @@ dependencies {
     compile 'org.json:json:20141113'
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.xerial:sqlite-jdbc:3.8.11.1'
 }
 
 defaultTasks 'build', 'writeClasspath'

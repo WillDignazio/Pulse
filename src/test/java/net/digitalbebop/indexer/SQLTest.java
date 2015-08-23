@@ -6,6 +6,8 @@ import net.digitalbebop.ClientRequests;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.File;
+
 public class SQLTest {
     private static Injector injector;
     private final ClientRequests.IndexRequest index =  ClientRequests.IndexRequest.newBuilder()
@@ -21,6 +23,11 @@ public class SQLTest {
 
     @BeforeClass
     public static void configureTests() {
+        File dbFile = new File(SQLTestModule.DB_FILE_PATH);
+        if (dbFile.exists()) {
+            dbFile.delete();
+        }
+
         injector = Guice.createInjector(new SQLTestModule());
     }
 

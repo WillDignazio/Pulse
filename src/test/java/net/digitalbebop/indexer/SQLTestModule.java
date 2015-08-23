@@ -10,6 +10,7 @@ import java.util.Map;
 
 class SQLTestModule extends AbstractModule {
     private static Logger logger = LogManager.getLogger(SQLTestModule.class);
+    public static String DB_FILE_PATH = "/tmp/pulse-test.db";
 
     @Override
     protected void configure() {
@@ -17,7 +18,7 @@ class SQLTestModule extends AbstractModule {
 
         Map<String, String> propertyMap = new HashMap<>();
 
-        propertyMap.put("sqlJDBC", "jdbc:sqlite:/tmp");
+        propertyMap.put("sqlJDBC", "jdbc:sqlite:/tmp/pulse.db");
         propertyMap.put("sqlUser", "");
         propertyMap.put("sqlPassword", "");
 
