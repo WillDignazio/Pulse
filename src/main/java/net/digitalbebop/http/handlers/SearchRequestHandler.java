@@ -47,7 +47,6 @@ public class SearchRequestHandler implements RequestHandler {
                 logger.warn("Could not decode search string", e);
                 return Response.badRequest("could not decode search string");
             }
-
         } else {
             return Response.badRequest("no search string provided");
         }
@@ -78,8 +77,8 @@ public class SearchRequestHandler implements RequestHandler {
                 Map<String, List<String>> forDoc = response.getHighlighting().get(id);
                 if (forDoc != null) {
                     List<String> words = forDoc.get("data");
-                    if (words != null) {
-                        doc.setField("data", words.toString());
+                    if (words != null && words.size() != 0) {
+                        doc.setField("data", words.get(0));
                     }
                 }
             }
