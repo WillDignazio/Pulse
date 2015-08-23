@@ -16,15 +16,15 @@ public class HBaseConduit implements IndexConduit {
     private static final Logger logger = LogManager.getLogger(HBaseConduit.class);
 
     private final HBaseWrapper hBaseWrapper;
-    private final SolrWrapper solrWrapper;
+    private final SolrConduit solrConduit;
 
     @Inject
     public HBaseConduit(HBaseWrapper hBaseWrapper,
-                        SolrWrapper solrWrapper) {
+                        SolrConduit solrConduit) {
         this.hBaseWrapper = hBaseWrapper;
-        this.solrWrapper = solrWrapper;
+        this.solrConduit = solrConduit;
 
-        if (this.hBaseWrapper == null || this.solrWrapper == null)
+        if (this.hBaseWrapper == null || this.solrConduit == null)
             throw new IllegalStateException("Uninitialized wrappers.");
     }
 
@@ -48,13 +48,13 @@ public class HBaseConduit implements IndexConduit {
             index.setCurrent(false);
             index.setId(index.getModuleName() + "-" + index.getModuleId() + "-" + index.getTimestamp());
             hBaseWrapper.putIndex(index, false);
-            solrWrapper.index(index);
+            solrConduit.index(index);
 
             // insets the current version of the index
             index.setCurrent(true);
             index.setId(index.getModuleName() + "-" + index.getModuleId());
             hBaseWrapper.putIndex(index, true);
-            solrWrapper.index(index);
+            solrConduit.index(index);
 
         } catch (Exception e) {
             logger.error("Error indexing request", e);
@@ -62,7 +62,7 @@ public class HBaseConduit implements IndexConduit {
     }
 
     public void delete(ClientRequests.DeleteRequest request) {
-        solrWrapper.delete(request.getModuleName(), request.getModuleId());
+        solrConduit.delete(request.getModuleName(), request.getModuleId());
     }
 
     public byte[] getRawData(String moduleName, String moduleId, long timestamp)

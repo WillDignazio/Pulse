@@ -1,10 +1,9 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.indexer.SolrWrapper;
+import net.digitalbebop.indexer.SolrConduit;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -24,11 +23,11 @@ import java.util.Map;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
-    private final SolrWrapper solrWrapper;
+    private final SolrConduit solrConduit;
 
     @Inject
-    public SearchRequestHandler(Provider<SolrWrapper> provider) {
-        solrWrapper = provider.get();
+    public SearchRequestHandler(SolrConduit solrConduit) {
+        this.solrConduit = solrConduit;
     }
 
     public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
@@ -64,7 +63,7 @@ public class SearchRequestHandler implements RequestHandler {
                 }
             }
         }
-        QueryResponse response = solrWrapper.search(search, offset, limit);
+        QueryResponse response = solrConduit.search(search, offset, limit);
         SolrDocumentList docs = response.getResults();
 
         /** replaces the data section with the highlighted snippets */
