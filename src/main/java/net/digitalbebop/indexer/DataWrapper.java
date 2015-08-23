@@ -27,6 +27,10 @@ public class DataWrapper {
             throw new IllegalStateException("Uninitialized wrappers.");
     }
 
+    /**
+     * Indexes the request into Solr with twice, one for the current version and then one for the
+     * old version. Then throws the Avro index record and the raw data into HBase.
+     */
     public void index(ClientRequests.IndexRequest request) {
         try {
             PulseAvroIndex index = toAvro(request);
@@ -58,10 +62,6 @@ public class DataWrapper {
 
     public void delete(ClientRequests.DeleteRequest request) {
         solrWrapper.delete(request.getModuleName(), request.getModuleId());
-    }
-
-    public SolrDocumentList search() {
-        return solrWrapper.search();
     }
 
     public byte[] getRawData(String moduleName, String moduleId, long timestamp)

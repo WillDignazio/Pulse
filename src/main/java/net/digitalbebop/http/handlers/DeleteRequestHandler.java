@@ -32,7 +32,7 @@ public class DeleteRequestHandler implements RequestHandler {
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Delete handler.");
-            return Response.badRequest("Invalid Protobuf");
+            return Response.badProtobuf;
         } catch (Exception e) {
             logger.error("Failed to handle Delete Request: " + e.getMessage(), e);
             return Response.serverError;

@@ -11,6 +11,7 @@ import org.apache.solr.client.solrj.impl.CloudSolrClient;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
+import org.javafp.parsecj.State;
 
 import java.io.IOException;
 import java.util.Date;
@@ -20,7 +21,7 @@ import java.util.Map;
  * Wraps around all actions with Solr. All insert document requests are performed asynchronously
  * with a configurable flush time.
  */
-class SolrWrapper {
+public class SolrWrapper {
     private static final Logger logger = LogManager.getLogger(SolrWrapper.class);
     private CloudSolrClient client;
     private int flushTime;
@@ -79,15 +80,23 @@ class SolrWrapper {
         }
     }
 
-    public SolrDocumentList search() { // TODO add more
+    public SolrDocumentList search(String searchStr, int offset, int limit) { // TODO add more
         try {
+            searchStr = "current:true " + Query.query.parse(State.of(searchStr)).getResult();
+            logger.debug("searching with: " + searchStr);
             SolrQuery query = new SolrQuery();
-            query.setQuery("*:*");
+            query.setQuery(searchStr);
+            query.setHighlight(true);
+            query.setRows(limit);
+            query.setStart(offset);
+            query.set("q.op", "AND");
             return client.query(query).getResults();
         } catch (SolrServerException | IOException e) {
             logger.error("Could not search Solr documents", e);
-            return new SolrDocumentList();
+        } catch (Exception e) {
+            logger.error("Could not parse query", e);
         }
+        return new SolrDocumentList();
     }
     
     private SolrInputDocument copyDocument(SolrDocument doc) {

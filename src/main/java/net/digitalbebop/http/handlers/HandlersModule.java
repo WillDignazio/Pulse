@@ -8,5 +8,6 @@ public class HandlersModule extends AbstractModule {
         bind(DeleteRequestHandler.class);
         bind(GetDataRequestHandler.class);
         bind(IndexRequestHandler.class);
+        bind(SearchRequestHandler.class);
     }
 }
