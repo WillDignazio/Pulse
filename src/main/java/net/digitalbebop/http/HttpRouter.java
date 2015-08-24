@@ -1,5 +1,6 @@
 package net.digitalbebop.http;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.apache.commons.lang.NotImplementedException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -15,7 +16,7 @@ interface HttpRouter {
      * @param payload byte[] payload of posted data
      * @return {@link HttpResponse} to client
      */
-    default HttpResponse route(HttpRequest req, byte[] payload) { throw new NotImplementedException(); }
+    default ListenableFuture<HttpResponse> route(HttpRequest req, byte[] payload) { throw new NotImplementedException(); }
 
     /**
      * Initialize the HttpRouter.

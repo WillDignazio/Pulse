@@ -1,9 +1,13 @@
 package net.digitalbebop.http;
 
 import co.paralleluniverse.fibers.*;
+import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
+import co.paralleluniverse.strands.AbstractFuture;
 import co.paralleluniverse.strands.Strand;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.IOUtils;
@@ -21,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BasicHttpServerImpl implements HttpServer {
@@ -55,7 +60,7 @@ public class BasicHttpServerImpl implements HttpServer {
         fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
-    public void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, InterruptedException {
+    public void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, InterruptedException, IOException {
         logger.debug("Started worker");
 
         try {
@@ -89,7 +94,8 @@ public class BasicHttpServerImpl implements HttpServer {
                 }
             }
 
-            final HttpResponse rawResponse = router.route(rawRequest, payload);
+            /* We can wrap this in a fiber if we feel we can be more async */
+            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, payload));
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
@@ -108,6 +114,10 @@ public class BasicHttpServerImpl implements HttpServer {
             ch.close();
         } catch (HttpException | IOException e) {
             logger.error("Error processing request: " + e.getMessage(), e);
+            ch.close();
+        } catch (ExecutionException e) {
+            logger.error("Failed to properly build response: " + e.getLocalizedMessage(), e);
+            ch.close();
         }
     }
 
@@ -146,8 +156,9 @@ public class BasicHttpServerImpl implements HttpServer {
                         logger.debug("Accepted from: " + ch.toString());
                         new Fiber<Void>(fiberScheduler, () -> {
                             logger.debug("Running server routine in : " + Strand.currentStrand().getName());
-                            fiberServerRoutine(ch);
-
+                            try {
+                                fiberServerRoutine(ch);
+                            } catch (IOException ignored) {}
                             return null;
                         }).start();
                     }
