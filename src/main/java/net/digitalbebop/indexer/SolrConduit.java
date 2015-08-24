@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.solr.client.solrj.SolrQuery;
 import org.apache.solr.client.solrj.SolrServerException;
 import org.apache.solr.client.solrj.impl.CloudSolrClient;
+import org.apache.solr.client.solrj.response.QueryResponse;
 import org.apache.solr.common.SolrDocument;
 import org.apache.solr.common.SolrDocumentList;
 import org.apache.solr.common.SolrInputDocument;
@@ -21,13 +22,13 @@ import java.util.Map;
  * Wraps around all actions with Solr. All insert document requests are performed asynchronously
  * with a configurable flush time.
  */
-public class SolrWrapper {
-    private static final Logger logger = LogManager.getLogger(SolrWrapper.class);
+public class SolrConduit {
+    private static final Logger logger = LogManager.getLogger(SolrConduit.class);
     private CloudSolrClient client;
     private int flushTime;
 
     @Inject
-    public SolrWrapper(@Named("zookeeperQuorum") String quorum,
+    public SolrConduit(@Named("zookeeperQuorum") String quorum,
                        @Named("solrCollection") String collection,
                        @Named("solrFlushtime") Integer flushTime) {
         client = new CloudSolrClient(quorum + "/solr");
@@ -56,6 +57,7 @@ public class SolrWrapper {
             newDoc.addField("tags", index.getTags());
             newDoc.addField("timestamp", new Date(index.getTimestamp()));
             newDoc.addField("username", index.getUsername());
+            newDoc.addField("location", index.getLocation());
             client.add(newDoc, flushTime);
         } catch (SolrServerException | IOException e) {
             logger.error("Could not upload Solr document", e);
@@ -80,23 +82,26 @@ public class SolrWrapper {
         }
     }
 
-    public SolrDocumentList search(String searchStr, int offset, int limit) { // TODO add more
+    public QueryResponse search(String searchStr, int offset, int limit) { // TODO add more
         try {
-            searchStr = "current:true " + Query.query.parse(State.of(searchStr)).getResult();
+            searchStr = "current:true AND " + Query.query.parse(State.of(searchStr)).getResult();
             logger.debug("searching with: " + searchStr);
             SolrQuery query = new SolrQuery();
             query.setQuery(searchStr);
-            query.setHighlight(true);
             query.setRows(limit);
             query.setStart(offset);
-            query.set("q.op", "AND");
-            return client.query(query).getResults();
+            query.setHighlight(true);
+            query.setHighlightSnippets(3);
+            query.setHighlightFragsize(70);
+            query.setParam("hl.fl", "data");
+            query.setParam("hl.maxAnalyzedChars", "-1");
+            return client.query(query);
         } catch (SolrServerException | IOException e) {
             logger.error("Could not search Solr documents", e);
         } catch (Exception e) {
             logger.error("Could not parse query", e);
         }
-        return new SolrDocumentList();
+        return null;
     }
     
     private SolrInputDocument copyDocument(SolrDocument doc) {

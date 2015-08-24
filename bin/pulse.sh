@@ -51,7 +51,8 @@ launch_pulse()
     fi
 
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
-    JVM_OPTS+=" -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
+
+    JVM_OPTS="$JVM_OPTS -server -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
     JVM_OPTS+=" -javaagent:$quasar_path_content"
 #    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
