@@ -2,6 +2,7 @@ package net.digitalbebop.http;
 
 import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import net.digitalbebop.http.handlers.DeleteRequestHandler;
 import net.digitalbebop.http.handlers.GetDataRequestHandler;
 import net.digitalbebop.http.handlers.IndexRequestHandler;
@@ -29,7 +30,8 @@ class EndpointRouter implements HttpRouter {
     private static final Logger logger = LogManager.getLogger(EndpointRouter.class);
 
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
-    private final ExecutorService executor = Executors.newCachedThreadPool();
+    private final ExecutorService executor;
+    private final Integer parallelism;
 
     @Inject DeleteRequestHandler deleteRequestHandler;
     @Inject GetDataRequestHandler getDataRequestHandler;
@@ -60,7 +62,11 @@ class EndpointRouter implements HttpRouter {
 
     private static RequestHandler notFoundHandler = new RequestHandler() {};
 
-    public EndpointRouter() {}
+    @Inject
+    public EndpointRouter(@Named("routerParallelism") Integer parallelism) {
+        this.parallelism = parallelism;
+        this.executor = Executors.newFixedThreadPool(parallelism);
+    }
 
     @Override
     public Future<HttpResponse> route(HttpRequest request, byte[] payload) {
