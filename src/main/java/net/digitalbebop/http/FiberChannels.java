@@ -4,8 +4,6 @@ import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.Strand;
-import sun.nio.cs.StreamDecoder;
-import sun.nio.cs.StreamEncoder;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -480,7 +478,7 @@ public final class FiberChannels {
                                    CharsetDecoder dec,
                                    int minBufferCap) throws SuspendExecution {
         checkNotNull(ch, "ch");
-        return StreamDecoder.forDecoder(ch, dec.reset(), minBufferCap);
+        return FiberStreamDecoder.forDecoder(ch, dec.reset(), minBufferCap);
     }
 
     /**
@@ -547,7 +545,7 @@ public final class FiberChannels {
                                    final CharsetEncoder enc,
                                    final int minBufferCap) throws SuspendExecution {
         checkNotNull(ch, "ch");
-        return StreamEncoder.forEncoder(ch, enc.reset(), minBufferCap);
+        return FiberStreamEncoder.forEncoder(ch, enc.reset(), minBufferCap);
     }
 
     /**
