@@ -73,9 +73,14 @@ public class SearchRequestHandler implements RequestHandler {
             if (response.getHighlighting().get(id) != null) {
                 Map<String, List<String>> forDoc = response.getHighlighting().get(id);
                 if (forDoc != null) {
-                    List<String> words = forDoc.get("data");
-                    if (words != null && words.size() != 0) {
-                        doc.setField("data", words.get(0));
+                    List<String> snippets = forDoc.get("data");
+                    if (snippets != null) {
+                        StringBuilder builder = new StringBuilder();
+                        for (int i = 0 ; i < snippets.size() - 1 ; i++) {
+                            builder.append(snippets.get(i) + "...");
+                        }
+                        builder.append(snippets.get(snippets.size() - 1));
+                        doc.setField("data", builder.toString());
                     } else {
                         String data = doc.getFieldValue("data").toString();
                         int length = Math.min(200, data.length());

@@ -90,10 +90,9 @@ public class SolrWrapper {
             query.setQuery(searchStr);
             query.setRows(limit);
             query.setStart(offset);
-            //query.set("q.op", "AND");
             query.setHighlight(true);
-            query.setHighlightSnippets(1);
-            query.setHighlightFragsize(200);
+            query.setHighlightSnippets(3);
+            query.setHighlightFragsize(70);
             query.setParam("hl.fl", "data");
             query.setParam("hl.maxAnalyzedChars", "-1");
             return client.query(query);
