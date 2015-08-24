@@ -1,10 +1,10 @@
 package net.digitalbebop.indexer;
 
+import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.solr.common.SolrDocumentList;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -12,18 +12,19 @@ import org.json.JSONObject;
  * Wraps around all interactions with HBase and Solr to keep track of connections
  * and to provide a nice interface to it all
  */
-public class DataWrapper {
-    private static final Logger logger = LogManager.getLogger(DataWrapper.class);
+public class HBaseConduit implements IndexConduit {
+    private static final Logger logger = LogManager.getLogger(HBaseConduit.class);
 
     private final HBaseWrapper hBaseWrapper;
-    private final SolrWrapper solrWrapper;
+    private final SolrConduit solrConduit;
 
-    public DataWrapper(HBaseWrapper hBaseWrapper,
-                       SolrWrapper solrWrapper) {
+    @Inject
+    public HBaseConduit(HBaseWrapper hBaseWrapper,
+                        SolrConduit solrConduit) {
         this.hBaseWrapper = hBaseWrapper;
-        this.solrWrapper = solrWrapper;
+        this.solrConduit = solrConduit;
 
-        if (this.hBaseWrapper == null || this.solrWrapper == null)
+        if (this.hBaseWrapper == null || this.solrConduit == null)
             throw new IllegalStateException("Uninitialized wrappers.");
     }
 
@@ -47,13 +48,13 @@ public class DataWrapper {
             index.setCurrent(false);
             index.setId(index.getModuleName() + "-" + index.getModuleId() + "-" + index.getTimestamp());
             hBaseWrapper.putIndex(index, false);
-            solrWrapper.index(index);
+            solrConduit.index(index);
 
             // insets the current version of the index
             index.setCurrent(true);
             index.setId(index.getModuleName() + "-" + index.getModuleId());
             hBaseWrapper.putIndex(index, true);
-            solrWrapper.index(index);
+            solrConduit.index(index);
 
         } catch (Exception e) {
             logger.error("Error indexing request", e);
@@ -61,7 +62,7 @@ public class DataWrapper {
     }
 
     public void delete(ClientRequests.DeleteRequest request) {
-        solrWrapper.delete(request.getModuleName(), request.getModuleId());
+        solrConduit.delete(request.getModuleName(), request.getModuleId());
     }
 
     public byte[] getRawData(String moduleName, String moduleId, long timestamp)

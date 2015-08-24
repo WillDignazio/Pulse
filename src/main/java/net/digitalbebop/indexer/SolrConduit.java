@@ -22,13 +22,13 @@ import java.util.Map;
  * Wraps around all actions with Solr. All insert document requests are performed asynchronously
  * with a configurable flush time.
  */
-public class SolrWrapper {
-    private static final Logger logger = LogManager.getLogger(SolrWrapper.class);
+public class SolrConduit {
+    private static final Logger logger = LogManager.getLogger(SolrConduit.class);
     private CloudSolrClient client;
     private int flushTime;
 
     @Inject
-    public SolrWrapper(@Named("zookeeperQuorum") String quorum,
+    public SolrConduit(@Named("zookeeperQuorum") String quorum,
                        @Named("solrCollection") String collection,
                        @Named("solrFlushtime") Integer flushTime) {
         client = new CloudSolrClient(quorum + "/solr");

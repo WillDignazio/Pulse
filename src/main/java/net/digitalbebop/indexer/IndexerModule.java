@@ -5,8 +5,11 @@ import com.google.inject.AbstractModule;
 public class IndexerModule extends AbstractModule {
     @Override
     protected void configure() {
-        bind(SolrWrapper.class);
+        bind(SolrConduit.class);
         bind(HBaseWrapper.class);
-        bind(DataWrapper.class).toProvider(DataWrapperProvider.class);
+
+        bind(HBaseConduit.class).toProvider(HBaseConduitProvider.class);
+
+        bind(IndexConduit.class).to(HBaseConduit.class);
     }
 }

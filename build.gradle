@@ -15,6 +15,11 @@ plugins {
     id "com.commercehub.gradle.plugin.avro" version "0.3.4"
 }
 
+// Avro contains a log4j instance for some ungodly reason
+configurations.all {
+    exclude module: 'slf4j-log4j12'
+}
+
 repositories {
     mavenCentral()
 }
@@ -28,7 +33,6 @@ protobuf {
 }
 
 dependencies {
-    testCompile 'junit:junit:4.12'
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.3'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.3'
     compile group: 'com.google.inject', name: 'guice', version: '4.0'
@@ -47,6 +51,10 @@ dependencies {
     compile 'org.json:json:20141113'
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
+
+    testCompile 'junit:junit:4.12'
+    testCompile 'org.apache.zookeeper:zookeeper:3.5.0-alpha'
+    testCompile 'org.xerial:sqlite-jdbc:3.8.11'
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -115,15 +123,15 @@ test {
 
     testSrcDirs = ['src/test/java']
 
-    // show standard out and standard error of the test JVM(s) on the console
-    testLogging.showStandardStreams = true
+    // Toggle standard out and standard error of the test JVM(s) on the console
+    testLogging.showStandardStreams = false
 
     // set heap size for the test JVM(s)
     minHeapSize = "128m"
     maxHeapSize = "512m"
 
     // set JVM arguments for the test JVM(s)
-    jvmArgs '-XX:MaxPermSize=256m'
+    jvmArgs '-XX:MaxPermSize=512m'
 
     // listen to events in the test execution lifecycle
     beforeTest { descriptor ->
