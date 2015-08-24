@@ -91,8 +91,10 @@ public class SolrConduit {
             query.setRows(limit);
             query.setStart(offset);
             query.setHighlight(true);
-            query.setHighlightSnippets(3);
-            query.setHighlightFragsize(70);
+            query.setHighlightSnippets(1);
+            query.setHighlightFragsize(300);
+            query.setHighlightSimplePre("");
+            query.setHighlightSimplePost("");
             query.setParam("hl.fl", "data");
             query.setParam("hl.maxAnalyzedChars", "-1");
             return client.query(query);

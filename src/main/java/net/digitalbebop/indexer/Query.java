@@ -61,7 +61,7 @@ public final class Query {
     private static final Parser<Character, String> string =
             state -> {
                 if (state.end()) {
-                    return ConsumedT.empty(endOfInput(state, "alphaNum"));
+                    return ConsumedT.empty(endOfInput(state, "string"));
                 }
 
                 char c = state.current();
@@ -107,8 +107,6 @@ public final class Query {
     private final static Parser<Character, BinaryOperator<String>> notInOp =
             retn((f, v) -> "-" + f + ":*" + v + "*");
 
-
-
     private final static Parser<Character, BinaryOperator<String>> ops = choice(
             chr('=').then(isOp),
             chr('~').then(inOp),
@@ -130,8 +128,7 @@ public final class Query {
 
     private final static BiFunction<StringBuilder, String, StringBuilder> combine = ((builder, expr) -> {
         if (builder == null) {
-            builder = new StringBuilder();
-            return builder.append(expr);
+            return new StringBuilder().append(expr);
         } else {
             return builder.append(" AND " + expr);
         }

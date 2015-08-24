@@ -5,6 +5,7 @@ import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
 import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 
 public final class Response {
@@ -21,6 +22,7 @@ public final class Response {
 
     public static HttpResponse ok(byte[] payload) {
         HttpResponse response = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
+        response.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
         response.setEntity(new ByteArrayEntity(payload));
         return response;
     }
