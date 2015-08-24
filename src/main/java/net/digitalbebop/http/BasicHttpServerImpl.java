@@ -1,5 +1,13 @@
 package net.digitalbebop.http;
 
+import co.paralleluniverse.fibers.*;
+import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
+import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
+import co.paralleluniverse.fibers.io.FiberSocketChannel;
+import co.paralleluniverse.strands.AbstractFuture;
+import co.paralleluniverse.strands.Strand;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.IOUtils;
@@ -17,18 +25,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BasicHttpServerImpl implements HttpServer {
     private static Logger logger = LogManager.getLogger(BasicHttpServerImpl.class);
 
     private static final int SESSION_BUFFER_SIZE = 100*1024; // 100KB
-    private final ExecutorService executor = Executors.newCachedThreadPool();
-    private final ServerWorker worker = new ServerWorker();
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -37,9 +40,11 @@ public class BasicHttpServerImpl implements HttpServer {
 
     private final String serverAddress;
     private final int serverPort;
-    private ServerSocket serverSocket = null;
 
     private HttpRouter router;
+
+    private final FiberScheduler fiberScheduler;
+    private FiberServerSocketChannel serverChannel;
 
     @Inject
     private void getRouter(HttpRouter router) {
@@ -48,82 +53,71 @@ public class BasicHttpServerImpl implements HttpServer {
 
     @Inject
     public BasicHttpServerImpl(@Named("bindAddress") String serverAddress,
-                               @Named("bindPort") Integer port) {
+                               @Named("bindPort") Integer port,
+                               @Named("parallelism") Integer parallelism) {
         this.serverAddress = serverAddress;
         this.serverPort = port;
+        fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
-    private class ServerWorker implements Runnable {
-        @Override
-        public void run() {
-            logger.debug("Started worker");
+    public void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, InterruptedException, IOException {
+        logger.debug("Started worker");
 
-            for(;;) {
-                final Socket sock;
+        try {
+            final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
+            final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
 
-                try {
-                    sock = serverSocket.accept();
-                } catch (Exception e) {
-                    logger.error("Failed to accept connection from socket: " + e.getMessage(), e);
-                    break;
-                }
+            OutputStream os = FiberChannels.newOutputStream(ch);
+            InputStream is = FiberChannels.newInputStream(ch);
 
-                try {
-                    logger.debug("Accepted connection from " + sock.toString());
-                    executor.submit(() -> {
-                        try {
-                            final OutputStream sos = sock.getOutputStream();
-                            final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
-                            final SessionOutputBufferImpl sessionOutputBuffer = new SessionOutputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
+            sessionOutputBuffer.bind(os);
+            sessionInputBuffer.bind(is);
 
-                            sessionOutputBuffer.bind(sos);
-                            sessionInputBuffer.bind(sock.getInputStream());
+            final DefaultHttpRequestParser parser = new DefaultHttpRequestParser(sessionInputBuffer);
+            final HttpRequest rawRequest = parser.parse();
 
-                            final DefaultHttpRequestParser parser  = new DefaultHttpRequestParser(sessionInputBuffer);
-                            final HttpRequest rawRequest = parser.parse();
-
-                            // deals with PUT requests
-                            byte[] payload = new byte[0];
-                            if (rawRequest instanceof HttpEntityEnclosingRequest) {
-                                InputStream contentStream = null;
-                                ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
-                                long len = contentLengthStrategy.determineLength(rawRequest);
-                                if (len > 0) {
-                                    if (len == ContentLengthStrategy.CHUNKED) {
-                                        contentStream = new ChunkedInputStream(sessionInputBuffer);
-                                    } else if (len == ContentLengthStrategy.IDENTITY) {
-                                        contentStream = new IdentityInputStream(sessionInputBuffer);
-                                    } else {
-                                        contentStream = new ContentLengthInputStream(sessionInputBuffer, len);
-                                    }
-                                    payload = IOUtils.toByteArray(contentStream);
-                                }
-                            }
-
-                            final HttpResponse rawResponse = router.route(rawRequest, payload);
-
-                            DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
-                            msgWriter.write(rawResponse);
-
-                            sessionOutputBuffer.flush();
-
-                            if (rawResponse.getEntity() != null) {
-                                rawResponse.getEntity().writeTo(sock.getOutputStream());
-                            }
-
-                            sos.flush();
-                            sessionOutputBuffer.flush();
-
-                            sos.close();
-                            sock.close();
-                        } catch (HttpException | IOException e) {
-                            logger.error("Error processing request: " + e.getMessage(), e);
-                        }
-                    });
-                } catch (Exception e) {
-                    logger.error("Error handling socket connection", e);
+            // deals with PUT requests
+            byte[] payload = new byte[0];
+            if (rawRequest instanceof HttpEntityEnclosingRequest) {
+                InputStream contentStream = null;
+                ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
+                long len = contentLengthStrategy.determineLength(rawRequest);
+                if (len > 0) {
+                    if (len == ContentLengthStrategy.CHUNKED) {
+                        contentStream = new ChunkedInputStream(sessionInputBuffer);
+                    } else if (len == ContentLengthStrategy.IDENTITY) {
+                        contentStream = new IdentityInputStream(sessionInputBuffer);
+                    } else {
+                        contentStream = new ContentLengthInputStream(sessionInputBuffer, len);
+                    }
+                    payload = IOUtils.toByteArray(contentStream);
                 }
             }
+
+            /* We can wrap this in a fiber if we feel we can be more async */
+            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, payload));
+
+            DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
+            msgWriter.write(rawResponse);
+
+            sessionOutputBuffer.flush();
+
+            if (rawResponse.getEntity() != null) {
+                rawResponse.getEntity().writeTo(os);
+            }
+
+            os.flush();
+            sessionOutputBuffer.flush();
+
+            os.close();
+            is.close();
+            ch.close();
+        } catch (HttpException | IOException e) {
+            logger.error("Error processing request: " + e.getMessage(), e);
+            ch.close();
+        } catch (ExecutionException e) {
+            logger.error("Failed to properly build response: " + e.getLocalizedMessage(), e);
+            ch.close();
         }
     }
 
@@ -131,6 +125,7 @@ public class BasicHttpServerImpl implements HttpServer {
         return initialized.get();
     }
 
+    @Suspendable
     public void init() throws IOException {
         if(!initialized.compareAndSet(false, true)) {
             logger.error("Server has already been initialized.");
@@ -143,18 +138,49 @@ public class BasicHttpServerImpl implements HttpServer {
         }
 
         try {
-            InetSocketAddress address = new InetSocketAddress(serverAddress, serverPort);
-            serverSocket = new ServerSocket();
-            serverSocket.bind(address);
+            Fiber bindFiber = new Fiber<Void>(fiberScheduler, () -> {
+                try {
+                    InetSocketAddress socketAddress = new InetSocketAddress(serverAddress, serverPort);
+                    serverChannel = FiberServerSocketChannel.open(null).bind(socketAddress);
+
+                    logger.info("Waiting for connections");
+
+                    for (;;) {
+                        if (shutdown.get()) {
+                            logger.info("Server was shutdown, exiting server routine.");
+                            break;
+                        }
+
+                        FiberSocketChannel ch = serverChannel.accept();
+
+                        logger.debug("Accepted from: " + ch.toString());
+                        new Fiber<Void>(fiberScheduler, () -> {
+                            logger.debug("Running server routine in : " + Strand.currentStrand().getName());
+                            try {
+                                fiberServerRoutine(ch);
+                            } catch (IOException ignored) {}
+                            return null;
+                        }).start();
+                    }
+
+                    serverChannel.close();
+                } catch (IOException e) {
+                    logger.error("Failed to generate fiber channel: " + e.getMessage(), e);
+                    shutdown.set(true);
+                }
+
+                return null;
+            });
+
 
             logger.info("Bound server socket, initializing router");
+
             router.init();
+            bindFiber.start();
+
         } catch (IOException e) {
             logger.error("Failed to initialize BasicHttpServerImpl instance", e);
             shutdown.set(true);
-            return;
         }
-
-        executor.submit(worker);
     }
 }

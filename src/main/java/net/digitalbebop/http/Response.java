@@ -9,7 +9,6 @@ import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
 
 public final class Response {
-
     public static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
     public static final HttpResponse ok = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
     public static final HttpResponse notFound = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");

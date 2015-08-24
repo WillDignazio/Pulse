@@ -4,6 +4,7 @@ buildscript {
     }
 
     apply plugin: 'java' // Needed for protobuf
+//    apply from: 'gradle/aot.gradle'
 }
 
 plugins {
@@ -14,6 +15,8 @@ plugins {
     id "com.google.protobuf" version "0.6.1"
     id "com.commercehub.gradle.plugin.avro" version "0.3.4"
 }
+
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
 
 // Avro contains a log4j instance for some ungodly reason
 configurations.all {
@@ -30,6 +33,10 @@ protobuf {
         artifact = 'com.google.protobuf:protoc:2.6.1'
     }
     generatedFilesBaseDir = "$projectDir/src/generated"
+}
+
+configurations { // Needs to go before dependencies
+    quasar
 }
 
 dependencies {
@@ -49,12 +56,42 @@ dependencies {
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
+
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
+
+    compile 'co.paralleluniverse:quasar-core:0.7.2:jdk8'
+    compile 'co.paralleluniverse:quasar-actors:0.7.2'
+    compile 'co.paralleluniverse:quasar-reactive-streams:0.7.2'
+
+    quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.apache.zookeeper:zookeeper:3.5.0-alpha'
     testCompile 'org.xerial:sqlite-jdbc:3.8.11'
+}
+
+// Enable javaagent for fibers on test code
+tasks.withType(Test) {
+    systemProperty 'co.paralleluniverse.fibers.verifyInstrumentation', 'true'
+    systemProperty 'co.paralleluniverse.fibers.detectRunawayFibers', 'true'
+    jvmArgs "-javaagent:${configurations.quasar.singleFile}"
+}
+
+classes {
+    doFirst {
+        println "Excuting scanSuspendables..."
+        ant.taskdef(
+                name: 'scanSuspendables', classname: 'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
+                classpath: "build/classes/main:build/resources/main:${configurations.quasar.asPath}:${configurations.runtime.asPath}")
+        ant.scanSuspendables(
+                auto: false,
+                suspendablesFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendables",
+                supersFile: "$sourceSets.main.output.resourcesDir/META-INF/suspendable-supers",
+                append: true) {
+            fileset(dir: sourceSets.main.output.classesDir)
+        }
+    }
 }
 
 defaultTasks 'build', 'writeClasspath'
@@ -70,6 +107,12 @@ sourceSets {
         proto {
             // needed so that AsyncHBase's messages get built with 2.6.1
             srcDir 'build/extracted-include-protos/main'
+        }
+    }
+
+    test {
+        java {
+            srcDir 'src/generated/main'
         }
     }
 }
@@ -114,6 +157,9 @@ task writeClasspath(dependsOn: build) << {
     new File(buildDir.absolutePath + "/runtime.classpath").withWriter {
         out -> out.writeLine(sourceSets.main.runtimeClasspath.asPath +
                              ":" + jar.archivePath);
+    }
+    new File(buildDir.absolutePath + "/quasar-core.path").withWriter {
+        out -> out.writeLine(configurations.quasar.asPath);
     }
 }
 
