@@ -19,8 +19,10 @@ import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class BasicHttpServerImpl implements HttpServer {
@@ -100,9 +102,12 @@ public class BasicHttpServerImpl implements HttpServer {
                                 }
                             }
 
-                            final HttpResponse rawResponse = router.route(rawRequest, payload);
+                            final Future<HttpResponse> routeFuture = router.route(rawRequest, payload);
 
                             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
+                            /* Do more work! */
+
+                            HttpResponse rawResponse = routeFuture.get();
                             msgWriter.write(rawResponse);
 
                             sessionOutputBuffer.flush();
@@ -118,6 +123,14 @@ public class BasicHttpServerImpl implements HttpServer {
                             sock.close();
                         } catch (HttpException | IOException e) {
                             logger.error("Error processing request: " + e.getMessage(), e);
+                            try {
+                                sock.close();
+                            } catch (IOException ignored) {}
+                        } catch (ExecutionException | InterruptedException e) {
+                            logger.error("Failed while executing handle procedure: " + e.getLocalizedMessage(), e);
+                            try {
+                                sock.close();
+                            } catch (IOException ignored) {}
                         }
                     });
                 } catch (Exception e) {

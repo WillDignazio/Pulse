@@ -5,6 +5,7 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
 import java.io.IOException;
+import java.util.concurrent.Future;
 
 interface HttpRouter {
     /**
@@ -15,7 +16,7 @@ interface HttpRouter {
      * @param payload byte[] payload of posted data
      * @return {@link HttpResponse} to client
      */
-    default HttpResponse route(HttpRequest req, byte[] payload) { throw new NotImplementedException(); }
+    default Future<HttpResponse> route(HttpRequest req, byte[] payload) { throw new NotImplementedException(); }
 
     /**
      * Initialize the HttpRouter.

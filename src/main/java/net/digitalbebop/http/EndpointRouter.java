@@ -1,5 +1,6 @@
 package net.digitalbebop.http;
 
+import com.google.common.util.concurrent.Futures;
 import com.google.inject.Inject;
 import net.digitalbebop.http.handlers.DeleteRequestHandler;
 import net.digitalbebop.http.handlers.GetDataRequestHandler;
@@ -18,6 +19,9 @@ import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -25,6 +29,7 @@ class EndpointRouter implements HttpRouter {
     private static final Logger logger = LogManager.getLogger(EndpointRouter.class);
 
     private final ConcurrentLinkedQueue<EndpointMap> endpointMap = new ConcurrentLinkedQueue<>();
+    private final ExecutorService executor = Executors.newCachedThreadPool();
 
     @Inject DeleteRequestHandler deleteRequestHandler;
     @Inject GetDataRequestHandler getDataRequestHandler;
@@ -58,7 +63,7 @@ class EndpointRouter implements HttpRouter {
     public EndpointRouter() {}
 
     @Override
-    public HttpResponse route(HttpRequest request, byte[] payload) {
+    public Future<HttpResponse> route(HttpRequest request, byte[] payload) {
         long startTime = System.currentTimeMillis();
         try {
             final HashMap<String, String> parameters;
@@ -86,22 +91,22 @@ class EndpointRouter implements HttpRouter {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
-                            return map.getHandler().handleGet(request, parameters);
+                            return executor.submit(() -> map.getHandler().handleGet(request, parameters));
                         case POST:
-                            return map.getHandler().handlePost(request, parameters, payload);
+                            return executor.submit(() -> map.getHandler().handlePost(request, parameters, payload));
                         case DELETE:
-                            return map.getHandler().handleDelete(request, parameters);
+                            return executor.submit(() -> map.getHandler().handleDelete(request, parameters));
                         case PUT:
-                            return map.getHandler().handlePut(request, parameters);
+                            return executor.submit(() -> map.getHandler().handlePut(request, parameters));
                     }
                 }
             }
 
             logger.debug("Couldn't match " + method + " (" + path + ")");
-            return notFoundHandler.handleGet(request, new HashMap<>());
+            return Futures.immediateFuture(notFoundHandler.handleGet(request, new HashMap<>()));
         } catch(Exception e) {
             logger.warn("Could not parse URI: " + e.getMessage(), e);
-            return notFoundHandler.handleGet(request, new HashMap<>());
+            return Futures.immediateFuture(notFoundHandler.handleGet(request, new HashMap<>()));
         } finally {
             long endTime = System.currentTimeMillis();
             logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
