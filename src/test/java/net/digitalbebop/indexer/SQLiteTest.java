@@ -9,6 +9,9 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.Statement;
 
 public class SQLiteTest extends UnitTestBase {
 
@@ -39,13 +42,32 @@ public class SQLiteTest extends UnitTestBase {
             Assert.assertTrue(dbFile.delete());
         }
 
+        /* Create Template Table */
+        final Connection connection = DriverManager.getConnection(jdbc);
+        final Statement stmt = connection.createStatement();
 
+        stmt.execute(
+                "CREATE TABLE pulse (" +
+                        "id TEXT PRIMARY KEY, " +
+                        "timestamp INTEGER, " +
+                        "current BOOLEAN, " +
+                        "format TEXT, " +
+                        "tags TEXT, " +
+                        "username TEXT, " +
+                        "deleted BOOLEAN, " +
+                        "moduleName TEXT, " +
+                        "moduleId TEXT, " +
+                        "metaData TEXT, " +
+                        "data TEXT, " +
+                        "location TEXT" +
+                        ");"
+        );
 
         conduit = injector().getInstance(SQLConduit.class);
     }
 
     @Test
     public void indexTest() throws ClassNotFoundException {
-
+        conduit.index(index);
     }
 }
