@@ -9,6 +9,13 @@ org.apache.http.impl.io.SessionOutputBufferImpl.streamWrite
 org.apache.http.impl.io.SessionOutputBufferImpl.flushBuffer
 org.apache.http.impl.io.SessionOutputBufferImpl.flush
 
+org.apache.http.impl.io.SessionInputBufferImpl.read
+org.apache.http.impl.io.ContentLengthInputStream.read
+org.apache.http.impl.io.ContentLengthInputStream.read
+org.apache.commons.io.IOUtils.copyLarge
+org.apache.commons.io.IOUtils.copy
+org.apache.commons.io.IOUtils.toByteArray
+
 sun.nio.ch.ChannelInputStream.read(Ljava/nio/channels/ReadableByteChannel;Ljava/nio/ByteBuffer;B)I
 sun.nio.ch.ChannelInputStream.read
 
