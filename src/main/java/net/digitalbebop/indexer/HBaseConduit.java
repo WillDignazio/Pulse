@@ -65,8 +65,7 @@ public class HBaseConduit implements IndexConduit {
         solrConduit.delete(request.getModuleName(), request.getModuleId());
     }
 
-    public byte[] getRawData(String moduleName, String moduleId, long timestamp)
-            throws Exception {
+    public byte[] getRawData(String moduleName, String moduleId, long timestamp) throws Exception {
         return hBaseWrapper.getData(moduleName, moduleId, timestamp);
     }
 

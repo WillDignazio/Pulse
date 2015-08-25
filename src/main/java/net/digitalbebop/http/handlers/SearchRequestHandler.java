@@ -99,6 +99,8 @@ public class SearchRequestHandler implements RequestHandler {
         }
         // TODO replace with own StringBuilder implementation
         JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put("start", offset);
+        jsonResponse.put("limit", limit);
         jsonResponse.put("numFound", docs.getNumFound());
         jsonResponse.put("results", toJson(docs));
         return Response.ok(jsonResponse.toString(2).getBytes());

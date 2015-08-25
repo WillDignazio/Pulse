@@ -121,7 +121,7 @@ class HBaseWrapper {
         encoder.flush();
         out.close();
         byte[] arr = out.toByteArray();
-        logger.debug("compressing avro to " + arr.length + " bytes");
+        logger.debug("compressing Avro to " + arr.length + " bytes");
         return arr;
     }
 
