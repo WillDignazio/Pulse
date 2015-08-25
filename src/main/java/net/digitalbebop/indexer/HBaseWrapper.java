@@ -39,8 +39,8 @@ class HBaseWrapper {
         this.tableName = hbaseTable.getBytes();
         hBaseClient = new HBaseClient(quorum, DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
 
-        tableExists(INDEX_COLUMN_FAMILY);
-        tableExists(DATA_COLUMN_FAMILY);
+        //tableExists(INDEX_COLUMN_FAMILY);
+        //tableExists(DATA_COLUMN_FAMILY);
     }
 
     /**

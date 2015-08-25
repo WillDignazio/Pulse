@@ -90,6 +90,8 @@ public class SolrConduit {
             query.setQuery(searchStr);
             query.setRows(limit);
             query.setStart(offset);
+            query.set("boost", "recip(ms(NOW,timestamp),6.3371356e-12,1,1)");
+            query.set("defType", "edismax");
             query.setHighlight(true);
             query.setHighlightSnippets(1);
             query.setHighlightFragsize(300);

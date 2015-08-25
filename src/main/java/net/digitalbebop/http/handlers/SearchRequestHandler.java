@@ -64,6 +64,7 @@ public class SearchRequestHandler implements RequestHandler {
             }
         }
         QueryResponse response = solrConduit.search(search, offset, limit);
+        long numFound = response.getResults().getNumFound();
         SolrDocumentList docs = response.getResults();
 
         /** replaces the data section with the highlighted snippets */
@@ -97,7 +98,10 @@ public class SearchRequestHandler implements RequestHandler {
             }
         }
         // TODO replace with own StringBuilder implementation
-        return Response.ok(toJson(docs).toString(2).getBytes());
+        JSONObject jsonResponse = new JSONObject();
+        jsonResponse.put("numFound", docs.getNumFound());
+        jsonResponse.put("results", toJson(docs));
+        return Response.ok(jsonResponse.toString(2).getBytes());
     }
 
     private JSONArray toJson(SolrDocumentList docs) {
