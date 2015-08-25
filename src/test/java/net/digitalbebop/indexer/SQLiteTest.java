@@ -18,7 +18,11 @@ public class SQLiteTest extends UnitTestBase {
     private SQLConduit conduit;
     private String jdbc;
 
-    private final ClientRequests.IndexRequest index =  ClientRequests.IndexRequest.newBuilder()
+    public SQLiteTest() {
+        super(false, false);
+    }
+
+    private final ClientRequests.IndexRequest index = ClientRequests.IndexRequest.newBuilder()
             .setIndexData("FooIndex")
             .setLocation("FooLocation")
             .setMetaTags("{}")
@@ -32,7 +36,7 @@ public class SQLiteTest extends UnitTestBase {
     @Before
     public void configureTests() throws Exception {
         String jdbc = injector().getInstance(Key.get(String.class, Names.named("sqlJDBC")));
-        System.out.println("Using JDBC: "  + jdbc);
+        System.out.println("Using JDBC: " + jdbc);
 
         File dbFile = new File(jdbc.split(":")[2]);
         System.out.println("FILE: " + dbFile.toString());
