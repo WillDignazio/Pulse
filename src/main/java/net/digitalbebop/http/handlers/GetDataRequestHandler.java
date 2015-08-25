@@ -36,7 +36,7 @@ public class GetDataRequestHandler implements RequestHandler {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
         } catch (Exception e) {
-            logger.error("Error getting data from HBase");
+            logger.error("Error getting data from HBase:", e);
             return Response.serverError;
         }
     }
