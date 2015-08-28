@@ -38,9 +38,8 @@ class HBaseWrapper {
         logger.info("Initializing HBaseWrapper instance");
         this.tableName = hbaseTable.getBytes();
         hBaseClient = new HBaseClient(quorum, DEFAULT_ZK_DIR, Executors.newCachedThreadPool());
-
-        tableExists(INDEX_COLUMN_FAMILY);
-        tableExists(DATA_COLUMN_FAMILY);
+        //tableExists(INDEX_COLUMN_FAMILY);
+        //tableExists(DATA_COLUMN_FAMILY);
     }
 
     /**
@@ -110,7 +109,7 @@ class HBaseWrapper {
         byte[] rowKey = generateRowKey(moduleName, moduleId);
         byte[] qualifier = timestamp.toString().getBytes();
         GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY, qualifier);
-        return hBaseClient.get(request).joinUninterruptibly(3000).get(0).value();
+        return hBaseClient.get(request).joinUninterruptibly().get(0).value();
     }
 
     private byte[] compressAvro(PulseAvroIndex index) throws Exception {

@@ -56,6 +56,7 @@ dependencies {
     compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
+    compile 'org.apache.pdfbox:pdfbox:1.8.10'
 
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
