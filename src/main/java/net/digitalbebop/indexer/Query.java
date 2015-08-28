@@ -25,7 +25,7 @@ public final class Query {
                 }
 
                 char c = state.current();
-                if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '.') {
+                if (!Character.isAlphabetic(c) && !Character.isDigit(c) && c != '.' && c != '/' && c != '-') {
                     final State<Character> tail = state;
                     return ConsumedT.empty(
                             Reply.error(
@@ -44,7 +44,7 @@ public final class Query {
                     }
                     c = state.current();
 
-                } while (Character.isAlphabetic(c) || Character.isDigit(c) || c == '.');
+                } while (Character.isAlphabetic(c) || Character.isDigit(c) || c == '.' || c == '/' || c == '-');
 
                 final State<Character> tail = state;
                 return ConsumedT.consumed(
