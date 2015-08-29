@@ -9,6 +9,7 @@ public interface IndexConduit {
      */
     void index(ClientRequests.IndexRequest indexRequest);
 
+
     /**
      * Handler for a delete request
      * @param deleteRequest Delete request protobuf message

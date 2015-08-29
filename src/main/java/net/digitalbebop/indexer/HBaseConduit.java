@@ -27,7 +27,7 @@ import java.util.List;
  */
 public class HBaseConduit implements IndexConduit {
     private static final Logger logger = LogManager.getLogger(HBaseConduit.class);
-    private static final int THUMBNAIL_SIZE = 100;
+
     private final HBaseWrapper hBaseWrapper;
     private final SolrConduit solrConduit;
 
@@ -38,28 +38,6 @@ public class HBaseConduit implements IndexConduit {
 
         if (this.hBaseWrapper == null || this.solrConduit == null)
             throw new IllegalStateException("Uninitialized wrappers.");
-    }
-
-    private ByteArrayOutputStream generatePdfThumbnail(ClientRequests.IndexRequest request) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        PDDocument document = PDDocument.load(request.getRawData().newInput());
-        List<PDPage> pages = document.getDocumentCatalog().getAllPages();
-        BufferedImage img = pages.get(0).convertToImage(BufferedImage.TYPE_INT_RGB, THUMBNAIL_SIZE);
-        ImageIOUtil.writeImage(img, "png", outputStream);
-        return outputStream;
-    }
-
-    private ByteArrayOutputStream generateImageThumbnail(ClientRequests.IndexRequest request) throws IOException {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        BufferedImage img = ImageIO.read(request.getRawData().newInput());
-        Image scaledImg = img.getScaledInstance(THUMBNAIL_SIZE, THUMBNAIL_SIZE, Image.SCALE_SMOOTH);
-        BufferedImage bimage = new BufferedImage(scaledImg.getWidth(null), scaledImg.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-        // Draw the image on to the buffered image
-        Graphics2D bGr = bimage.createGraphics();
-        bGr.drawImage(scaledImg, 0, 0, null);
-        bGr.dispose();
-        ImageIO.write(bimage, "png", outputStream);
-        return outputStream;
     }
 
     /**
@@ -77,21 +55,7 @@ public class HBaseConduit implements IndexConduit {
             }
             // inserts the raw data
             hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), payload);
-            ByteArrayOutputStream stream = null;
-            try {
-                switch (index.getFormat()) {
-                    case "pdf":
-                        stream = generatePdfThumbnail(request);
-                        logger.debug("generating thumbnail for pdf");
-                        break;
-                    case "image":
-                        stream = generateImageThumbnail(request);
-                        logger.debug("generating thumbnail for image");
-                        break;
-                }
-            } catch (Exception e) {
-                logger.warn("exception generating thumbnail", e);
-            }
+            ByteArrayOutputStream stream = Thumbnails.convert(index.getFormat(), request);
             if (stream != null) {
                 hBaseWrapper.putThumbnail(index.getModuleName(), index.getModuleId(),
                         index.getTimestamp(), stream.toByteArray());
