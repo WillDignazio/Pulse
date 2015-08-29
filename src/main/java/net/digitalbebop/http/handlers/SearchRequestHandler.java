@@ -63,6 +63,7 @@ public class SearchRequestHandler implements RequestHandler {
                 }
             }
         }
+        logger.debug("search query: " + search);
         QueryResponse response = solrConduit.search(search, offset, limit);
         long numFound = response.getResults().getNumFound();
         SolrDocumentList docs = response.getResults();

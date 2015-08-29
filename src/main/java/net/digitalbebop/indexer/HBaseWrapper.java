@@ -10,9 +10,12 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hbase.async.GetRequest;
 import org.hbase.async.HBaseClient;
+import org.hbase.async.KeyValue;
 import org.hbase.async.PutRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,6 +29,7 @@ class HBaseWrapper {
     private static final String DEFAULT_ZK_DIR = "/hbase";
     private static final byte[] INDEX_COLUMN_FAMILY = "index".getBytes();
     private static final byte[] DATA_COLUMN_FAMILY = "data".getBytes();
+    private static final byte[] THUMBNAIL_COLUMN_FAMILY = "thumbnail".getBytes();
     private static final byte[] CURRENT_QUALIFIER = "current".getBytes();
 
     private HBaseClient hBaseClient;
@@ -100,6 +104,25 @@ class HBaseWrapper {
                 });
     }
 
+    public void putThumbnail(String moduleName, String moduleId, Long timestamp, byte[] payload) throws IOException {
+        logger.debug("Putting thumbnail for " + moduleName + ", " + moduleId + ", " + timestamp);
+        byte[] rowKey = generateRowKey(moduleName, moduleId);
+        PutRequest dataRequest = new PutRequest(tableName, rowKey, THUMBNAIL_COLUMN_FAMILY,
+                timestamp.toString().getBytes(), payload);
+
+        hBaseClient.put(dataRequest).addCallbacks(
+                req -> {
+                    logger.debug("Successfully inserted thumbnail: " + moduleName + ", " +
+                            moduleId + "," + timestamp.toString());
+                    return null;
+                },
+                exception -> {
+                    logger.error("Error inserting thumbnail: " + moduleName + ", " +
+                            moduleId + "," + timestamp.toString(), exception);
+                    return null;
+                });
+    }
+
     /**
      * Gets the raw data for the given ID. The caller needs to know how to interpret the binary
      * array.
@@ -110,6 +133,19 @@ class HBaseWrapper {
         byte[] qualifier = timestamp.toString().getBytes();
         GetRequest request = new GetRequest(tableName, rowKey, DATA_COLUMN_FAMILY, qualifier);
         return hBaseClient.get(request).joinUninterruptibly().get(0).value();
+    }
+
+    public byte[] getThumbnail(String moduleName, String moduleId, Long timestamp) throws Exception {
+        logger.debug("getting thumbnail for " + moduleName + ", " + moduleId + ", " + timestamp);
+        byte[] rowKey = generateRowKey(moduleName, moduleId);
+        byte[] qualifier = timestamp.toString().getBytes();
+        GetRequest request = new GetRequest(tableName, rowKey, THUMBNAIL_COLUMN_FAMILY, qualifier);
+        List<KeyValue> result = hBaseClient.get(request).joinUninterruptibly();
+        if (result.size() > 0) {
+            return result.get(0).value();
+        } else {
+            return new byte[0];
+        }
     }
 
     private byte[] compressAvro(PulseAvroIndex index) throws Exception {

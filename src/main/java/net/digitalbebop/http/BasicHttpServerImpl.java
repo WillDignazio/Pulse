@@ -79,7 +79,7 @@ public class BasicHttpServerImpl implements HttpServer {
             // deals with PUT requests
             byte[] payload = new byte[0];
             if (rawRequest instanceof HttpEntityEnclosingRequest) {
-                InputStream contentStream = null;
+                InputStream contentStream;
                 ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
                 long len = contentLengthStrategy.determineLength(rawRequest);
                 if (len > 0) {

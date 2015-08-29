@@ -32,8 +32,7 @@ public class HBaseConduit implements IndexConduit {
     private final SolrConduit solrConduit;
 
     @Inject
-    public HBaseConduit(HBaseWrapper hBaseWrapper,
-                        SolrConduit solrConduit) {
+    public HBaseConduit(HBaseWrapper hBaseWrapper, SolrConduit solrConduit) {
         this.hBaseWrapper = hBaseWrapper;
         this.solrConduit = solrConduit;
 
@@ -54,12 +53,12 @@ public class HBaseConduit implements IndexConduit {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         BufferedImage img = ImageIO.read(request.getRawData().newInput());
         Image scaledImg = img.getScaledInstance(THUMBNAIL_SIZE, THUMBNAIL_SIZE, Image.SCALE_SMOOTH);
-        BufferedImage bimage = new BufferedImage(img.getWidth(null), img.getHeight(null), BufferedImage.TYPE_INT_ARGB);
+        BufferedImage bimage = new BufferedImage(scaledImg.getWidth(null), scaledImg.getHeight(null), BufferedImage.TYPE_INT_ARGB);
         // Draw the image on to the buffered image
         Graphics2D bGr = bimage.createGraphics();
-        bGr.drawImage(img, 0, 0, null);
+        bGr.drawImage(scaledImg, 0, 0, null);
         bGr.dispose();
-        ImageIO.write((RenderedImage) bGr, "png", outputStream);
+        ImageIO.write(bimage, "png", outputStream);
         return outputStream;
     }
 
@@ -79,18 +78,23 @@ public class HBaseConduit implements IndexConduit {
             // inserts the raw data
             hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), payload);
             ByteArrayOutputStream stream = null;
-            switch (index.getFormat()) {
-                case "pdf":
-                    stream = generatePdfThumbnail(request);
-                    logger.debug("generating thumbnail for pdf");
-                    break;
-                case "image":
-                    stream = generateImageThumbnail(request);
-                    logger.debug("generating thumbnail for image");
-                    break;
+            try {
+                switch (index.getFormat()) {
+                    case "pdf":
+                        stream = generatePdfThumbnail(request);
+                        logger.debug("generating thumbnail for pdf");
+                        break;
+                    case "image":
+                        stream = generateImageThumbnail(request);
+                        logger.debug("generating thumbnail for image");
+                        break;
+                }
+            } catch (Exception e) {
+                logger.warn("exception generating thumbnail", e);
             }
             if (stream != null) {
-                hBaseWrapper.putData(index.getModuleName(), index.getModuleId() + "-thumbnail", index.getTimestamp(), stream.toByteArray());
+                hBaseWrapper.putThumbnail(index.getModuleName(), index.getModuleId(),
+                        index.getTimestamp(), stream.toByteArray());
             }
 
             // inserts the old version of the index
@@ -116,6 +120,10 @@ public class HBaseConduit implements IndexConduit {
 
     public byte[] getRawData(String moduleName, String moduleId, long timestamp) throws Exception {
         return hBaseWrapper.getData(moduleName, moduleId, timestamp);
+    }
+
+    public byte[] getThumbnail(String moduleName, String moduleId, long timestamp) throws Exception {
+        return hBaseWrapper.getThumbnail(moduleName, moduleId, timestamp);
     }
 
     private String getFormat(String metaData) {

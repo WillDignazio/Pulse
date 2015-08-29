@@ -9,5 +9,6 @@ public class HandlersModule extends AbstractModule {
         bind(GetDataRequestHandler.class);
         bind(IndexRequestHandler.class);
         bind(SearchRequestHandler.class);
+        bind(GetThumbnailRequestHandler.class);
     }
 }

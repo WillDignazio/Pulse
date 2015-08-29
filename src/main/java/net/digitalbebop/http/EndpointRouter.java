@@ -6,10 +6,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import net.digitalbebop.http.handlers.DeleteRequestHandler;
-import net.digitalbebop.http.handlers.GetDataRequestHandler;
-import net.digitalbebop.http.handlers.IndexRequestHandler;
-import net.digitalbebop.http.handlers.SearchRequestHandler;
+import net.digitalbebop.http.handlers.*;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -38,6 +35,7 @@ class EndpointRouter implements HttpRouter {
     @Inject GetDataRequestHandler getDataRequestHandler;
     @Inject IndexRequestHandler indexRequestHandler;
     @Inject SearchRequestHandler searchRequestHandler;
+    @Inject GetThumbnailRequestHandler getThumbnailRequestHandler;
 
     private static class EndpointMap {
         private final Pattern _pattern;
@@ -150,6 +148,7 @@ class EndpointRouter implements HttpRouter {
         registerEndpoint("/api/index", RequestType.POST,indexRequestHandler);
         registerEndpoint("/api/delete", RequestType.POST, deleteRequestHandler);
         registerEndpoint("/api/get_data", RequestType.GET, getDataRequestHandler);
+        registerEndpoint("/api/get_thumbnail", RequestType.GET, getThumbnailRequestHandler);
         registerEndpoint("/api/search", RequestType.GET, searchRequestHandler);
 
         logger.info("Finished configuring endpoints");
