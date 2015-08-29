@@ -107,7 +107,7 @@ public class SolrConduit {
         }
         return null;
     }
-    
+
     private SolrInputDocument copyDocument(SolrDocument doc) {
         SolrInputDocument newDoc = new SolrInputDocument();
         for (Map.Entry<String, Object> entry : doc) {

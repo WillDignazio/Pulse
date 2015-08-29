@@ -22,7 +22,7 @@ public class SQLiteTest extends UnitTestBase {
         super(false, false);
     }
 
-    private final ClientRequests.IndexRequest index = ClientRequests.IndexRequest.newBuilder()
+    private final ClientRequests.IndexRequest protoIndex = ClientRequests.IndexRequest.newBuilder()
             .setIndexData("FooIndex")
             .setLocation("FooLocation")
             .setMetaTags("{}")
@@ -55,15 +55,15 @@ public class SQLiteTest extends UnitTestBase {
                         "id TEXT PRIMARY KEY, " +
                         "timestamp INTEGER, " +
                         "current BOOLEAN, " +
+                        "deleted BOOLEAN, " +
                         "format TEXT, " +
                         "tags TEXT, " +
                         "username TEXT, " +
-                        "deleted BOOLEAN, " +
                         "moduleName TEXT, " +
                         "moduleId TEXT, " +
                         "metaData TEXT, " +
-                        "data TEXT, " +
-                        "location TEXT" +
+                        "location TEXT," +
+                        "data TEXT" +
                         ");"
         );
 
@@ -72,6 +72,8 @@ public class SQLiteTest extends UnitTestBase {
 
     @Test
     public void indexTest() throws ClassNotFoundException {
+        final PulseIndex index = PulseIndex.fromProtobufRequest(protoIndex);
+
         conduit.index(index);
     }
 }

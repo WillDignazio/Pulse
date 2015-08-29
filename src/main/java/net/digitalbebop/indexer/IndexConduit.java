@@ -5,9 +5,9 @@ import net.digitalbebop.ClientRequests;
 public interface IndexConduit {
     /**
      * Handler for an index request
-     * @param indexRequest Index request protobuf message
+     * @param pulseIndex Index request protobuf message
      */
-    void index(ClientRequests.IndexRequest indexRequest);
+    void index(PulseIndex pulseIndex);
 
     /**
      * Handler for a delete request

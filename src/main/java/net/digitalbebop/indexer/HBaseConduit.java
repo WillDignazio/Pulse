@@ -5,7 +5,6 @@ import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 /**
@@ -32,17 +31,12 @@ public class HBaseConduit implements IndexConduit {
      * Indexes the request into Solr with twice, one for the current version and then one for the
      * old version. Then throws the Avro index record and the raw data into HBase.
      */
-    public void index(ClientRequests.IndexRequest request) {
+    public void index(PulseIndex request) {
         try {
             PulseAvroIndex index = toAvro(request);
-            byte[] payload;
-            if (request.hasRawData()) {
-                payload = request.getRawData().toByteArray();
-            } else {
-                payload = request.getIndexData().getBytes();
-            }
+
             // inserts the raw data
-            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), payload);
+            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), request.getRawData());
 
             // inserts the old version of the index
             index.setCurrent(false);
@@ -69,38 +63,25 @@ public class HBaseConduit implements IndexConduit {
         return hBaseWrapper.getData(moduleName, moduleId, timestamp);
     }
 
-    private String getFormat(String metaData) {
-        try {
-            JSONObject obj = new JSONObject(metaData);
-            return obj.getString("format");
-        } catch (JSONException e) {
-            logger.error("Could not get format from metadata: " + metaData, e);
-            return "";
-        }
+    private String getFormat(JSONObject metaData) {
+        if (metaData.has("format"))
+            return metaData.getString("format");
+
+        return "";
     }
 
-    private PulseAvroIndex toAvro(ClientRequests.IndexRequest request) {
+    private PulseAvroIndex toAvro(PulseIndex request) {
         PulseAvroIndex index = new PulseAvroIndex();
         index.setData(request.getIndexData());
         index.setDeleted(false); // TODO fix
-        index.setFormat(getFormat(request.getMetaTags()));
-        if (request.hasMetaTags()) {
-            index.setMetaData(request.getMetaTags());
-        }
-        index.setModuleId(request.getModuleId());
+        index.setFormat(getFormat(request.getMetatags()));
+        index.setMetaData(request.getMetatags().toString());
+        index.setModuleId(request.getModuleID());
         index.setModuleName(request.getModuleName());
-        index.setTags(request.getTagsList());
-        if (request.hasTimestamp()) {
-            index.setTimestamp(request.getTimestamp());
-        } else {
-            index.setTimestamp(System.currentTimeMillis());
-        }
-        if (request.hasUsername()) {
-            index.setUsername(request.getUsername());
-        }
-        if (request.hasLocation()) {
-            index.setLocation(request.getLocation());
-        }
+        index.setTags(request.getTags());
+        index.getTimestamp();
+        index.setUsername(request.getUsername());
+        index.setLocation(request.getLocation());
         return index;
     }
 }
