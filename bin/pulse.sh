@@ -57,7 +57,7 @@ launch_pulse()
 #    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
     echo $JVM_OPTS
-    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.AppBootstrapper
+    "$JAVA" $JVM_OPTS -classpath $PULSE_CLASSPATH net.digitalbebop.AppBootstrapper "$@"
 }
 
-launch_pulse
+launch_pulse "$@"

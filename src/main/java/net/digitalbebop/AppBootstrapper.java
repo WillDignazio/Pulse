@@ -3,7 +3,12 @@ package net.digitalbebop;
 import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
+import com.google.inject.Stage;
 import com.google.inject.name.Named;
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.Options;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -26,6 +31,7 @@ class AppBootstrapper {
     private File pidFile;
     private AtomicBoolean shutdown = new AtomicBoolean(false);
 
+    private static Options options = new Options();
     private final String pidPath;
 
     @Inject
@@ -126,7 +132,28 @@ class AppBootstrapper {
     }
 
     public static void main(String[] args) throws Exception {
-        Injector injector = Guice.createInjector(new PulseModule());
+        final CommandLineParser parser = new DefaultParser();
+        final CommandLine cmd;
+        final Injector injector;
+        final Stage stage;
+
+        options.addOption("mode", true, "Mode to run the application in.");
+        cmd = parser.parse(options, args);
+
+        if (cmd.hasOption("mode")) {
+            String mode = cmd.getOptionValue("mode");
+            if (mode.toLowerCase().equals("dev")) {
+                stage = Stage.DEVELOPMENT;
+            } else {
+                System.err.println("Unknown mode: " + mode);
+                stage = null;
+                System.exit(1);
+            }
+        } else {
+            stage = Stage.PRODUCTION;
+        }
+
+        injector = Guice.createInjector(stage, new PulseModule());
         AppBootstrapper bootstrapper = injector.getInstance(AppBootstrapper.class);
 
         logger.info("Bootstrapping application....");
