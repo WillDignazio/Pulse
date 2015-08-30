@@ -74,7 +74,7 @@ public class SQLiteTest extends UnitTestBase {
     }
 
     @Test
-    public void indexTest() throws ClassNotFoundException {
+    public void basicIndexTest() {
         final PulseIndex index = PulseIndex.fromProtobufRequest(protoIndex);
 
         conduit.index(index);

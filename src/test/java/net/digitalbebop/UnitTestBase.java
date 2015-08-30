@@ -3,6 +3,7 @@ package net.digitalbebop;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.zookeeper.server.ServerConfig;
 import org.apache.zookeeper.server.ZooKeeperServerMain;
 import org.apache.zookeeper.server.quorum.QuorumPeerConfig;
@@ -26,6 +27,11 @@ public class UnitTestBase {
 
     Thread zookeeperThread;
     ZooKeeperServerMain zookeeper;
+
+    static {
+        Configurator.initialize("Pulse Test", Thread.currentThread().getContextClassLoader()
+                .getResource("log4j-test.xml").getPath());
+    }
 
     public UnitTestBase() {
         this(true, true);
