@@ -1,12 +1,15 @@
 package net.digitalbebop.indexer;
 
+import com.esotericsoftware.kryo.io.ByteBufferInput;
 import net.digitalbebop.ClientRequests;
+import org.apache.commons.io.input.NullInputStream;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.validation.constraints.NotNull;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -22,13 +25,14 @@ public class PulseIndex {
     private final String moduleID;
     private final JSONObject metatags;
     private final String indexData;
-    private final byte[] rawData;
     private final long timestamp;
     private final String location;
 
+    private final InputStream rawDataStream;
+
     private PulseIndex(@NotNull List<String> tags, @NotNull String username, @NotNull String moduleID, @NotNull String moduleName,
                        @NotNull JSONObject metatags, @NotNull String indexData,
-                       @NotNull byte[] rawData, @NotNull long timestamp, @NotNull String location) {
+                       @NotNull InputStream rawDataStream, @NotNull long timestamp, @NotNull String location) {
         this.id = generateID();
         this.tags = tags;
         this.username = username;
@@ -36,7 +40,7 @@ public class PulseIndex {
         this.moduleID = moduleID;
         this.metatags = metatags;
         this.indexData = indexData;
-        this.rawData = rawData;
+        this.rawDataStream = rawDataStream;
         this.timestamp = timestamp;
         this.location = location;
     }
@@ -48,7 +52,7 @@ public class PulseIndex {
         private String _moduleID = "<unknown>";
         private JSONObject _metatags = new JSONObject();
         private String _indexData = "";
-        private byte[] _rawData = new byte[0];
+        private InputStream _rawDataStream = new NullInputStream(0);
         private long _timestamp = 0;
         private String _location = "<unkown>";
 
@@ -77,8 +81,8 @@ public class PulseIndex {
             return this;
         }
 
-        public Builder setRawData(@NotNull byte[] rawData) {
-            this._rawData = rawData;
+        public Builder setRawData(@NotNull InputStream rawDataStream) {
+            this._rawDataStream = rawDataStream;
             return this;
         }
 
@@ -97,7 +101,7 @@ public class PulseIndex {
          * but we want to gaurantee a consistent view of
          */
         public PulseIndex build() {
-            return new PulseIndex(_tags, _username, _moduleName, _moduleID, _metatags, _indexData, _rawData, _timestamp, _location);
+            return new PulseIndex(_tags, _username, _moduleName, _moduleID, _metatags, _indexData, _rawDataStream, _timestamp, _location);
         }
     }
 
@@ -137,8 +141,8 @@ public class PulseIndex {
     }
 
     @NotNull
-    public byte[] getRawData() {
-        return rawData;
+    public InputStream getRawDataStream() {
+        return rawDataStream;
     }
 
     @NotNull
@@ -167,7 +171,7 @@ public class PulseIndex {
                     .setMetatags(jmtags)
                     .setModuleName(proto.getModuleName())
                     .setModuleID(proto.getModuleId())
-                    .setRawData(proto.getRawData().toByteArray())
+                    .setRawData(new ByteBufferInput(proto.getRawData().asReadOnlyByteBuffer()))
                     .setTimestamp(proto.getTimestamp())
                     .setUsername(proto.getUsername());
 

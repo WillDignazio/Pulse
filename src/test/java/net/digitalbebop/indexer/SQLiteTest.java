@@ -2,6 +2,7 @@ package net.digitalbebop.indexer;
 
 import com.google.inject.Key;
 import com.google.inject.name.Names;
+import com.google.protobuf.ByteString;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.UnitTestBase;
 import org.junit.Assert;
@@ -31,6 +32,7 @@ public class SQLiteTest extends UnitTestBase {
             .addTags("FooTag1")
             .setUsername("slackwill")
             .setTimestamp(0)
+            .setRawData(ByteString.copyFrom("FOOOOOOOOO Data".getBytes()))
             .build();
 
     @Before
@@ -63,7 +65,8 @@ public class SQLiteTest extends UnitTestBase {
                         "moduleId TEXT, " +
                         "metaData TEXT, " +
                         "location TEXT," +
-                        "data TEXT" +
+                        "indexData TEXT," +
+                        "rawData BLOB" +
                         ");"
         );
 

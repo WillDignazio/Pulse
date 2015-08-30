@@ -13,6 +13,7 @@ import org.hbase.async.HBaseClient;
 import org.hbase.async.PutRequest;
 
 import java.io.ByteArrayOutputStream;
+import java.nio.ByteBuffer;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -81,12 +82,21 @@ class HBaseWrapper {
      * Inserts the raw payload into the data section of HBase asynchronously.
      * @throws Exception
      */
-    public void putData(String moduleName, String moduleId, Long timestamp, byte[] payload)
+    public void putData(String moduleName, String moduleId, Long timestamp, ByteBuffer payload)
             throws Exception {
         logger.debug("Putting data for " + moduleName + ", " + moduleId + ", " + timestamp);
+
+        /*
+         * XXX: BAD BAD BAD we need a better way to stream data in, does the client have
+         * a streaming mode?
+         */
+        byte[] copiedData = new byte[payload.remaining()];
+        
+
         byte[] rowKey = generateRowKey(moduleName, moduleId);
+
         PutRequest dataRequest = new PutRequest(tableName, rowKey, DATA_COLUMN_FAMILY,
-                timestamp.toString().getBytes(), payload);
+                timestamp.toString().getBytes(), payload.array());
 
         hBaseClient.put(dataRequest).addCallbacks(
                 req -> {

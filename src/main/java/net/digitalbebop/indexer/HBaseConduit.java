@@ -3,9 +3,12 @@ package net.digitalbebop.indexer;
 import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.avro.PulseAvroIndex;
+import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
+
+import java.nio.ByteBuffer;
 
 /**
  * Wraps around all interactions with HBase and Solr to keep track of connections
@@ -35,8 +38,14 @@ public class HBaseConduit implements IndexConduit {
         try {
             PulseAvroIndex index = toAvro(request);
 
+            /*
+             * XXX: Bad bad bad again, copies data
+             */
+            byte[] payload = IOUtils.toByteArray(request.getRawDataStream());
+            ByteBuffer buffer = ByteBuffer.wrap(payload);
+
             // inserts the raw data
-            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), request.getRawData());
+            hBaseWrapper.putData(index.getModuleName(), index.getModuleId(), index.getTimestamp(), buffer);
 
             // inserts the old version of the index
             index.setCurrent(false);

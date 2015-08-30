@@ -37,6 +37,7 @@ public class IndexRequestHandler implements RequestHandler {
             PulseIndex index = PulseIndex.fromProtobufRequest(indexRequest);
 
             dataConduit.index(index);
+
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);

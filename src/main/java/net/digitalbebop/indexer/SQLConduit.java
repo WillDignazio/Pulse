@@ -8,10 +8,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
-import java.sql.Statement;
+import java.sql.*;
 import java.util.List;
 
 public class SQLConduit implements IndexConduit {
@@ -20,7 +17,24 @@ public class SQLConduit implements IndexConduit {
     private final String jdbc;
     private final String username;
     private final String password;
+
     private final SolrConduit solrConduit;
+
+    String sql = "INSERT INTO pulse (" +
+            "id, " +            // ID
+            "timestamp, " +     // Timestamp
+            "current, " +       // Current
+            "deleted, " +       // Deleted
+            "format, " +        // Format
+            "tags, " +          // Tags
+            "username, " +      // Username
+            "moduleName, " +    // Module Name
+            "moduleID, " +      // Module ID
+            "metaData, " +      // Meta Data
+            "location," +       // Location
+            "indexData," +      // Index Data
+            "rawData" +
+            ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);";
 
     @Inject
     public SQLConduit(@Named("sqlJDBC") String jdbc,
@@ -67,23 +81,26 @@ public class SQLConduit implements IndexConduit {
                 format = null;
             }
 
-            String sql = "INSERT INTO pulse VALUES (" +
-                    "\"" + index.getID()+ "\", " +                  // ID
-                    index.getTimestamp() + ", " +                   // Timestamp
-                    "1, " +                                         // Current
-                    "0, " +                                         // Deleted
-                    "\"" + (format != null? format : "") + "\", " + // Format
-                    "\"" + tagsAsString(index.getTags()) + "\", " + // Tags
-                    "\"" + index.getUsername() + "\", " +           // Username
-                    "\"" + index.getModuleName() + "\", " +         // Module Name
-                    "\"" + index.getModuleID() + "\", " +           // Module ID
-                    "\"" + index.getMetatags() + "\", " +           // Meta Data
-                    "\"" + index.getLocation() + "\"," +            // Location
-                    "\"" + index.getIndexData() + "\" " +           // Index Data Blob
-                    ");";
+            final String tags = tagsAsString(index.getTags());
 
-            logger.debug("Executing: " + sql);
-            stmt.execute(sql);
+            PreparedStatement prepared = connection.prepareStatement(sql);
+
+            prepared.setString(1, index.getID());
+            prepared.setLong(2, index.getTimestamp());
+            prepared.setBoolean(3, true);
+            prepared.setBoolean(4, false);
+            prepared.setString(5, format);
+            prepared.setString(6, tags);
+            prepared.setString(7, index.getUsername());
+            prepared.setString(8, index.getModuleName());
+            prepared.setString(9, index.getModuleID());
+            prepared.setString(10, index.getMetatags().toString());
+            prepared.setString(11, index.getLocation());
+            prepared.setString(12, index.getIndexData());
+            prepared.setBlob(13, index.getRawDataStream());
+
+            prepared.execute();
+
         } catch (Exception e) {
             logger.info("ERROR: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
