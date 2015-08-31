@@ -5,7 +5,7 @@ import java.io.*;
 /**
  * All backend data stores implement this interface to allow for hot swapping of the data stores
  */
-public interface DataConduit {
+public interface StorageConduit {
 
     InputStream getRaw(String moduleName, String moduleId, long timestamp) throws IOException;
 

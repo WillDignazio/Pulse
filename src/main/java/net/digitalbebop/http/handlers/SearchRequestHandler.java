@@ -65,8 +65,7 @@ public class SearchRequestHandler implements RequestHandler {
         final int fOffset = offset;
         final int fLimit = limit;
         logger.debug("search query: " + search);
-        Optional<SearchResult> results = indexConduit.search(search, offset, limit);
-        return results.map(result -> {
+        return indexConduit.search(search, offset, limit).map(result -> {
             JSONObject jsonResponse = new JSONObject();
             jsonResponse.put("start", fOffset);
             jsonResponse.put("limit", fLimit);

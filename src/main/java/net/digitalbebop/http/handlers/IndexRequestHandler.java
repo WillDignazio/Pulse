@@ -6,7 +6,7 @@ import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
-import net.digitalbebop.storage.DataConduit;
+import net.digitalbebop.storage.StorageConduit;
 import net.digitalbebop.storage.Thumbnails;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -15,20 +15,19 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.xml.crypto.Data;
 import java.io.IOException;
 import java.util.HashMap;
 
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
     private final IndexConduit indexConduit;
-    private final DataConduit dataConduit;
+    private final StorageConduit storageConduit;
 
     @Inject
-    public IndexRequestHandler(IndexConduit indexConduit, DataConduit dataConduit) {
+    public IndexRequestHandler(IndexConduit indexConduit, StorageConduit storageConduit) {
         logger.info("Initializing IndexRequestHandler, conduit: " + indexConduit);
         this.indexConduit = indexConduit;
-        this.dataConduit = dataConduit;
+        this.storageConduit = storageConduit;
     }
 
     @Override
@@ -37,11 +36,11 @@ public class IndexRequestHandler implements RequestHandler {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             indexConduit.index(indexRequest);
-            dataConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
+            storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                     indexRequest.getTimestamp(), indexRequest.getRawData().newInput());
             Thumbnails.convert(indexRequest.getMetaTags(), indexRequest).map(stream -> {
                 try {
-                    dataConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
+                    storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                             indexRequest.getTimestamp(), stream);
                 } catch (IOException e) {
                     logger.error("error inserting thumbnail", e);

@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.storage.DataConduit;
+import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -14,10 +14,10 @@ import java.util.HashMap;
 
 public class GetDataRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
-    private DataConduit conduit;
+    private StorageConduit conduit;
 
     @Inject
-    public GetDataRequestHandler(Provider<DataConduit> provider) {
+    public GetDataRequestHandler(Provider<StorageConduit> provider) {
         conduit = provider.get();
     }
 
