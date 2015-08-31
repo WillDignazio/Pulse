@@ -12,7 +12,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class SQLConduit implements IndexConduit {
+public class SQLConduit  {
     private static Logger logger = LogManager.getLogger(SQLConduit.class);
 
     private final String jdbc;
@@ -38,7 +38,6 @@ public class SQLConduit implements IndexConduit {
      * XXX: WARNING: Testing only currently
      * @param indexRequest Index request protobuf message
      */
-    @Override
     public synchronized void index(ClientRequests.IndexRequest indexRequest) {
         try {
             System.out.println("JDBC: " + jdbc);
@@ -78,7 +77,6 @@ public class SQLConduit implements IndexConduit {
         }
     }
 
-    @Override
     public void delete(ClientRequests.DeleteRequest deleteRequest) {
         throw new NotImplementedException("Deletion in SQLConduit Not Implemented.");
     }

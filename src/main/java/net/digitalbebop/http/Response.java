@@ -4,9 +4,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public final class Response {
     public static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
@@ -23,6 +27,15 @@ public final class Response {
         HttpResponse response = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
         response.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
         response.setEntity(new ByteArrayEntity(payload));
+        return response;
+    }
+
+    public static HttpResponse ok(InputStream stream) {
+        HttpResponse response = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
+        response.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
+        BasicHttpEntity entity = new BasicHttpEntity();
+        entity.setContent(stream);
+        response.setEntity(entity);
         return response;
     }
 

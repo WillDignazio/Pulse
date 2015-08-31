@@ -3,7 +3,9 @@ package net.digitalbebop.http.handlers;
 import com.google.inject.Inject;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
+import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.indexer.SolrConduit;
+import net.digitalbebop.indexer.ToJson;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -15,6 +17,7 @@ import org.apache.solr.common.SolrDocumentList;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -23,11 +26,11 @@ import java.util.Map;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
-    private final SolrConduit solrConduit;
+    private final IndexConduit indexConduit;
 
     @Inject
-    public SearchRequestHandler(SolrConduit solrConduit) {
-        this.solrConduit = solrConduit;
+    public SearchRequestHandler(IndexConduit solrConduit) {
+        this.indexConduit = solrConduit;
     }
 
     public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
@@ -64,66 +67,24 @@ public class SearchRequestHandler implements RequestHandler {
             }
         }
         logger.debug("search query: " + search);
-        QueryResponse response = solrConduit.search(search, offset, limit);
-        long numFound = response.getResults().getNumFound();
-        SolrDocumentList docs = response.getResults();
-
-        /** replaces the data section with the highlighted snippets */
-        for (SolrDocument doc : docs) {
-            String id = (String) doc.getFieldValue("id");
-            if (response.getHighlighting().get(id) != null) {
-                Map<String, List<String>> forDoc = response.getHighlighting().get(id);
-                if (forDoc != null) {
-                    List<String> snippets = forDoc.get("data");
-                    if (snippets != null) {
-                        StringBuilder builder = new StringBuilder();
-                        for (int i = 0 ; i < snippets.size() - 1 ; i++) {
-                            builder.append(snippets.get(i) + "...");
-                        }
-                        builder.append(snippets.get(snippets.size() - 1));
-                        doc.setField("data", builder.toString());
-                    } else {
-                        String data = doc.getFieldValue("data").toString();
-                        int length = Math.min(200, data.length());
-                        doc.setField("data", data.substring(0, length));
-                    }
-                } else {
-                    String data = doc.getFieldValue("data").toString();
-                    int length = Math.min(200, data.length());
-                    doc.setField("data", data.substring(0, length));
-                }
-            } else {
-                String data = doc.getFieldValue("data").toString();
-                int length = Math.min(200, data.length());
-                doc.setField("data", data.substring(0, length));
-            }
+        try {
+            l1SONObject jsonResponse = new JSONObject();
+            jsonResponse.put("start", offset);
+            jsonResponse.put("limit", limit);
+            jsonResponse.put("numFound", results.size());
+            jsonResponse.put("results", toJson(results));
+            return Response.ok(jsonResponse.toString(2).getBytes());
+        } catch (IOException e) {
+            logger.error("IO Exception when searching", e);
+            return Response.serverError;
         }
-        // TODO replace with own StringBuilder implementation
-        JSONObject jsonResponse = new JSONObject();
-        jsonResponse.put("start", offset);
-        jsonResponse.put("limit", limit);
-        jsonResponse.put("numFound", docs.getNumFound());
-        jsonResponse.put("results", toJson(docs));
-        return Response.ok(jsonResponse.toString(2).getBytes());
     }
 
-    private JSONArray toJson(SolrDocumentList docs) {
-        JSONArray arr = new JSONArray();
-        for (SolrDocument doc : docs) {
-            arr.put(toJson(doc));
+    private JSONArray toJson(List<ToJson> results) {
+        JSONArray arr = new JSONArray(results.size());
+        for (ToJson result : results) {
+            arr.put(result.toJson());
         }
         return arr;
-    }
-
-    private JSONObject toJson(SolrDocument doc) {
-        JSONObject obj = new JSONObject();
-        for (Map.Entry<String, Object> entry : doc.entrySet()) {
-            if (entry.getKey().equals("metaData")) {
-                obj.put(entry.getKey(), new JSONObject(entry.getValue().toString()));
-            } else {
-                obj.put(entry.getKey(), entry.getValue());
-            }
-        }
-        return obj;
     }
 }

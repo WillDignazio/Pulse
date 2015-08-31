@@ -4,7 +4,7 @@ import com.google.inject.Inject;
 import com.google.inject.Provider;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.indexer.HBaseConduit;
+import net.digitalbebop.storage.DataConduit;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -14,10 +14,10 @@ import java.util.HashMap;
 
 public class GetDataRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
-    private HBaseConduit conduit;
+    private DataConduit conduit;
 
     @Inject
-    public GetDataRequestHandler(Provider<HBaseConduit> provider) {
+    public GetDataRequestHandler(Provider<DataConduit> provider) {
         conduit = provider.get();
     }
 
@@ -29,9 +29,7 @@ public class GetDataRequestHandler implements RequestHandler {
                 String moduleName = params.get("moduleName");
                 String moduleId = params.get("moduleId");
                 Long timestamp = Long.parseLong(params.get("timestamp"));
-
-                byte[] bytes = conduit.getRawData(moduleName, moduleId, timestamp);
-                return Response.ok(bytes);
+                return Response.ok(conduit.getRaw(moduleName, moduleId, timestamp));
             } else {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }

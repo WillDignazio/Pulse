@@ -1,4 +1,4 @@
-package net.digitalbebop.indexer;
+package net.digitalbebop.storage;
 
 import net.digitalbebop.ClientRequests;
 import org.apache.logging.log4j.LogManager;

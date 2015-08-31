@@ -6,10 +6,5 @@ public class IndexerModule extends AbstractModule {
     @Override
     protected void configure() {
         bind(SolrConduit.class);
-        bind(HBaseWrapper.class);
-
-        bind(HBaseConduit.class).toProvider(HBaseConduitProvider.class);
-
-        bind(IndexConduit.class).to(HBaseConduit.class);
     }
 }
