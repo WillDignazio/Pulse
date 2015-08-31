@@ -11,9 +11,9 @@ public interface DataConduit {
 
     InputStream getThumbnail(String moduleName, String moduleId, long timestamp) throws IOException;
 
-    void putRaw(String moduleName, String moduleId, long timestamp, OutputStream data) throws IOException;
+    void putRaw(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException;
 
-    void putThumbnail(String moduleName, String moduleId, long timestamp, OutputStream data) throws IOException;
+    void putThumbnail(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException;
 
     void delete(String moduleName, String moduleId) throws IOException;
 }

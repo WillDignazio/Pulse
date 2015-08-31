@@ -4,6 +4,7 @@ import net.digitalbebop.ClientRequests;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Optional;
 
 public interface IndexConduit {
     /**
@@ -26,5 +27,5 @@ public interface IndexConduit {
      * @return a list of Objects that can be turned into JSON
      * @throws IOException
      */
-    List<ToJson> search(String search, int offset, int limit) throws IOException;
+    Optional<SearchResult> search(String search, int offset, int limit);
 }

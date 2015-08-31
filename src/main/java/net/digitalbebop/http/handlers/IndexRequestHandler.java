@@ -7,10 +7,13 @@ import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.storage.DataConduit;
+import net.digitalbebop.storage.Thumbnails;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.xml.crypto.Data;
 import java.io.IOException;
@@ -35,7 +38,16 @@ public class IndexRequestHandler implements RequestHandler {
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             indexConduit.index(indexRequest);
             dataConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
-                    indexRequest.getTimestamp(), indexRequest.getRawData().newOutput());
+                    indexRequest.getTimestamp(), indexRequest.getRawData().newInput());
+            Thumbnails.convert(indexRequest.getMetaTags(), indexRequest).map(stream -> {
+                try {
+                    dataConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
+                            indexRequest.getTimestamp(), stream);
+                } catch (IOException e) {
+                    logger.error("error inserting thumbnail", e);
+                }
+                return null;
+            });
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
@@ -45,5 +57,15 @@ public class IndexRequestHandler implements RequestHandler {
             return Response.serverError;
         }
 
+    }
+
+    private String getFormat(String metaData) {
+        try {
+            JSONObject obj = new JSONObject(metaData);
+            return obj.getString("format");
+        } catch (JSONException e) {
+            logger.error("Could not get format from metadata: " + metaData, e);
+            return "";
+        }
     }
 }

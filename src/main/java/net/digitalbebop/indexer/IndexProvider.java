@@ -12,7 +12,7 @@ public class IndexProvider implements Provider<IndexConduit> {
         return new ThreadLocal<IndexConduit>() {
             @Override
             public IndexConduit initialValue() {
-                return new SolrConduit(hBaseWrapper, solrConduit);
+                return solrConduit;
             }
         }.get();
     }

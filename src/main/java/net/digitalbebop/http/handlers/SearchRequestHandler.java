@@ -4,16 +4,12 @@ import com.google.inject.Inject;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
-import net.digitalbebop.indexer.SolrConduit;
-import net.digitalbebop.indexer.ToJson;
+import net.digitalbebop.indexer.SearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.solr.client.solrj.response.QueryResponse;
-import org.apache.solr.common.SolrDocument;
-import org.apache.solr.common.SolrDocumentList;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -22,7 +18,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
@@ -66,25 +62,18 @@ public class SearchRequestHandler implements RequestHandler {
                 }
             }
         }
+        final int fOffset = offset;
+        final int fLimit = limit;
         logger.debug("search query: " + search);
-        try {
-            l1SONObject jsonResponse = new JSONObject();
-            jsonResponse.put("start", offset);
-            jsonResponse.put("limit", limit);
-            jsonResponse.put("numFound", results.size());
-            jsonResponse.put("results", toJson(results));
+        Optional<SearchResult> results = indexConduit.search(search, offset, limit);
+        return results.map(result -> {
+            JSONObject jsonResponse = new JSONObject();
+            jsonResponse.put("start", fOffset);
+            jsonResponse.put("limit", fLimit);
+            jsonResponse.put("numFound", result.size());
+            jsonResponse.put("results", result.results());
             return Response.ok(jsonResponse.toString(2).getBytes());
-        } catch (IOException e) {
-            logger.error("IO Exception when searching", e);
-            return Response.serverError;
-        }
-    }
+        }).orElse(Response.serverError);
 
-    private JSONArray toJson(List<ToJson> results) {
-        JSONArray arr = new JSONArray(results.size());
-        for (ToJson result : results) {
-            arr.put(result.toJson());
-        }
-        return arr;
     }
 }

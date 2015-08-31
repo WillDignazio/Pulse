@@ -15,7 +15,7 @@ public class FileStorageConduit implements DataConduit {
     private String dir;
 
     @Inject
-    public FileStorageConduit(@Named("FileStorageDir") String dir) {
+    public FileStorageConduit(@Named("fileStorageDir") String dir) {
         this.dir = dir;
         if (dir == null) {
             throw new IllegalStateException("Uninitialized File Storage.");
@@ -33,12 +33,17 @@ public class FileStorageConduit implements DataConduit {
     }
 
     @Override
-    public void putRaw(String moduleName, String moduleId, long timestamp, OutputStream data) throws IOException {
+    public void putRaw(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException {
 
     }
 
     @Override
-    public void putThumbnail(String moduleName, String moduleId, long timestamp, OutputStream data) throws IOException {
+    public void putThumbnail(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException {
+
+    }
+
+    @Override
+    public void delete(String moduleName, String moduleId) throws IOException {
 
     }
 }

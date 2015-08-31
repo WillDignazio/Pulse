@@ -1,6 +1,6 @@
 package net.digitalbebop.indexer;
 
-import org.json.JSONObject;
+import org.json.JSONArray;
 
 /**
  * Simple interface for converting IndexConduit results into JSON
@@ -17,5 +17,5 @@ public interface SearchResult {
      * of the array returned by the `results()` method since the search
      * query could have specified a limit amount.
      */
-    int size();
+    long size();
 }
