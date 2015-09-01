@@ -46,66 +46,8 @@
 -->
 
 <schema name="pulse" version="1.5">
-  <!-- attribute "name" is the name of this schema and is only used for display purposes.
-       version="x.y" is Solr's version number for the schema syntax and 
-       semantics.  It should not normally be changed by applications.
-
-       1.0: multiValued attribute did not exist, all fields are multiValued 
-            by nature
-       1.1: multiValued attribute introduced, false by default 
-       1.2: omitTermFreqAndPositions attribute introduced, true by default 
-            except for text fields.
-       1.3: removed optional field compress feature
-       1.4: autoGeneratePhraseQueries attribute introduced to drive QueryParser
-            behavior when a single string produces multiple tokens.  Defaults 
-            to off for version >= 1.4
-       1.5: omitNorms defaults to true for primitive field types 
-            (int, float, boolean, string...)
-     -->
 
  <fields>
-   <!-- Valid attributes for fields:
-     name: mandatory - the name for the field
-     type: mandatory - the name of a field type from the 
-       <types> fieldType section
-     indexed: true if this field should be indexed (searchable or sortable)
-     stored: true if this field should be retrievable
-     docValues: true if this field should have doc values. Doc values are
-       useful for faceting, grouping, sorting and function queries. Although not
-       required, doc values will make the index faster to load, more
-       NRT-friendly and more memory-efficient. They however come with some
-       limitations: they are currently only supported by StrField, UUIDField
-       and all Trie*Fields, and depending on the field type, they might
-       require the field to be single-valued, be required or have a default
-       value (check the documentation of the field type you're interested in
-       for more information)
-     multiValued: true if this field may contain multiple values per document
-     omitNorms: (expert) set to true to omit the norms associated with
-       this field (this disables length normalization and index-time
-       boosting for the field, and saves some memory).  Only full-text
-       fields or fields that need an index-time boost need norms.
-       Norms are omitted for primitive (non-analyzed) types by default.
-     termVectors: [false] set to true to store the term vector for a
-       given field.
-       When using MoreLikeThis, fields used for similarity should be
-       stored for best performance.
-     termPositions: Store position information with the term vector.  
-       This will increase storage costs.
-     termOffsets: Store offset information with the term vector. This 
-       will increase storage costs.
-     required: The field is required.  It will throw an error if the
-       value does not exist
-     default: a value that should be used if no value is specified
-       when adding a document.
-   -->
-
-   <!-- field names should consist of alphanumeric or underscore characters only and
-      not start with a digit.  This is not currently strictly enforced,
-      but other field names will not have first class support from all components
-      and back compatibility is not guaranteed.  Names with both leading and
-      trailing underscores (e.g. _version_) are reserved.
-   -->
-        
    <field name="id" type="string" indexed="true" stored="true" required="true" multiValued="false" /> 
    
    <!-- points to the root document of a block of nested documents. Required for nested
@@ -170,14 +112,7 @@
  <defaultSearchField>text</defaultSearchField>
 
   <types>
-    <!-- field type definitions. The "name" attribute is
-       just a label to be used by field definitions.  The "class"
-       attribute and any other attributes determine the real
-       behavior of the fieldType.
-         Class names starting with "solr" refer to java classes in a
-       standard package such as org.apache.solr.analysis
-    -->
-
+   
     <fieldType name="uuid" class="solr.UUIDField" indexed="true" />
 
     <!-- The StrField type is not analyzed, but indexed/stored verbatim.
@@ -185,9 +120,12 @@
        single-valued and either required or have a default value.
       -->
     <fieldType name="string" class="solr.StrField" sortMissingLast="true" />
-
+    <fieldType name="strings" class="solr.StrField" sortMissingLast="true" multiValued="true"/>
+    
     <!-- boolean type: "true" or "false" -->
     <fieldType name="boolean" class="solr.BoolField" sortMissingLast="true"/>
+    
+    <fieldType name="booleans" class="solr.BoolField" sortMissingLast="true" multiValued="true"/>
 
     <!-- sortMissingLast and sortMissingFirst attributes are optional attributes are
          currently supported on types that are sorted internally as strings
@@ -216,6 +154,11 @@
     <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
     <fieldType name="double" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0"/>
 
+    <fieldType name="ints" class="solr.TrieIntField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="floats" class="solr.TrieFloatField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="longs" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="doubles" class="solr.TrieDoubleField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+
     <!--
      Numeric field types that index each value at various levels of precision
      to accelerate range queries when the number of values between the range
@@ -230,6 +173,12 @@
     <fieldType name="tfloat" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0"/>
     <fieldType name="tlong" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0"/>
     <fieldType name="tdouble" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0"/>
+
+    <fieldType name="tints" class="solr.TrieIntField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tfloats" class="solr.TrieFloatField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tlongs" class="solr.TrieLongField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+    <fieldType name="tdoubles" class="solr.TrieDoubleField" precisionStep="8" positionIncrementGap="0" multiValued="true"/>
+
 
     <!-- The format for this date field is of the form 1995-12-31T23:59:59Z, and
          is a more restricted form of the canonical representation of dateTime
@@ -254,10 +203,11 @@
          Note: For faster range queries, consider the tdate type
       -->
     <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
-
+    <fieldType name="dates" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0" multiValued="true"/>
+    
     <!-- A Trie based date field for faster date range queries and date faceting. -->
     <fieldType name="tdate" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0"/>
-
+    <fieldType name="tdates" class="solr.TrieDateField" precisionStep="6" positionIncrementGap="0" multiValued="true"/>
 
     <!--Binary data type. The data should be sent/retrieved in as Base64 encoded Strings -->
     <fieldtype name="binary" class="solr.BinaryField"/>
@@ -271,11 +221,11 @@
       value verbatim (and hence don't correctly support range queries, since the
       lexicographic ordering isn't equal to the numeric ordering)
     -->
-    <fieldType name="pint" class="solr.IntField"/>
+    <!-- <fieldType name="pint" class="solr.IntField"/>
     <fieldType name="plong" class="solr.LongField"/>
     <fieldType name="pfloat" class="solr.FloatField"/>
     <fieldType name="pdouble" class="solr.DoubleField"/>
-    <fieldType name="pdate" class="solr.DateField" sortMissingLast="true"/>
+    <fieldType name="pdate" class="solr.DateField" sortMissingLast="true"/> -->
 
     <!-- The "RandomSortField" is not used to store or search any
          data.  You can declare fields of this type it in your schema
