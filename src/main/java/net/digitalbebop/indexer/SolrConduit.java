@@ -30,15 +30,12 @@ import java.util.Optional;
 public class SolrConduit implements IndexConduit {
     private static final Logger logger = LogManager.getLogger(SolrConduit.class);
     private HttpSolrClient client;
-    private String collection;
     private int flushTime;
 
     @Inject
     public SolrConduit(@Named("solrURL") String solrURL,
-                       @Named("solrCollection") String collection,
                        @Named("solrFlushtime") Integer flushTime) {
         client = new HttpSolrClient(solrURL);
-        this.collection = collection;
         this.flushTime = flushTime;
     }
 
@@ -132,7 +129,7 @@ class Result implements SearchResult {
     }
 
     public JSONArray results() {
-        JSONArray arr = new JSONArray(response.getResults().size());
+        JSONArray arr = new JSONArray();
         SolrDocumentList docs = response.getResults();
         for (int i = 0 ; i < docs.size() ; i++) {
             JSONObject obj = new JSONObject();
