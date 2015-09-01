@@ -1,5 +1,7 @@
 package net.digitalbebop.storage;
 
+import com.google.inject.Singleton;
+
 import java.io.*;
 import java.util.Optional;
 

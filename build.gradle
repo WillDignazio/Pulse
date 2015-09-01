@@ -53,6 +53,7 @@ dependencies {
     compile 'org.slf4j:slf4j-simple:1.6.1'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
     compile 'org.apache.avro:avro-tools:1.7.7'
+    compile 'org.hbase:asynchbase:1.6.0'
     compile 'org.apache.solr:solr-solrj:5.2.1'
     compile 'org.json:json:20141113'
     compile 'org.apache.pdfbox:pdfbox:1.8.10'
@@ -68,6 +69,7 @@ dependencies {
     quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
 
     testCompile 'junit:junit:4.12'
+    testCompile 'org.apache.zookeeper:zookeeper:3.5.0-alpha'
     testCompile 'org.xerial:sqlite-jdbc:3.8.11'
 }
 

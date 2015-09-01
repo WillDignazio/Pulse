@@ -31,7 +31,7 @@ public class GetDataRequestHandler implements RequestHandler {
                 Long timestamp = Long.parseLong(params.get("timestamp"));
                 return conduit.getRaw(moduleName, moduleId, timestamp)
                         .map(Response::ok)
-                        .orElse(Response.serverError);
+                        .orElse(Response.ok);
             } else {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
