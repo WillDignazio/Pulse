@@ -2,12 +2,16 @@ package net.digitalbebop.storage;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.mapdb.BTreeKeySerializer;
+import org.mapdb.DB;
+import org.mapdb.DBMaker;
+import org.mapdb.Serializer;
 
 import java.io.*;
-import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentNavigableMap;
 
 /**
  * Uses on disk storage for the backend data store. This is not a tread safe operation since there
@@ -15,59 +19,71 @@ import java.util.Objects;
  */
 public class FileStorageConduit implements StorageConduit {
     private static final Logger logger = LogManager.getLogger(FileStorageConduit.class);
-    private String dir;
-    private byte[] BUFFER = new byte[1024 * 4];
+    private static final int CACHE_SIZE = 10000;
+    private static final int FLUSH_DELAY = 2000;
+    private static final int WRITE_QUEUE_SIZE = 32000;
+    private DB db;
+    private ConcurrentNavigableMap<String, byte[]> collection;
 
     @Inject
-    public FileStorageConduit(@Named("fileStorageDir") String dir) {
-        this.dir = dir;
+    public FileStorageConduit(@Named("fileStorageFile") String dir) {
+        db = DBMaker.newFileDB(new File(dir))
+                .closeOnJvmShutdown()
+                .cacheHardRefEnable()
+                .cacheSize(CACHE_SIZE)
+                .asyncWriteEnable()
+                .asyncWriteFlushDelay(FLUSH_DELAY)
+                .asyncWriteQueueSize(WRITE_QUEUE_SIZE)
+                .make();
+        db.compact();
+
+        collection = db.createTreeMap("pulse")
+                .valuesOutsideNodesEnable()
+                .keySerializer(BTreeKeySerializer.STRING)
+                .valueSerializer(new Serializer.CompressionWrapper(Serializer.BYTE_ARRAY))
+                .makeOrGet();
     }
 
     @Override
-    public InputStream getRaw(String moduleName, String moduleId, long timestamp) throws IOException {
-        return new FileInputStream(getRawFile(moduleName, moduleId, timestamp));
-    }
-
-    @Override
-    public InputStream getThumbnail(String moduleName, String moduleId, long timestamp) throws IOException {
-        return new FileInputStream(getThumbnailFile(moduleName, moduleId, timestamp));
-    }
-
-    @Override
-    public void putRaw(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException {
-        File file = getRawFile(moduleName, moduleId, timestamp);
-        if (!file.exists()) {
-            file.mkdirs();
+    public Optional<byte[]> getRaw(String moduleName, String moduleId, long timestamp) {
+        byte[] arr = collection.get(getRawId(moduleName, moduleId, timestamp));
+        if (arr != null) {
+            return Optional.of(arr);
+        } else {
+            return Optional.empty();
         }
-        FileOutputStream output = new FileOutputStream(file);
-        IOUtils.copyLarge(data, output, BUFFER);
-        output.flush();
-        output.close();
     }
 
     @Override
-    public void putThumbnail(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException {
-        File file = getThumbnailFile(moduleName, moduleId, timestamp);
-        if (!file.exists()) {
-            file.mkdirs();
+    public Optional<byte[]> getThumbnail(String moduleName, String moduleId, long timestamp) {
+        byte[] arr = collection.get(getThumbnailId(moduleName, moduleId, timestamp));
+        if (arr != null) {
+            return Optional.of(arr);
+        } else {
+            return Optional.empty();
         }
-        FileOutputStream output = new FileOutputStream(file);
-        IOUtils.copyLarge(data, output, BUFFER);
-        output.flush();
-        output.close();
     }
 
     @Override
-    public void delete(String moduleName, String moduleId) throws IOException {
+    public void putRaw(String moduleName, String moduleId, long timestamp, byte[] data) {
+        collection.put(getRawId(moduleName, moduleId, timestamp), data);
     }
 
-    private File getRawFile(String moduleName, String moduleId, long timestamp) {
-        String hash = Integer.toHexString(Objects.hash(moduleName, moduleId, timestamp));
-        return new File(dir + "/raw/" + hash.replaceAll(".(?=.)", "$0/"));
+    @Override
+    public void putThumbnail(String moduleName, String moduleId, long timestamp, byte[] data) {
+        collection.put(getThumbnailId(moduleName, moduleId, timestamp), data);
     }
 
-    private File getThumbnailFile(String moduleName, String moduleId, long timestamp) {
-        String hash = Integer.toHexString(Objects.hash(moduleName, moduleId, timestamp));
-        return new File(dir + "/thumbnail/" + hash.replaceAll(".(?=.)", "$0/"));
+    @Override
+    public void delete(String moduleName, String moduleId) {
+        throw new UnsupportedOperationException("delete not yet supported");
+    }
+
+    private String getRawId(String moduleName, String moduleId, long timestamp) {
+        return "raw-" + moduleName + "-" + moduleId + "-" + timestamp;
+    }
+
+    private String getThumbnailId(String moduleName, String moduleId, long timestamp) {
+        return "thumbnail-" + moduleName + "-" + moduleId + "-" + timestamp;
     }
 }

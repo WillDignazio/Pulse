@@ -28,7 +28,9 @@ public class GetThumbnailRequestHandler implements RequestHandler {
                 String moduleName = params.get("moduleName");
                 String moduleId = params.get("moduleId");
                 Long timestamp = Long.parseLong(params.get("timestamp"));
-                return Response.ok(conduit.getThumbnail(moduleName, moduleId, timestamp));
+                return conduit.getThumbnail(moduleName, moduleId, timestamp)
+                        .map(Response::ok)
+                        .orElse(Response.serverError);
             } else {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }

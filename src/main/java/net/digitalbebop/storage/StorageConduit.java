@@ -1,19 +1,20 @@
 package net.digitalbebop.storage;
 
 import java.io.*;
+import java.util.Optional;
 
 /**
  * All backend data stores implement this interface to allow for hot swapping of the data stores
  */
 public interface StorageConduit {
 
-    InputStream getRaw(String moduleName, String moduleId, long timestamp) throws IOException;
+    Optional<byte[]> getRaw(String moduleName, String moduleId, long timestamp);
 
-    InputStream getThumbnail(String moduleName, String moduleId, long timestamp) throws IOException;
+    Optional<byte[]> getThumbnail(String moduleName, String moduleId, long timestamp);
 
-    void putRaw(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException;
+    void putRaw(String moduleName, String moduleId, long timestamp, byte[] data);
 
-    void putThumbnail(String moduleName, String moduleId, long timestamp, InputStream data) throws IOException;
+    void putThumbnail(String moduleName, String moduleId, long timestamp, byte[] data);
 
     void delete(String moduleName, String moduleId) throws IOException;
 }

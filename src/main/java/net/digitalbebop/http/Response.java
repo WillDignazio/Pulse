@@ -30,15 +30,6 @@ public final class Response {
         return response;
     }
 
-    public static HttpResponse ok(InputStream stream) {
-        HttpResponse response = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
-        response.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
-        BasicHttpEntity entity = new BasicHttpEntity();
-        entity.setContent(stream);
-        response.setEntity(entity);
-        return response;
-    }
-
     public static HttpResponse serverError(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, message);
     }
