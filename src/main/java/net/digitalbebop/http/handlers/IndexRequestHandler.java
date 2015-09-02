@@ -40,7 +40,7 @@ public class IndexRequestHandler implements RequestHandler {
                     indexRequest.getTimestamp(), indexRequest.getRawData().toByteArray());
             Thumbnails.convert(getFormat(indexRequest.getMetaTags()), indexRequest)
                     .map(data -> {
-                        storageConduit.putRaw(indexRequest.getModuleName(),
+                        storageConduit.putThumbnail(indexRequest.getModuleName(),
                                 indexRequest.getModuleId(), indexRequest.getTimestamp(), data);
                         return null;
                     });
