@@ -40,7 +40,7 @@ public class FileStorageConduit implements StorageConduit {
         collection = db.createTreeMap("pulse")
                 .valuesOutsideNodesEnable()
                 .keySerializer(BTreeKeySerializer.STRING)
-                .valueSerializer(new Serializer.CompressionWrapper(Serializer.BYTE_ARRAY))
+                .valueSerializer(Serializer.BYTE_ARRAY)
                 .makeOrGet();
     }
 

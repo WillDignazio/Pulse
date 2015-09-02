@@ -161,7 +161,11 @@ class Result implements SearchResult {
         for (SolrDocument doc : docs) {
             JSONObject obj = new JSONObject();
             for (Map.Entry<String, Object> entry : doc.entrySet()) {
-                obj.put(entry.getKey(), entry.getValue());
+                if (entry.getKey().equals("metaData")) {
+                    obj.put(entry.getKey(), new JSONObject(entry.getValue().toString()));
+                } else {
+                    obj.put(entry.getKey(), entry.getValue());
+                }
             }
             arr.put(obj);
         }
