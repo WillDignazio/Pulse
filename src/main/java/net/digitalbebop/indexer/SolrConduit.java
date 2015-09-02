@@ -31,15 +31,12 @@ import java.util.Optional;
 public class SolrConduit implements IndexConduit {
     private static final Logger logger = LogManager.getLogger(SolrConduit.class);
     private HttpSolrClient client;
-    private String collection;
     private int flushTime;
 
     @Inject
     public SolrConduit(@Named("solrURL") String solrURL,
-                       @Named("solrCollection") String collection,
                        @Named("solrFlushtime") Integer flushTime) {
         client = new HttpSolrClient(solrURL);
-        this.collection = collection;
         this.flushTime = flushTime;
     }
 
