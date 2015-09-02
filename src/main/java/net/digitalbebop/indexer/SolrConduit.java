@@ -20,6 +20,7 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -129,14 +130,39 @@ class Result implements SearchResult {
 
     public Result(QueryResponse response) {
         this.response = response;
+        boolean noHighlight = true;
+
+        /** replaces the data section with the highlighted snippets */
+        for (SolrDocument doc : response.getResults()) {
+            String id = (String) doc.getFieldValue("id");
+            if (response.getHighlighting().get(id) != null) {
+                Map<String, List<String>> forDoc = response.getHighlighting().get(id);
+                if (forDoc != null) {
+                    List<String> snippets = forDoc.get("data");
+                    if (snippets != null) {
+                        StringBuilder builder = new StringBuilder();
+                        for (int i = 0 ; i < snippets.size() - 1 ; i++) {
+                            builder.append(snippets.get(i)).append("...");
+                        }
+                        builder.append(snippets.get(snippets.size() - 1));
+                        doc.setField("data", builder.toString());
+                        noHighlight = false;
+                    }
+                }
+            }
+            if (noHighlight) {
+                String data = doc.getFieldValue("data").toString();
+                int length = Math.min(200, data.length());
+                doc.setField("data", data.substring(0, length));
+            }
+        }
     }
 
     public JSONArray results() {
-        JSONArray arr = new JSONArray(response.getResults().size());
+        JSONArray arr = new JSONArray();
         SolrDocumentList docs = response.getResults();
-        for (int i = 0 ; i < docs.size() ; i++) {
+        for (SolrDocument doc : docs) {
             JSONObject obj = new JSONObject();
-            SolrDocument doc = docs.get(i);
             for (Map.Entry<String, Object> entry : doc.entrySet()) {
                 obj.put(entry.getKey(), entry.getValue());
             }
