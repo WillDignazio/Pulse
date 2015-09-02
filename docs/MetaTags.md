@@ -27,3 +27,4 @@ may be found in the JSON blob:
 
 1. _title_ -- A contiguous string, a formal title that should be used for the given result
 2. _format_  -- A single word, a generic format indicator that can be used to render or associate the file in a certain situations, for instance a "image" or "file"
+3. _count_ -- The number of sub-documents that this document represents. This is used for things like gallery albums in which this shows the number of images that is in the given album
