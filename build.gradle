@@ -164,17 +164,6 @@ task writeClasspath(dependsOn: build) << {
     }
 }
 
-task suspendDetection() {
-    ant.taskdef(name:'scanSuspendables', classname:'co.paralleluniverse.fibers.instrument.SuspendablesScanner',
-            classpath: "build/classes/main:build/resources/main:${configurations.runtime.asPath}")
-    ant.scanSuspendables(
-            auto:true,
-            suspendablesFile: "src/main/resources/META-INF/suspendables",
-            supersFile: "src/main/resources/META-INF/suspendable-supers") {
-        fileset(dir: sourceSets.main.output.classesDir)
-    }
-}
-
 test {
     // enable TestNG support (default is JUnit)
     useJUnit()
