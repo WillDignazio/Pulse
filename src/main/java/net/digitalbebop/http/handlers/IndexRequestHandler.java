@@ -38,9 +38,9 @@ public class IndexRequestHandler implements RequestHandler {
             indexConduit.index(indexRequest);
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                     indexRequest.getTimestamp(), indexRequest.getRawData().toByteArray());
-            Thumbnails.convert(indexRequest.getMetaTags(), indexRequest)
+            Thumbnails.convert(getFormat(indexRequest.getMetaTags()), indexRequest)
                     .map(data -> {
-                        storageConduit.putRaw(indexRequest.getModuleName(),
+                        storageConduit.putThumbnail(indexRequest.getModuleName(),
                                 indexRequest.getModuleId(), indexRequest.getTimestamp(), data);
                         return null;
                     });
