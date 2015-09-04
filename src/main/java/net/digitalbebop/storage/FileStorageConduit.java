@@ -33,8 +33,8 @@ public class FileStorageConduit implements StorageConduit {
                 .closeOnJvmShutdown()
                 .cacheHardRefEnable()
                 .cacheSize(CACHE_SIZE)
-                .asyncWriteEnable()
-                .asyncWriteFlushDelay(FLUSH_DELAY)
+                //.asyncWriteEnable()
+                //.asyncWriteFlushDelay(FLUSH_DELAY)
                 .make();
 
         collection = db.createTreeMap("pulse")
@@ -73,6 +73,7 @@ public class FileStorageConduit implements StorageConduit {
         String id = getRawId(moduleName, moduleId, timestamp);
         logger.debug("putting raw: " + id);
         collection.put(id, data);
+        db.commit();
     }
 
     @Override
@@ -80,6 +81,7 @@ public class FileStorageConduit implements StorageConduit {
         String id = getThumbnailId(moduleName, moduleId, timestamp);
         logger.debug("putting thumbnail: " + id);
         collection.put(id, data);
+        db.commit();
     }
 
     @Override

@@ -141,6 +141,7 @@ public class BasicHttpServerImpl implements HttpServer {
             Fiber bindFiber = new Fiber<Void>(fiberScheduler, () -> {
                 try {
                     InetSocketAddress socketAddress = new InetSocketAddress(serverAddress, serverPort);
+                    logger.info("Binding to " + serverAddress + ":" + serverPort);
                     serverChannel = FiberServerSocketChannel.open(null).bind(socketAddress);
 
                     logger.info("Waiting for connections");
