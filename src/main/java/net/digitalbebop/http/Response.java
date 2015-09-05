@@ -4,9 +4,13 @@ import org.apache.http.HttpResponse;
 import org.apache.http.HttpStatus;
 import org.apache.http.HttpVersion;
 import org.apache.http.ProtocolVersion;
+import org.apache.http.entity.BasicHttpEntity;
 import org.apache.http.entity.ByteArrayEntity;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.message.BasicHttpResponse;
+
+import java.io.InputStream;
+import java.io.OutputStream;
 
 public final class Response {
     public static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;

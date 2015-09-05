@@ -1,7 +1,6 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.storage.StorageConduit;
@@ -12,13 +11,13 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.HashMap;
 
-public class GetDataRequestHandler implements RequestHandler {
-    private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
+public class GetThumbnailRequestHandler implements RequestHandler {
+    private static final Logger logger = LogManager.getLogger(GetThumbnailRequestHandler.class);
     private StorageConduit conduit;
 
     @Inject
-    public GetDataRequestHandler(Provider<StorageConduit> provider) {
-        conduit = provider.get();
+    public GetThumbnailRequestHandler(StorageConduit dc) {
+        conduit = dc;
     }
 
     @Override
@@ -29,7 +28,7 @@ public class GetDataRequestHandler implements RequestHandler {
                 String moduleName = params.get("moduleName");
                 String moduleId = params.get("moduleId");
                 Long timestamp = Long.parseLong(params.get("timestamp"));
-                return conduit.getRaw(moduleName, moduleId, timestamp)
+                return conduit.getThumbnail(moduleName, moduleId, timestamp)
                         .map(Response::ok)
                         .orElse(Response.ok);
             } else {

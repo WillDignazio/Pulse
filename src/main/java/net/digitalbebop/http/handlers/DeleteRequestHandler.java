@@ -1,11 +1,11 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import com.google.inject.Provider;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.http.Response;
-import net.digitalbebop.indexer.HBaseConduit;
+import net.digitalbebop.indexer.IndexConduit;
+import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;
 import net.digitalbebop.http.RequestHandler;
 import org.apache.http.HttpResponse;
@@ -16,11 +16,13 @@ import java.util.HashMap;
 
 public class DeleteRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(DeleteRequestHandler.class);
-    private final HBaseConduit conduit;
+    private final StorageConduit storageConduit;
+    private final IndexConduit indexConduit;
 
     @Inject
-    public DeleteRequestHandler(Provider<HBaseConduit> provider) {
-        conduit = provider.get();
+    public DeleteRequestHandler(StorageConduit dc, IndexConduit ic) {
+        storageConduit = dc;
+        indexConduit = ic;
     }
 
     @Override
@@ -28,7 +30,8 @@ public class DeleteRequestHandler implements RequestHandler {
         try {
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
             logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
-            conduit.delete(deleteRequest);
+            indexConduit.delete(deleteRequest);
+            storageConduit.delete(deleteRequest.getModuleName(), deleteRequest.getModuleId());
             return Response.ok;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Delete handler.");

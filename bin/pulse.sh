@@ -53,7 +53,7 @@ launch_pulse()
     PULSE_CLASSPATH="$PULSE_CLASSPATH:$fn_classpath_content"
 
     JVM_OPTS="$JVM_OPTS -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
-    JVM_OPTS+=" -javaagent:$quasar_path_content"
+    JVM_OPTS+=" -server -Xmx6g -javaagent:$quasar_path_content"
 #    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
     echo $JVM_OPTS

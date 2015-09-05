@@ -1,10 +1,12 @@
 org.apache.http.impl.io.AbstractMessageParser.parse
+org.apache.http.impl.io.AbstractMessageParser.parseHeaders
 org.apache.http.impl.io.DefaultHttpRequestParser.parseHead
 org.apache.http.impl.io.SessionInputBufferImpl.readLine
 org.apache.http.impl.io.SessionInputBufferImpl.fillBuffer
 org.apache.http.impl.io.SessionInputBufferImpl.streamRead
 
 org.apache.http.entity.StringEntity.writeTo
+org.apache.http.entity.ByteArrayEntity.writeTo
 org.apache.http.impl.io.SessionOutputBufferImpl.streamWrite
 org.apache.http.impl.io.SessionOutputBufferImpl.flushBuffer
 org.apache.http.impl.io.SessionOutputBufferImpl.flush

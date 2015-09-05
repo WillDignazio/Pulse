@@ -11,7 +11,7 @@ import org.json.JSONObject;
 import java.sql.*;
 import java.util.List;
 
-public class SQLConduit implements IndexConduit {
+public class SQLConduit  {
     private static Logger logger = LogManager.getLogger(SQLConduit.class);
 
     private final String jdbc;
@@ -67,7 +67,6 @@ public class SQLConduit implements IndexConduit {
      * XXX: WARNING: Testing only currently
      * @param index Index request protobuf message
      */
-    @Override
     public synchronized void index(PulseIndex index) {
         try {
             final Connection connection = DriverManager.getConnection(jdbc, username, password);
@@ -107,7 +106,6 @@ public class SQLConduit implements IndexConduit {
         }
     }
 
-    @Override
     public void delete(ClientRequests.DeleteRequest deleteRequest) {
         throw new NotImplementedException("Deletion in SQLConduit Not Implemented.");
     }
