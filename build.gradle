@@ -43,7 +43,6 @@ dependencies {
     compile group: 'org.apache.logging.log4j', name: 'log4j-api', version: '2.3'
     compile group: 'org.apache.logging.log4j', name: 'log4j-core', version: '2.3'
     compile group: 'com.google.inject', name: 'guice', version: '4.0'
-    compile 'com.google.inject.extensions:guice-assistedinject:4.0'
     compile group: 'commons-configuration', name: 'commons-configuration', version: '1.10'
     compile group: 'com.google.guava', name: 'guava', version: '18.0'
     compile group: 'commons-lang', name: 'commons-lang', version: '2.6'
@@ -64,9 +63,6 @@ dependencies {
     compile 'org.mapdb:mapdb:1.0.8'
 
     compile 'co.paralleluniverse:quasar-core:0.7.2:jdk8'
-    compile 'co.paralleluniverse:quasar-actors:0.7.2'
-    compile 'co.paralleluniverse:quasar-reactive-streams:0.7.2'
-
     quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
 
     testCompile 'junit:junit:4.12'
