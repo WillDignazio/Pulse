@@ -31,13 +31,13 @@ public class GetDataRequestHandler implements RequestHandler {
                 Long timestamp = Long.parseLong(params.get("timestamp"));
                 return conduit.getRaw(moduleName, moduleId, timestamp)
                         .map(Response::ok)
-                        .orElse(Response.ok);
+                        .orElse(Response.OK);
             } else {
                 return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
         } catch (Exception e) {
             logger.error("Error getting data from HBase:", e);
-            return Response.serverError;
+            return Response.SERVER_ERROR;
         }
     }
 }

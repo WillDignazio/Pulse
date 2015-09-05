@@ -45,13 +45,13 @@ public class IndexRequestHandler implements RequestHandler {
                                 indexRequest.getModuleId(), indexRequest.getTimestamp(), data);
                         return null;
                     });
-            return Response.ok;
+            return Response.OK;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);
-            return Response.badProtobuf;
+            return Response.BAD_REQUEST;
         } catch (IOException e) {
             logger.error("IO exception when inserting data", e);
-            return Response.serverError;
+            return Response.SERVER_ERROR;
         }
 
     }

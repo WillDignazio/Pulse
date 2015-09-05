@@ -11,18 +11,18 @@ import java.util.HashMap;
 public interface RequestHandler {
 
     default HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
-        return Response.notFound;
+        return Response.NOT_FOUND;
     }
 
     default HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
-        return Response.notFound;
+        return Response.NOT_FOUND;
     }
 
     default HttpResponse handleDelete(HttpRequest req, HashMap<String, String> params) {
-        return Response.notFound;
+        return Response.NOT_FOUND;
     }
 
     default HttpResponse handlePut(HttpRequest req, HashMap<String, String> params) {
-        return Response.notFound;
+        return Response.NOT_FOUND;
     }
 }

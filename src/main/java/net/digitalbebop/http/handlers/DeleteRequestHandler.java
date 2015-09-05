@@ -30,15 +30,16 @@ public class DeleteRequestHandler implements RequestHandler {
         try {
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
             logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
+
             indexConduit.delete(deleteRequest);
             storageConduit.delete(deleteRequest.getModuleName(), deleteRequest.getModuleId());
-            return Response.ok;
+            return Response.OK;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Delete handler.");
-            return Response.badProtobuf;
+            return Response.BAD_REQUEST;
         } catch (Exception e) {
             logger.error("Failed to handle Delete Request: " + e.getMessage(), e);
-            return Response.serverError;
+            return Response.SERVER_ERROR;
         }
     }
 }

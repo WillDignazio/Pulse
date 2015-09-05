@@ -4,21 +4,16 @@ import com.google.inject.Inject;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
-import net.digitalbebop.indexer.SearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
@@ -72,7 +67,7 @@ public class SearchRequestHandler implements RequestHandler {
             jsonResponse.put("numFound", result.size());
             jsonResponse.put("results", result.results());
             return Response.ok(jsonResponse.toString(2).getBytes());
-        }).orElse(Response.serverError);
+        }).orElse(Response.SERVER_ERROR);
 
     }
 }
