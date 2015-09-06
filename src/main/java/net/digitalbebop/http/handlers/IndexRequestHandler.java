@@ -16,6 +16,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class IndexRequestHandler implements RequestHandler {
@@ -32,7 +34,7 @@ public class IndexRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
+    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, byte[] payload) {
         try {
             ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
             logger.debug("Received Index request from: " + indexRequest.getModuleName());

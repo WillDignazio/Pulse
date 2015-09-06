@@ -10,6 +10,8 @@ import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class GetDataRequestHandler implements RequestHandler {
@@ -22,7 +24,7 @@ public class GetDataRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+    public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         try {
             if (params.containsKey("moduleName") && params.containsKey("moduleId") &&
                     params.containsKey("timestamp")) {

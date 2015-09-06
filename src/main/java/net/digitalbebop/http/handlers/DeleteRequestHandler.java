@@ -12,6 +12,8 @@ import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class DeleteRequestHandler implements RequestHandler {
@@ -26,7 +28,7 @@ public class DeleteRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
+    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, byte[] payload) {
         try {
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(payload);
             logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());

@@ -15,6 +15,8 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
@@ -68,7 +70,7 @@ class EndpointRouter implements HttpRouter {
     }
 
     @Override
-    public ListenableFuture<HttpResponse> route(HttpRequest request, byte[] payload) {
+    public ListenableFuture<HttpResponse> route(HttpRequest request, InetSocketAddress address, byte[] payload) {
         long startTime = System.currentTimeMillis();
         try {
             final HashMap<String, String> parameters;
@@ -96,22 +98,22 @@ class EndpointRouter implements HttpRouter {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());
                     switch (map.getRequestType()) {
                         case GET:
-                            return executor.submit(() -> map.getHandler().handleGet(request, parameters));
+                            return executor.submit(() -> map.getHandler().handleGet(request, address, parameters));
                         case POST:
-                            return executor.submit(() -> map.getHandler().handlePost(request, parameters, payload));
+                            return executor.submit(() -> map.getHandler().handlePost(request, address, parameters, payload));
                         case DELETE:
-                            return executor.submit(() -> map.getHandler().handleDelete(request, parameters));
+                            return executor.submit(() -> map.getHandler().handleDelete(request, address, parameters));
                         case PUT:
-                            return executor.submit(() -> map.getHandler().handlePut(request, parameters));
+                            return executor.submit(() -> map.getHandler().handlePut(request, address, parameters));
                     }
                 }
             }
 
             logger.debug("Couldn't match " + method + " (" + path + ")");
-            return Futures.immediateFuture(notFoundHandler.handleGet(request, new HashMap<>()));
+            return Futures.immediateFuture(notFoundHandler.handleGet(request, address, new HashMap<>()));
         } catch(Exception e) {
             logger.warn("Could not parse URI: " + e.getMessage(), e);
-            return Futures.immediateFuture(notFoundHandler.handleGet(request, new HashMap<>()));
+            return Futures.immediateFuture(notFoundHandler.handleGet(request, address, new HashMap<>()));
         } finally {
             long endTime = System.currentTimeMillis();
             logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
@@ -140,7 +142,7 @@ class EndpointRouter implements HttpRouter {
 
         registerEndpoint("/", RequestType.GET, new RequestHandler() {
             @Override
-            public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+            public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
                 return Response.ok;
             }
         });

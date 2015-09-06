@@ -3,6 +3,8 @@ package net.digitalbebop.http;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 /**
@@ -10,19 +12,19 @@ import java.util.HashMap;
  */
 public interface RequestHandler {
 
-    default HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+    default HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         return Response.notFound;
     }
 
-    default HttpResponse handlePost(HttpRequest req, HashMap<String, String> params, byte[] payload) {
+    default HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, byte[] payload) {
         return Response.notFound;
     }
 
-    default HttpResponse handleDelete(HttpRequest req, HashMap<String, String> params) {
+    default HttpResponse handleDelete(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         return Response.notFound;
     }
 
-    default HttpResponse handlePut(HttpRequest req, HashMap<String, String> params) {
+    default HttpResponse handlePut(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         return Response.notFound;
     }
 }

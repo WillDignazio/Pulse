@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -60,7 +61,8 @@ public class BasicHttpServerImpl implements HttpServer {
         fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
-    public void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, InterruptedException, IOException {
+    public void fiberServerRoutine(InetSocketAddress address, FiberSocketChannel ch)
+            throws SuspendExecution, InterruptedException, IOException {
         logger.debug("Started worker");
 
         try {
@@ -95,7 +97,7 @@ public class BasicHttpServerImpl implements HttpServer {
             }
 
             /* We can wrap this in a fiber if we feel we can be more async */
-            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, payload));
+            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, address, payload));
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
@@ -153,12 +155,14 @@ public class BasicHttpServerImpl implements HttpServer {
                         }
 
                         FiberSocketChannel ch = serverChannel.accept();
+                        InetSocketAddress address = (InetSocketAddress) ch.getRemoteAddress();
+
 
                         logger.debug("Accepted from: " + ch.toString());
                         new Fiber<Void>(fiberScheduler, () -> {
                             logger.debug("Running server routine in : " + Strand.currentStrand().getName());
                             try {
-                                fiberServerRoutine(ch);
+                                fiberServerRoutine(address, ch);
                             } catch (IOException ignored) {}
                             return null;
                         }).start();
