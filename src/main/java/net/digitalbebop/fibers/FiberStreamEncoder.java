@@ -23,7 +23,7 @@
  * have any questions.
  */
 
-package net.digitalbebop.http;
+package net.digitalbebop.fibers;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;

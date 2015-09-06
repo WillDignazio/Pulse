@@ -7,6 +7,7 @@ import co.paralleluniverse.fibers.io.FiberSocketChannel;
 import co.paralleluniverse.strands.Strand;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import net.digitalbebop.fibers.FiberChannels;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
