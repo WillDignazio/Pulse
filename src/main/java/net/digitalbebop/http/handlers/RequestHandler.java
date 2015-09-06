@@ -1,5 +1,6 @@
-package net.digitalbebop.http;
+package net.digitalbebop.http.handlers;
 
+import net.digitalbebop.http.Response;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 

@@ -4,7 +4,6 @@ import com.google.inject.Inject;
 import net.digitalbebop.PulseException;
 import net.digitalbebop.auth.AuthConduit;
 import net.digitalbebop.http.HttpStatus;
-import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import org.apache.commons.lang.StringUtils;

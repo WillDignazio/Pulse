@@ -3,7 +3,6 @@ package net.digitalbebop.http.handlers;
 import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
-import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.storage.StorageConduit;
@@ -17,7 +16,6 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class IndexRequestHandler implements RequestHandler {

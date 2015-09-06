@@ -7,13 +7,11 @@ import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;
-import net.digitalbebop.http.RequestHandler;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class DeleteRequestHandler implements RequestHandler {

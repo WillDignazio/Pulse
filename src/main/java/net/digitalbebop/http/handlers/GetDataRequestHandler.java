@@ -2,7 +2,6 @@ package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;

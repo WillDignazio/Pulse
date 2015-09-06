@@ -1,7 +1,6 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;
@@ -10,7 +9,6 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class GetThumbnailRequestHandler implements RequestHandler {
