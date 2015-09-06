@@ -1,9 +1,9 @@
 package net.digitalbebop.http;
 
-import co.paralleluniverse.fibers.Fiber;
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
 import co.paralleluniverse.strands.Strand;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -19,6 +19,7 @@ import java.util.concurrent.ExecutionException;
  * Fiber Utility methods for channels and streams.
  */
 public final class FiberChannels {
+    private static ReentrantLock lock = new ReentrantLock();
 
     private FiberChannels() {}
 
@@ -33,18 +34,16 @@ public final class FiberChannels {
      */
     private static void writeFullyImpl(WritableByteChannel ch, ByteBuffer bb)
             throws IOException, ExecutionException, InterruptedException, SuspendExecution {
-        new Fiber<>(() -> {
-            while (bb.remaining() > 0) {
-                int n = 0;
-                try {
-                    n = ch.write(bb);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                if (n <= 0)
-                    throw new RuntimeException("no bytes written");
+        while (bb.remaining() > 0) {
+            int n = 0;
+            try {
+                n = ch.write(bb);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        }).start().get();
+            if (n <= 0)
+                throw new RuntimeException("no bytes written");
+        }
     }
 
     /**
@@ -55,14 +54,20 @@ public final class FiberChannels {
      */
     private static void writeFully(WritableByteChannel ch, ByteBuffer bb)
             throws IOException, InterruptedException, ExecutionException, SuspendExecution {
-        if (ch instanceof SelectableChannel) {
-            SelectableChannel sc = (SelectableChannel)ch;
-            if (!sc.isBlocking())
-                throw new IllegalBlockingModeException();
+        try {
+            lock.lock();
+            if (ch instanceof SelectableChannel) {
+                SelectableChannel sc = (SelectableChannel) ch;
+                if (!sc.isBlocking()) {
+                    throw new IllegalBlockingModeException();
+                }
 
-            writeFullyImpl(ch, bb);
-        } else {
-            writeFullyImpl(ch, bb);
+                writeFullyImpl(ch, bb);
+            } else {
+                writeFullyImpl(ch, bb);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -107,6 +112,7 @@ public final class FiberChannels {
         checkNotNull(ch, "ch");
 
         return new OutputStream() {
+            private ReentrantLock olock = new ReentrantLock();
 
             private ByteBuffer bb = null;
             private byte[] bs = null;       // Invoker's previous array
@@ -114,33 +120,43 @@ public final class FiberChannels {
 
             @Suspendable
             public void write(int b) throws IOException {
-                if (b1 == null)
-                    b1 = new byte[1];
-                b1[0] = (byte)b;
-                this.write(b1);
+                try {
+                    olock.lock();
+                    if (b1 == null)
+                        b1 = new byte[1];
+                    b1[0] = (byte) b;
+                    this.write(b1);
+                } finally {
+                    olock.unlock();
+                }
             }
 
             @Suspendable
             public void write(byte[] bs, int off, int len)
                     throws IOException
             {
-                if ((off < 0) || (off > bs.length) || (len < 0) ||
-                        ((off + len) > bs.length) || ((off + len) < 0)) {
-                    throw new IndexOutOfBoundsException();
-                } else if (len == 0) {
-                    return;
-                }
-                ByteBuffer bb = ((this.bs == bs)
-                        ? this.bb
-                        : ByteBuffer.wrap(bs));
-                bb.limit(Math.min(off + len, bb.capacity()));
-                bb.position(off);
-                this.bb = bb;
-                this.bs = bs;
                 try {
-                    FiberChannels.writeFully(ch, bb);
-                } catch (InterruptedException | ExecutionException | SuspendExecution e) {
-                    e.printStackTrace();
+                    olock.lock();
+                    if ((off < 0) || (off > bs.length) || (len < 0) ||
+                            ((off + len) > bs.length) || ((off + len) < 0)) {
+                        throw new IndexOutOfBoundsException();
+                    } else if (len == 0) {
+                        return;
+                    }
+                    ByteBuffer bb = ((this.bs == bs)
+                            ? this.bb
+                            : ByteBuffer.wrap(bs));
+                    bb.limit(Math.min(off + len, bb.capacity()));
+                    bb.position(off);
+                    this.bb = bb;
+                    this.bs = bs;
+                    try {
+                        FiberChannels.writeFully(ch, bb);
+                    } catch (InterruptedException | ExecutionException | SuspendExecution e) {
+                        e.printStackTrace();
+                    }
+                } finally {
+                    olock.unlock();
                 }
             }
 
@@ -169,6 +185,7 @@ public final class FiberChannels {
     public static InputStream newInputStream(final AsynchronousByteChannel ch) throws SuspendExecution {
         checkNotNull(ch, "ch");
         return new InputStream() {
+            private ReentrantLock ilock = new ReentrantLock();
 
             private ByteBuffer bb = null;
             private byte[] bs = null;           // Invoker's previous array
@@ -177,12 +194,17 @@ public final class FiberChannels {
             @Override
             @Suspendable
             public int read() throws IOException {
-                if (b1 == null)
-                    b1 = new byte[1];
-                int n = this.read(b1);
-                if (n == 1)
-                    return b1[0] & 0xff;
-                return -1;
+                try {
+                    ilock.lock();
+                    if (b1 == null)
+                        b1 = new byte[1];
+                    int n = this.read(b1);
+                    if (n == 1)
+                        return b1[0] & 0xff;
+                    return -1;
+                } finally {
+                    ilock.unlock();
+                }
             }
 
             @Override
@@ -190,34 +212,40 @@ public final class FiberChannels {
             public int read(byte[] bs, int off, int len)
                     throws IOException
             {
-                if ((off < 0) || (off > bs.length) || (len < 0) ||
-                        ((off + len) > bs.length) || ((off + len) < 0)) {
-                    throw new IndexOutOfBoundsException();
-                } else if (len == 0)
-                    return 0;
-
-                ByteBuffer bb = ((this.bs == bs)
-                        ? this.bb
-                        : ByteBuffer.wrap(bs));
-                bb.position(off);
-                bb.limit(Math.min(off + len, bb.capacity()));
-                this.bb = bb;
-                this.bs = bs;
-
-                boolean interrupted = false;
                 try {
-                    for (;;) {
-                        try {
-                            return ch.read(bb).get();
-                        } catch (ExecutionException ee) {
-                            throw new IOException(ee.getCause());
-                        } catch (InterruptedException ie) {
-                            interrupted = true;
+                    ilock.lock();
+
+                    if ((off < 0) || (off > bs.length) || (len < 0) ||
+                            ((off + len) > bs.length) || ((off + len) < 0)) {
+                        throw new IndexOutOfBoundsException();
+                    } else if (len == 0)
+                        return 0;
+
+                    ByteBuffer bb = ((this.bs == bs)
+                            ? this.bb
+                            : ByteBuffer.wrap(bs));
+                    bb.position(off);
+                    bb.limit(Math.min(off + len, bb.capacity()));
+                    this.bb = bb;
+                    this.bs = bs;
+
+                    boolean interrupted = false;
+                    try {
+                        for (; ; ) {
+                            try {
+                                return ch.read(bb).get();
+                            } catch (ExecutionException ee) {
+                                throw new IOException(ee.getCause());
+                            } catch (InterruptedException ie) {
+                                interrupted = true;
+                            }
                         }
+                    } finally {
+                        if (interrupted)
+                            Strand.currentStrand().interrupt();
                     }
                 } finally {
-                    if (interrupted)
-                        Strand.currentStrand().interrupt();
+                    ilock.unlock();
                 }
             }
 
@@ -246,6 +274,7 @@ public final class FiberChannels {
     public static OutputStream newOutputStream(final AsynchronousByteChannel ch) throws SuspendExecution {
         checkNotNull(ch, "ch");
         return new OutputStream() {
+            private ReentrantLock olock = new ReentrantLock();
 
             private ByteBuffer bb = null;
             private byte[] bs = null;   // Invoker's previous array
@@ -254,10 +283,16 @@ public final class FiberChannels {
             @Override
             @Suspendable
             public void write(int b) throws IOException {
-                if (b1 == null)
-                    b1 = new byte[1];
-                b1[0] = (byte)b;
-                this.write(b1);
+                try {
+                    olock.lock();
+
+                    if (b1 == null)
+                        b1 = new byte[1];
+                    b1[0] = (byte) b;
+                    this.write(b1);
+                } finally {
+                    olock.unlock();
+                }
             }
 
             @Override
@@ -265,34 +300,40 @@ public final class FiberChannels {
             public void write(byte[] bs, int off, int len)
                     throws IOException
             {
-                if ((off < 0) || (off > bs.length) || (len < 0) ||
-                        ((off + len) > bs.length) || ((off + len) < 0)) {
-                    throw new IndexOutOfBoundsException();
-                } else if (len == 0) {
-                    return;
-                }
-                ByteBuffer bb = ((this.bs == bs)
-                        ? this.bb
-                        : ByteBuffer.wrap(bs));
-                bb.limit(Math.min(off + len, bb.capacity()));
-                bb.position(off);
-                this.bb = bb;
-                this.bs = bs;
-
-                boolean interrupted = false;
                 try {
-                    while (bb.remaining() > 0) {
-                        try {
-                            ch.write(bb).get();
-                        } catch (ExecutionException ee) {
-                            throw new IOException(ee.getCause());
-                        } catch (InterruptedException ie) {
-                            interrupted = true;
+                    olock.lock();
+
+                    if ((off < 0) || (off > bs.length) || (len < 0) ||
+                            ((off + len) > bs.length) || ((off + len) < 0)) {
+                        throw new IndexOutOfBoundsException();
+                    } else if (len == 0) {
+                        return;
+                    }
+                    ByteBuffer bb = ((this.bs == bs)
+                            ? this.bb
+                            : ByteBuffer.wrap(bs));
+                    bb.limit(Math.min(off + len, bb.capacity()));
+                    bb.position(off);
+                    this.bb = bb;
+                    this.bs = bs;
+
+                    boolean interrupted = false;
+                    try {
+                        while (bb.remaining() > 0) {
+                            try {
+                                ch.write(bb).get();
+                            } catch (ExecutionException ee) {
+                                throw new IOException(ee.getCause());
+                            } catch (InterruptedException ie) {
+                                interrupted = true;
+                            }
                         }
+                    } finally {
+                        if (interrupted)
+                            Thread.currentThread().interrupt();
                     }
                 } finally {
-                    if (interrupted)
-                        Thread.currentThread().interrupt();
+                    olock.unlock();
                 }
             }
 
@@ -334,11 +375,11 @@ public final class FiberChannels {
             extends AbstractInterruptibleChannel    // Not really interruptible
             implements ReadableByteChannel
     {
+        private static ReentrantLock lock = new ReentrantLock();
+
         InputStream in;
         private static final int TRANSFER_SIZE = 8192;
         private byte buf[] = new byte[0];
-        private boolean open = true;
-        private Object readLock = new Object();
 
         ReadableByteChannelImpl(InputStream in) {
             this.in = in;
@@ -349,34 +390,38 @@ public final class FiberChannels {
             int totalRead = 0;
             int bytesRead = 0;
 
-            while (totalRead < len) {
-                int bytesToRead = Math.min((len - totalRead),
-                        TRANSFER_SIZE);
-                if (buf.length < bytesToRead)
-                    buf = new byte[bytesToRead];
-                if ((totalRead > 0) && !(in.available() > 0))
-                    break; // block at most once
-                try {
-                    begin();
-                    bytesRead = in.read(buf, 0, bytesToRead);
-                } finally {
-                    end(bytesRead > 0);
+            try {
+                lock.lock();
+                while (totalRead < len) {
+                    int bytesToRead = Math.min((len - totalRead),
+                            TRANSFER_SIZE);
+                    if (buf.length < bytesToRead)
+                        buf = new byte[bytesToRead];
+                    if ((totalRead > 0) && !(in.available() > 0))
+                        break; // block at most once
+                    try {
+                        begin();
+                        bytesRead = in.read(buf, 0, bytesToRead);
+                    } finally {
+                        end(bytesRead > 0);
+                    }
+                    if (bytesRead < 0)
+                        break;
+                    else
+                        totalRead += bytesRead;
+                    dst.put(buf, 0, bytesRead);
                 }
-                if (bytesRead < 0)
-                    break;
-                else
-                    totalRead += bytesRead;
-                dst.put(buf, 0, bytesRead);
-            }
-            if ((bytesRead < 0) && (totalRead == 0))
-                return -1;
+                if ((bytesRead < 0) && (totalRead == 0))
+                    return -1;
 
-            return totalRead;
+                return totalRead;
+            } finally {
+                lock.unlock();
+            }
         }
 
         protected void implCloseChannel() throws IOException {
             in.close();
-            open = false;
         }
     }
 
@@ -408,11 +453,11 @@ public final class FiberChannels {
             extends AbstractInterruptibleChannel    // Not really interruptible
             implements WritableByteChannel
     {
+        private static ReentrantLock lock = new ReentrantLock();
+
         OutputStream out;
         private static final int TRANSFER_SIZE = 8192;
         private byte buf[] = new byte[0];
-        private boolean open = true;
-        private Object writeLock = new Object();
 
         WritableByteChannelImpl(OutputStream out) {
             this.out = out;
@@ -422,26 +467,29 @@ public final class FiberChannels {
             int len = src.remaining();
             int totalWritten = 0;
 
-            while (totalWritten < len) {
-                int bytesToWrite = Math.min((len - totalWritten),
-                        TRANSFER_SIZE);
-                if (buf.length < bytesToWrite)
-                    buf = new byte[bytesToWrite];
-                src.get(buf, 0, bytesToWrite);
-                try {
-                    begin();
-                    out.write(buf, 0, bytesToWrite);
-                } finally {
-                    end(bytesToWrite > 0);
+            try {
+                while (totalWritten < len) {
+                    int bytesToWrite = Math.min((len - totalWritten),
+                            TRANSFER_SIZE);
+                    if (buf.length < bytesToWrite)
+                        buf = new byte[bytesToWrite];
+                    src.get(buf, 0, bytesToWrite);
+                    try {
+                        begin();
+                        out.write(buf, 0, bytesToWrite);
+                    } finally {
+                        end(bytesToWrite > 0);
+                    }
+                    totalWritten += bytesToWrite;
                 }
-                totalWritten += bytesToWrite;
+                return totalWritten;
+            } finally {
+                lock.unlock();
             }
-            return totalWritten;
         }
 
         protected void implCloseChannel() throws IOException {
             out.close();
-            open = false;
         }
     }
 
