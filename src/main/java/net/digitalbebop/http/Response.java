@@ -25,8 +25,4 @@ public final class Response {
         response.setEntity(new ByteArrayEntity(payload));
         return response;
     }
-
-    public static HttpResponse serverError(String message) {
-        return new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, message);
-    }
 }

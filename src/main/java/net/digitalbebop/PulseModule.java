@@ -3,6 +3,7 @@ package net.digitalbebop;
 import com.google.inject.AbstractModule;
 import com.google.inject.Provides;
 import com.google.inject.name.Names;
+import net.digitalbebop.auth.AuthModule;
 import net.digitalbebop.http.HttpModule;
 import net.digitalbebop.indexer.IndexerModule;
 import net.digitalbebop.storage.StorageModule;
@@ -28,5 +29,6 @@ public class PulseModule extends AbstractModule {
         install(new HttpModule());
         install(new IndexerModule());
         install(new StorageModule());
+        install(new AuthModule());
     }
 }

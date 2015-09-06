@@ -4,10 +4,7 @@ import co.paralleluniverse.fibers.*;
 import co.paralleluniverse.fibers.futures.AsyncListenableFuture;
 import co.paralleluniverse.fibers.io.FiberServerSocketChannel;
 import co.paralleluniverse.fibers.io.FiberSocketChannel;
-import co.paralleluniverse.strands.AbstractFuture;
 import co.paralleluniverse.strands.Strand;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.commons.io.IOUtils;
@@ -60,7 +57,8 @@ public class BasicHttpServerImpl implements HttpServer {
         fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
-    public void fiberServerRoutine(FiberSocketChannel ch) throws SuspendExecution, InterruptedException, IOException {
+    public void fiberServerRoutine(InetSocketAddress address, FiberSocketChannel ch)
+            throws SuspendExecution, InterruptedException, IOException {
         logger.debug("Started worker");
 
         try {
@@ -95,12 +93,10 @@ public class BasicHttpServerImpl implements HttpServer {
             }
 
             /* We can wrap this in a fiber if we feel we can be more async */
-            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, payload));
+            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, address, payload));
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
-
-            sessionOutputBuffer.flush();
 
             if (rawResponse.getEntity() != null) {
                 rawResponse.getEntity().writeTo(os);
@@ -109,8 +105,6 @@ public class BasicHttpServerImpl implements HttpServer {
             os.flush();
             sessionOutputBuffer.flush();
 
-            os.close();
-            is.close();
             ch.close();
         } catch (HttpException | IOException e) {
             logger.error("Error processing request: " + e.getMessage(), e);
@@ -153,12 +147,14 @@ public class BasicHttpServerImpl implements HttpServer {
                         }
 
                         FiberSocketChannel ch = serverChannel.accept();
+                        InetSocketAddress address = (InetSocketAddress) ch.getRemoteAddress();
+
 
                         logger.debug("Accepted from: " + ch.toString());
                         new Fiber<Void>(fiberScheduler, () -> {
                             logger.debug("Running server routine in : " + Strand.currentStrand().getName());
                             try {
-                                fiberServerRoutine(ch);
+                                fiberServerRoutine(address, ch);
                             } catch (IOException ignored) {}
                             return null;
                         }).start();

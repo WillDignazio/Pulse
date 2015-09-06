@@ -1,6 +1,9 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
+import net.digitalbebop.PulseException;
+import net.digitalbebop.auth.AuthConduit;
+import net.digitalbebop.http.HttpStatus;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
@@ -12,19 +15,28 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.net.InetSocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
     private final IndexConduit indexConduit;
+    private final AuthConduit authConduit;
 
     @Inject
-    public SearchRequestHandler(IndexConduit solrConduit) {
+    public SearchRequestHandler(IndexConduit solrConduit, AuthConduit authConduit) {
         this.indexConduit = solrConduit;
+        this.authConduit = authConduit;
     }
 
-    public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+    public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
+
+        if (!authConduit.auth(address)) {
+            logger.warn("Attempted use of restricted materials from " + address.getHostString());
+            throw new PulseException(HttpStatus.NOT_AUTHORIZED, "Unauthorized Access");
+        }
+
         String offsetStr = params.get("offset");
         String limitStr = params.get("limit");
         String search = params.get("search");

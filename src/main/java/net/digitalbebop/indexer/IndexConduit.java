@@ -9,7 +9,7 @@ import java.util.Optional;
 public interface IndexConduit {
     /**
      * Handler for an index request
-     * @param pulseIndex Index request protobuf message
+     * @param indexRequest the Protocol Buffer request message
      */
     void index(ClientRequests.IndexRequest indexRequest) throws IOException;
 

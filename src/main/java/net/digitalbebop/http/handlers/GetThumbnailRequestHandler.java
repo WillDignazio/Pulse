@@ -9,6 +9,8 @@ import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.util.HashMap;
 
 public class GetThumbnailRequestHandler implements RequestHandler {
@@ -21,7 +23,7 @@ public class GetThumbnailRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handleGet(HttpRequest req, HashMap<String, String> params) {
+    public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         try {
             if (params.containsKey("moduleName") && params.containsKey("moduleId") &&
                     params.containsKey("timestamp")) {
@@ -32,7 +34,8 @@ public class GetThumbnailRequestHandler implements RequestHandler {
                         .map(Response::ok)
                         .orElse(Response.OK);
             } else {
-                return Response.badRequest("'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
+                return Response.badRequest(
+                        "'moduleId', 'moduleName', and 'timestamp' were not given as parameters");
             }
         } catch (Exception e) {
             logger.error("Error getting data from HBase:", e);

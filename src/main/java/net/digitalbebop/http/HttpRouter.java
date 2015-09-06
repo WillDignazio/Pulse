@@ -6,8 +6,10 @@ import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 
 interface HttpRouter {
+
     /**
      * Handle a recieved HTTP request, this is a raw transfer from the {@link BasicHttpServerImpl}
      * socket connection. The response from this call will be written back to the socket
@@ -16,7 +18,7 @@ interface HttpRouter {
      * @param payload byte[] payload of posted data
      * @return {@link HttpResponse} to client
      */
-    default ListenableFuture<HttpResponse> route(HttpRequest req, byte[] payload) { throw new NotImplementedException(); }
+    default ListenableFuture<HttpResponse> route(HttpRequest req, InetSocketAddress address, byte[] payload) { throw new NotImplementedException(); }
 
     /**
      * Initialize the HttpRouter.
