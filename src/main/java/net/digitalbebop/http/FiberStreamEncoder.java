@@ -35,6 +35,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.channels.WritableByteChannel;
 import java.nio.charset.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class FiberStreamEncoder extends Writer {
     private static Logger logger = LogManager.getLogger(FiberStreamEncoder.class);
@@ -50,7 +51,7 @@ public class FiberStreamEncoder extends Writer {
 
     // Factories for java.io.OutputStreamWriter
     public static FiberStreamEncoder forOutputStreamWriter(OutputStream out,
-                                                      Object lock,
+                                                      ReentrantLock lock,
                                                       String charsetName)
         throws UnsupportedEncodingException, SuspendExecution
     {
@@ -65,14 +66,14 @@ public class FiberStreamEncoder extends Writer {
     }
 
     public static FiberStreamEncoder forOutputStreamWriter(OutputStream out,
-                                                      Object lock,
+                                                      ReentrantLock lock,
                                                       Charset cs) throws SuspendExecution
     {
         return new FiberStreamEncoder(out, lock, cs);
     }
 
     public static FiberStreamEncoder forOutputStreamWriter(OutputStream out,
-                                                      Object lock,
+                                                      ReentrantLock lock,
                                                       CharsetEncoder enc) throws SuspendExecution
     {
         return new FiberStreamEncoder(out, lock, enc);
@@ -183,14 +184,14 @@ public class FiberStreamEncoder extends Writer {
     private char leftoverChar;
     private CharBuffer lcb = null;
 
-    private FiberStreamEncoder(OutputStream out, Object lock, Charset cs) {
+    private FiberStreamEncoder(OutputStream out, ReentrantLock lock, Charset cs) {
         this(out, lock,
          cs.newEncoder()
          .onMalformedInput(CodingErrorAction.REPLACE)
          .onUnmappableCharacter(CodingErrorAction.REPLACE));
     }
 
-    private FiberStreamEncoder(OutputStream out, Object lock, CharsetEncoder enc) {
+    private FiberStreamEncoder(OutputStream out, ReentrantLock lock, CharsetEncoder enc) {
         super(lock);
         this.out = out;
         this.ch = null;

@@ -27,6 +27,7 @@ package net.digitalbebop.http;
 
 import co.paralleluniverse.fibers.SuspendExecution;
 import co.paralleluniverse.fibers.Suspendable;
+import co.paralleluniverse.strands.concurrent.ReentrantLock;
 
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -58,7 +59,7 @@ public class FiberStreamDecoder extends Reader {
    // Factories for java.io.InputStreamReader
 
    public static FiberStreamDecoder forInputStreamReader(InputStream in,
-                                                    Object lock,
+                                                    ReentrantLock lock,
                                                     String charsetName)
        throws UnsupportedEncodingException, SuspendExecution
    {
@@ -73,14 +74,14 @@ public class FiberStreamDecoder extends Reader {
    }
 
    public static FiberStreamDecoder forInputStreamReader(InputStream in,
-                                                    Object lock,
+                                                    ReentrantLock lock,
                                                     Charset cs) throws SuspendExecution
    {
        return new FiberStreamDecoder(in, lock, cs);
    }
 
    public static FiberStreamDecoder forInputStreamReader(InputStream in,
-                                                    Object lock,
+                                                    ReentrantLock lock,
                                                     CharsetDecoder dec) throws SuspendExecution
    {
        return new FiberStreamDecoder(in, lock, dec);
@@ -239,14 +240,14 @@ public class FiberStreamDecoder extends Reader {
     private InputStream in;
     private ReadableByteChannel ch;
 
-    FiberStreamDecoder(InputStream in, Object lock, Charset cs) throws SuspendExecution {
+    FiberStreamDecoder(InputStream in, ReentrantLock lock, Charset cs) throws SuspendExecution {
         this(in, lock,
          cs.newDecoder()
          .onMalformedInput(CodingErrorAction.REPLACE)
          .onUnmappableCharacter(CodingErrorAction.REPLACE));
     }
 
-    FiberStreamDecoder(InputStream in, Object lock, CharsetDecoder dec) throws SuspendExecution {
+    FiberStreamDecoder(InputStream in, ReentrantLock lock, CharsetDecoder dec) throws SuspendExecution {
         super(lock);
         this.cs = dec.charset();
         this.decoder = dec;
