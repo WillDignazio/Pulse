@@ -1,9 +1,8 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
-import net.digitalbebop.PulseException;
+import com.google.inject.Provider;
 import net.digitalbebop.auth.AuthConduit;
-import net.digitalbebop.http.HttpStatus;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import org.apache.commons.lang.StringUtils;
@@ -24,18 +23,15 @@ public class SearchRequestHandler implements RequestHandler {
     private final AuthConduit authConduit;
 
     @Inject
-    public SearchRequestHandler(IndexConduit solrConduit, AuthConduit authConduit) {
-        this.indexConduit = solrConduit;
+    public SearchRequestHandler(Provider<IndexConduit> indexProvider, AuthConduit authConduit) {
+        this.indexConduit = indexProvider.get();
         this.authConduit = authConduit;
     }
 
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
-
-        if (!authConduit.auth(address)) {
-            logger.warn("Attempted use of restricted materials from " + address.getHostString());
-            throw new PulseException(HttpStatus.NOT_AUTHORIZED, "Unauthorized Access");
+        if (!authConduit.auth(req, address)) {
+            return Response.NO_AUTH;
         }
-
         String offsetStr = params.get("offset");
         String limitStr = params.get("limit");
         String search = params.get("search");

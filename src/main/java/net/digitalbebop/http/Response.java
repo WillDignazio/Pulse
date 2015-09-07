@@ -10,10 +10,12 @@ import org.apache.http.message.BasicHttpResponse;
 
 public final class Response {
     public static final ProtocolVersion VERSION = HttpVersion.HTTP_1_1;
+
     public static final HttpResponse OK = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
     public static final HttpResponse NOT_FOUND = new BasicHttpResponse(VERSION, HttpStatus.SC_NOT_FOUND, "NOT IMPLEMENTED");
     public static final HttpResponse SERVER_ERROR = new BasicHttpResponse(VERSION, HttpStatus.SC_INTERNAL_SERVER_ERROR, "server error");
     public static final HttpResponse BAD_REQUEST = new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, "invalid request");
+    public static final HttpResponse NO_AUTH = new BasicHttpResponse(VERSION, HttpStatus.SC_FORBIDDEN, "forbidden request");
 
     public static HttpResponse badRequest(String message) {
         return new BasicHttpResponse(VERSION, HttpStatus.SC_BAD_REQUEST, message);

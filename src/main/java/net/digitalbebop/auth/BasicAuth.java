@@ -3,6 +3,8 @@ package net.digitalbebop.auth;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import org.apache.http.Header;
+import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -17,9 +19,12 @@ public class BasicAuth implements AuthConduit {
         this.host = host;
     }
 
-    public boolean auth(InetSocketAddress address) {
+    @Override
+    public boolean auth(HttpRequest request, InetSocketAddress address) {
         String hostname = address.getHostName();
-        logger.debug("checking auth for " + hostname);
-        return hostname.startsWith("localhost") || host == hostname;
+        Header username = request.getFirstHeader("X-WEBAUTH-USER");
+        boolean result = hostname.startsWith("localhost") || (host.equals(hostname) && username != null);
+        logger.debug("checking auth for hostname: " + hostname + " = " + result);
+        return result;
     }
 }
