@@ -15,8 +15,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
+import java.util.Optional;
 
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
@@ -32,9 +34,17 @@ public class IndexRequestHandler implements RequestHandler {
     }
 
     @Override
-    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, byte[] payload) {
+    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, Optional<InputStream> payload) {
         try {
-            ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(payload);
+            final InputStream is;
+            if (payload.isPresent()) {
+                is = payload.get();
+            } else {
+                return Response.BAD_REQUEST;
+            }
+
+            ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(is);
+
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             indexConduit.index(indexRequest);
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),

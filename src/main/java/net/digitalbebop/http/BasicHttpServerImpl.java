@@ -8,7 +8,6 @@ import co.paralleluniverse.strands.Strand;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import net.digitalbebop.fibers.FiberChannels;
-import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntityEnclosingRequest;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
@@ -23,6 +22,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -30,6 +30,7 @@ public class BasicHttpServerImpl implements HttpServer {
     private static Logger logger = LogManager.getLogger(BasicHttpServerImpl.class);
 
     private static final int SESSION_BUFFER_SIZE = 100*1024; // 100KB
+    private final ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
     private final AtomicBoolean initialized = new AtomicBoolean(false);
@@ -76,25 +77,26 @@ public class BasicHttpServerImpl implements HttpServer {
             final HttpRequest rawRequest = parser.parse();
 
             // deals with PUT requests
-            byte[] payload = new byte[0];
+            final Optional<InputStream> contentStream;
             if (rawRequest instanceof HttpEntityEnclosingRequest) {
-                InputStream contentStream;
-                ContentLengthStrategy contentLengthStrategy = StrictContentLengthStrategy.INSTANCE;
                 long len = contentLengthStrategy.determineLength(rawRequest);
                 if (len > 0) {
                     if (len == ContentLengthStrategy.CHUNKED) {
-                        contentStream = new ChunkedInputStream(sessionInputBuffer);
+                        contentStream = Optional.of(new ChunkedInputStream(sessionInputBuffer));
                     } else if (len == ContentLengthStrategy.IDENTITY) {
-                        contentStream = new IdentityInputStream(sessionInputBuffer);
+                        contentStream = Optional.of(new IdentityInputStream(sessionInputBuffer));
                     } else {
-                        contentStream = new ContentLengthInputStream(sessionInputBuffer, len);
+                        contentStream = Optional.of(new ContentLengthInputStream(sessionInputBuffer, len));
                     }
-                    payload = IOUtils.toByteArray(contentStream);
+                } else {
+                    contentStream = Optional.empty();
                 }
+            } else {
+                contentStream = Optional.empty();
             }
 
             /* We can wrap this in a fiber if we feel we can be more async */
-            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, address, payload));
+            HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, address, contentStream));
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);

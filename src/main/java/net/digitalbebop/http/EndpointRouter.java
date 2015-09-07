@@ -15,11 +15,13 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import javax.validation.constraints.NotNull;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
@@ -69,7 +71,7 @@ class EndpointRouter implements HttpRouter {
     }
 
     @Override
-    public ListenableFuture<HttpResponse> route(HttpRequest request, InetSocketAddress address, byte[] payload) {
+    public ListenableFuture<HttpResponse> route(HttpRequest request, InetSocketAddress address, Optional<InputStream> payload) {
         long startTime = System.currentTimeMillis();
         try {
             final HashMap<String, String> parameters;
@@ -91,7 +93,6 @@ class EndpointRouter implements HttpRouter {
             }
 
             logger.debug("Received request: " + request.getRequestLine());
-            logger.debug("payload size: " + payload.length);
             for (EndpointMap map : endpointMap) {
                 if (map.getRequestType().toString().equals(method) && map.getPattern().matcher(path).matches()) {
                     logger.debug("Handling request (" + path + ") with " + map.getHandler().toString());

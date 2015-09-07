@@ -4,9 +4,10 @@ import net.digitalbebop.http.Response;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.util.HashMap;
+import java.util.Optional;
 
 /**
  * Interface to the different supported HTTP methods
@@ -16,7 +17,7 @@ public interface RequestHandler {
         return Response.NOT_FOUND;
     }
 
-    default HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, byte[] payload) {
+    default HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, Optional<InputStream> payload) {
         return Response.NOT_FOUND;
     }
 
