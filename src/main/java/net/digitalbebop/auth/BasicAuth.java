@@ -20,6 +20,6 @@ public class BasicAuth implements AuthConduit {
     public boolean auth(InetSocketAddress address) {
         String hostname = address.getHostName();
         logger.debug("checking auth for " + hostname);
-        return hostname.startsWith("localhost") || host == hostname;
+        return hostname.startsWith("localhost") || host.equals(hostname);
     }
 }

@@ -35,11 +35,9 @@ public class SearchRequestHandler implements RequestHandler {
     }
 
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
-
         if (!authConduit.auth(address)) {
             return Response.serverError;
         }
-
         String offsetStr = params.get("offset");
         String limitStr = params.get("limit");
         String search = params.get("search");
