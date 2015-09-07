@@ -28,7 +28,7 @@ public class GetDataRequestHandler implements RequestHandler {
 
     @Override
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
-        if (!authConduit.auth(address)) {
+        if (!authConduit.auth(req, address)) {
             return Response.noAuth;
         }
         try {
