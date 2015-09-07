@@ -19,7 +19,8 @@ public class BasicAuth implements AuthConduit {
 
     public boolean auth(InetSocketAddress address) {
         String hostname = address.getHostName();
-        logger.debug("checking auth for " + hostname);
-        return hostname.startsWith("localhost") || host.equals(hostname);
+        boolean result = hostname.startsWith("localhost") || host.equals(hostname);
+        logger.debug("checking auth for hostname: " + hostname + " = " + result);
+        return result;
     }
 }

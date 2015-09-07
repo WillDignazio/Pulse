@@ -1,27 +1,22 @@
 package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
+import com.google.inject.Provider;
 import net.digitalbebop.auth.AuthConduit;
 import net.digitalbebop.http.RequestHandler;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
-import net.digitalbebop.indexer.SearchResult;
 import org.apache.commons.lang.StringUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.URLDecoder;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
 
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
@@ -29,14 +24,14 @@ public class SearchRequestHandler implements RequestHandler {
     private final AuthConduit authConduit;
 
     @Inject
-    public SearchRequestHandler(IndexConduit solrConduit, AuthConduit authConduit) {
-        this.indexConduit = solrConduit;
+    public SearchRequestHandler(Provider<IndexConduit> indexProvider, AuthConduit authConduit) {
+        this.indexConduit = indexProvider.get();
         this.authConduit = authConduit;
     }
 
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
         if (!authConduit.auth(address)) {
-            return Response.serverError;
+            return Response.noAuth;
         }
         String offsetStr = params.get("offset");
         String limitStr = params.get("limit");
