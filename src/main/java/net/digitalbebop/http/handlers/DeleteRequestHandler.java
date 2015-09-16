@@ -38,7 +38,7 @@ public class DeleteRequestHandler implements RequestHandler {
             }
 
             ClientRequests.DeleteRequest deleteRequest = ClientRequests.DeleteRequest.parseFrom(is);
-            logger.debug("Recieved Delete request from module: " + deleteRequest.getModuleName());
+            logger.debug("Received Delete request from module: " + deleteRequest.getModuleName());
 
             indexConduit.delete(deleteRequest);
             storageConduit.delete(deleteRequest.getModuleName(), deleteRequest.getModuleId());

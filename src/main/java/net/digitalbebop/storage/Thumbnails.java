@@ -6,9 +6,9 @@ import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.util.ImageIOUtil;
+import org.imgscalr.Scalr;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
@@ -51,16 +51,10 @@ public final class Thumbnails {
 
     private static Optional<byte[]> generateImageThumbnail(ClientRequests.IndexRequest request) {
         try {
+            BufferedImage input = ImageIO.read(request.getRawData().newInput());
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BufferedImage img = ImageIO.read(request.getRawData().newInput());
-            Image scaledImg = img.getScaledInstance(THUMBNAIL_SIZE, THUMBNAIL_SIZE, Image.SCALE_SMOOTH);
-            BufferedImage bImage = new BufferedImage(scaledImg.getWidth(null),
-                    scaledImg.getHeight(null), BufferedImage.TYPE_INT_ARGB);
-            // Draw the image on to the buffered image
-            Graphics2D bGr = bImage.createGraphics();
-            bGr.drawImage(scaledImg, 0, 0, null);
-            bGr.dispose();
-            ImageIO.write(bImage, IMAGE_TYPE, outputStream);
+            BufferedImage image = Scalr.resize(input, THUMBNAIL_SIZE);
+            ImageIO.write(image, "png", outputStream);
             return Optional.of(outputStream.toByteArray());
         } catch (IOException e) {
             logger.warn("could not generate thumbnail for image", e);

@@ -57,6 +57,7 @@ dependencies {
 
     compile 'commons-cli:commons-cli:1.3.1'
     compile 'org.apache.pdfbox:pdfbox:1.8.10'
+    compile 'org.imgscalr:imgscalr-lib:4.2'
 
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
