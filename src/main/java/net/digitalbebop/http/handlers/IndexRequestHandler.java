@@ -1,5 +1,7 @@
 package net.digitalbebop.http.handlers;
 
+import co.paralleluniverse.fibers.Fiber;
+import co.paralleluniverse.fibers.Suspendable;
 import com.google.inject.Inject;
 import com.google.protobuf.InvalidProtocolBufferException;
 import net.digitalbebop.ClientRequests;
@@ -19,6 +21,7 @@ import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.HashMap;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
@@ -34,6 +37,7 @@ public class IndexRequestHandler implements RequestHandler {
     }
 
     @Override
+    @Suspendable
     public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, Optional<InputStream> payload) {
         try {
             final InputStream is;
@@ -43,8 +47,16 @@ public class IndexRequestHandler implements RequestHandler {
                 return Response.BAD_REQUEST;
             }
 
-            ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(is);
+            Fiber<ClientRequests.IndexRequest> requestFiber = new Fiber<>(() -> {
+                try {
+                    return ClientRequests.IndexRequest.parseFrom(is);
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            }).start();
 
+
+            ClientRequests.IndexRequest indexRequest = requestFiber.get();
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             indexConduit.index(indexRequest);
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
@@ -62,8 +74,13 @@ public class IndexRequestHandler implements RequestHandler {
         } catch (IOException e) {
             logger.error("IO exception when inserting data", e);
             return Response.SERVER_ERROR;
+        } catch (InterruptedException e) {
+            logger.error("Interrrupted: " + e.getLocalizedMessage(), e);
+            return Response.SERVER_ERROR;
+        } catch (ExecutionException e) {
+            logger.error("Failed to index: " + e.getLocalizedMessage(), e);
+            return Response.BAD_REQUEST; // XXX: Best choice for this?
         }
-
     }
 
     private String getFormat(String metaData) {
