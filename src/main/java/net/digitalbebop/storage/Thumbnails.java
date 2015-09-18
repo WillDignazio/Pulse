@@ -6,14 +6,12 @@ import org.apache.logging.log4j.Logger;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.util.ImageIOUtil;
-import org.imgscalr.Scalr;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Wrapper around all thumbnail generation. Add function here to create thumbnails for different
@@ -59,7 +57,7 @@ public final class Thumbnails {
             Graphics2D g = outImg.createGraphics();
             g.drawImage(resizedImg, 0, 0, null);
             g.dispose();
-            ImageIO.write(outImg, "png", outputStream);
+            ImageIO.write(outImg, IMAGE_TYPE, outputStream);
             return outputStream.toByteArray();
         } catch (IOException e) {
             logger.warn("could not generate thumbnail for image", e);
