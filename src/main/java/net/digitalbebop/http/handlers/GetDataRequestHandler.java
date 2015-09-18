@@ -19,8 +19,8 @@ public class GetDataRequestHandler implements RequestHandler {
     private Authenticator authenticator;
 
     @Inject
-    public GetDataRequestHandler(Provider<StorageConduit> provider, Authenticator authenticator) {
-        storageConduit = provider.get();
+    public GetDataRequestHandler(StorageConduit storageConduit, Authenticator authenticator) {
+        this.storageConduit = storageConduit;
         this.authenticator = authenticator;
     }
 

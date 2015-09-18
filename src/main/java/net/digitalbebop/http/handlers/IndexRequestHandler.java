@@ -9,6 +9,7 @@ import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.storage.StorageConduit;
 import net.digitalbebop.storage.Thumbnails;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -49,7 +50,7 @@ public class IndexRequestHandler implements RequestHandler {
 
             Fiber<ClientRequests.IndexRequest> requestFiber = new Fiber<>(() -> {
                 try {
-                    return ClientRequests.IndexRequest.parseFrom(is);
+                    return ClientRequests.IndexRequest.parseFrom(IOUtils.toByteArray(is));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

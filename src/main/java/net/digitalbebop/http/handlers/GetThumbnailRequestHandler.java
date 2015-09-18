@@ -19,8 +19,8 @@ public class GetThumbnailRequestHandler implements RequestHandler {
     private Authenticator authenticator;
 
     @Inject
-    public GetThumbnailRequestHandler(Provider<StorageConduit> stoageProvider, Authenticator authenticator) {
-        storageConduit = stoageProvider.get();
+    public GetThumbnailRequestHandler(StorageConduit storageConduit, Authenticator authenticator) {
+        this.storageConduit = storageConduit;
         this.authenticator = authenticator;
     }
 
