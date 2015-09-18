@@ -7,6 +7,7 @@ import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import net.digitalbebop.storage.StorageConduit;
 import net.digitalbebop.storage.Thumbnails;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
 import org.apache.logging.log4j.LogManager;
@@ -42,8 +43,9 @@ public class IndexRequestHandler implements RequestHandler {
             } else {
                 return Response.BAD_REQUEST;
             }
-
-            ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(is);
+            byte[] arr = IOUtils.toByteArray(is);
+            logger.debug("payload size: " + arr.length);
+            ClientRequests.IndexRequest indexRequest = ClientRequests.IndexRequest.parseFrom(arr);
 
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
             indexConduit.index(indexRequest);
