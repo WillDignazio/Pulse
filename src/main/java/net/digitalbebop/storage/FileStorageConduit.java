@@ -15,8 +15,9 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentNavigableMap;
 
 /**
- * Uses on disk storage for the backend data store. This is not a tread safe operation since there
- * is an internal buffer used for writing to the disk.
+ * Uses on disk storage for the backend data store. This uses MapDB to implement the file
+ * backend. Make sure that this is a Singleton instance since it cannot deal with more than
+ * one open connection to the file backend.
  */
 @Singleton
 public class FileStorageConduit implements StorageConduit {
@@ -33,8 +34,8 @@ public class FileStorageConduit implements StorageConduit {
                 .closeOnJvmShutdown()
                 .cacheHardRefEnable()
                 .cacheSize(CACHE_SIZE)
-                //.asyncWriteEnable()
-                //.asyncWriteFlushDelay(FLUSH_DELAY)
+                .asyncWriteEnable()
+                .asyncWriteFlushDelay(FLUSH_DELAY)
                 .make();
 
         collection = db.createTreeMap("pulse")

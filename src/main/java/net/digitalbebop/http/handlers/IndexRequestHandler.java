@@ -50,9 +50,7 @@ public class IndexRequestHandler implements RequestHandler {
 
             Fiber<ClientRequests.IndexRequest> requestFiber = new Fiber<>(() -> {
                 try {
-                    byte[] arr = IOUtils.toByteArray(is);
-                    logger.debug("payload size: " + arr.length)
-                    return ClientRequests.IndexRequest.parseFrom(arr);
+                    return ClientRequests.IndexRequest.parseFrom(IOUtils.toByteArray(is));
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -3,7 +3,6 @@ package net.digitalbebop.auth;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
-import org.apache.http.Header;
 import org.apache.http.HttpRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
