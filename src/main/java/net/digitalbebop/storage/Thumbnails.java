@@ -9,6 +9,7 @@ import org.apache.pdfbox.util.ImageIOUtil;
 import org.imgscalr.Scalr;
 
 import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
@@ -27,38 +28,42 @@ public final class Thumbnails {
      * Creates the OutputStream of the thumbnail generated. Returns null if no thumbnail could be
      * generated. This happens in the case of errors of when the given type is not supported.
      */
-    public static Optional<byte[]> convert(String format, ClientRequests.IndexRequest request) {
+    public static byte[] convert(String format, ClientRequests.IndexRequest request) {
         switch(format) {
             case "pdf": return generatePdfThumbnail(request);
             case "image": return generateImageThumbnail(request);
-            default: return Optional.empty();
+            default: return null;
         }
     }
 
-    private static Optional<byte[]> generatePdfThumbnail(ClientRequests.IndexRequest request) {
+    private static byte[] generatePdfThumbnail(ClientRequests.IndexRequest request) {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             PDDocument document = PDDocument.load(request.getRawData().newInput());
             List<PDPage> pages = document.getDocumentCatalog().getAllPages();
             BufferedImage img = pages.get(0).convertToImage(BufferedImage.TYPE_INT_RGB, THUMBNAIL_SIZE);
             ImageIOUtil.writeImage(img, IMAGE_TYPE, outputStream);
-            return Optional.of(outputStream.toByteArray());
+            return outputStream.toByteArray();
         } catch (IOException e) {
             logger.warn("could not generate thumbnail for pdf", e);
-            return Optional.empty();
+            return null;
         }
     }
 
-    private static Optional<byte[]> generateImageThumbnail(ClientRequests.IndexRequest request) {
+    private static byte[] generateImageThumbnail(ClientRequests.IndexRequest request) {
         try {
-            BufferedImage input = ImageIO.read(request.getRawData().newInput());
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BufferedImage image = Scalr.resize(input, THUMBNAIL_SIZE);
-            ImageIO.write(image, "png", outputStream);
-            return Optional.of(outputStream.toByteArray());
+            BufferedImage img = ImageIO.read(request.getRawData().newInput());
+            Image resizedImg = img.getScaledInstance(THUMBNAIL_SIZE, THUMBNAIL_SIZE, Image.SCALE_FAST);
+            BufferedImage outImg = new BufferedImage(THUMBNAIL_SIZE, THUMBNAIL_SIZE, img.getType());
+            Graphics2D g = outImg.createGraphics();
+            g.drawImage(resizedImg, 0, 0, null);
+            g.dispose();
+            ImageIO.write(outImg, "png", outputStream);
+            return outputStream.toByteArray();
         } catch (IOException e) {
             logger.warn("could not generate thumbnail for image", e);
-            return Optional.empty();
+            return null;
         }
     }
 
