@@ -2,7 +2,7 @@ package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import net.digitalbebop.auth.AuthConduit;
+import net.digitalbebop.auth.Authenticator;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.storage.StorageConduit;
 import org.apache.http.HttpRequest;
@@ -16,17 +16,17 @@ import java.util.HashMap;
 public class GetDataRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(GetDataRequestHandler.class);
     private StorageConduit storageConduit;
-    private AuthConduit authConduit;
+    private Authenticator authenticator;
 
     @Inject
-    public GetDataRequestHandler(Provider<StorageConduit> provider, AuthConduit authConduit) {
+    public GetDataRequestHandler(Provider<StorageConduit> provider, Authenticator authenticator) {
         storageConduit = provider.get();
-        this.authConduit = authConduit;
+        this.authenticator = authenticator;
     }
 
     @Override
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
-        if (!authConduit.auth(req, address)) {
+        if (!authenticator.isAuthorized(req, address)) {
             return Response.NO_AUTH;
         }
         try {
