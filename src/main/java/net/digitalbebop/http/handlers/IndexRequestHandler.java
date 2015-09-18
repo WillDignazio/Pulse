@@ -61,12 +61,11 @@ public class IndexRequestHandler implements RequestHandler {
             indexConduit.index(indexRequest);
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                     indexRequest.getTimestamp(), indexRequest.getRawData().toByteArray());
-            Thumbnails.convert(getFormat(indexRequest.getMetaTags()), indexRequest)
-                    .map(data -> {
-                        storageConduit.putThumbnail(indexRequest.getModuleName(),
-                                indexRequest.getModuleId(), indexRequest.getTimestamp(), data);
-                        return null;
-                    });
+            byte[] thumbnail = Thumbnails.convert(getFormat(indexRequest.getMetaTags()), indexRequest);
+            if (thumbnail != null) {
+                storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
+                        indexRequest.getTimestamp(), thumbnail);
+            }
             return Response.OK;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);

@@ -22,8 +22,7 @@ public class BasicAuth implements AuthConduit {
     @Override
     public boolean auth(HttpRequest request, InetSocketAddress address) {
         String hostname = address.getHostName();
-        Header username = request.getFirstHeader("X-WEBAUTH-USER");
-        boolean result = hostname.startsWith("localhost") || (host.equals(hostname) && username != null);
+        boolean result = hostname.startsWith("localhost") || host.equals(hostname);
         logger.debug("checking auth for hostname: " + hostname + " = " + result);
         return result;
     }

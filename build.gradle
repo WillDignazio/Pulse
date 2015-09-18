@@ -13,7 +13,6 @@ plugins {
     id 'idea'
 
     id "com.google.protobuf" version "0.6.1"
-    id "com.commercehub.gradle.plugin.avro" version "0.3.4"
 }
 
 [compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
@@ -51,7 +50,6 @@ dependencies {
     compile 'javax.validation:validation-api:1.1.0.Final'
     compile 'org.slf4j:slf4j-simple:1.6.1'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
-    compile 'org.apache.avro:avro-tools:1.7.7'
     compile 'log4j:log4j:1.2.17'
     compile 'org.json:json:20141113'
 
