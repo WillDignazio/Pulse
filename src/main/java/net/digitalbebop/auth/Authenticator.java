@@ -4,7 +4,7 @@ import org.apache.http.HttpRequest;
 
 import java.net.InetSocketAddress;
 
-public interface AuthConduit {
+public interface Authenticator {
 
-    boolean auth(HttpRequest request, InetSocketAddress address);
+    boolean isAuthorized(HttpRequest request, InetSocketAddress address);
 }

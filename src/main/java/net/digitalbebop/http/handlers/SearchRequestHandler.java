@@ -2,7 +2,7 @@ package net.digitalbebop.http.handlers;
 
 import com.google.inject.Inject;
 import com.google.inject.Provider;
-import net.digitalbebop.auth.AuthConduit;
+import net.digitalbebop.auth.Authenticator;
 import net.digitalbebop.http.Response;
 import net.digitalbebop.indexer.IndexConduit;
 import org.apache.commons.lang.StringUtils;
@@ -20,16 +20,16 @@ import java.util.HashMap;
 public class SearchRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(SearchRequestHandler.class);
     private final IndexConduit indexConduit;
-    private final AuthConduit authConduit;
+    private final Authenticator authenticator;
 
     @Inject
-    public SearchRequestHandler(Provider<IndexConduit> indexProvider, AuthConduit authConduit) {
+    public SearchRequestHandler(Provider<IndexConduit> indexProvider, Authenticator authenticator) {
         this.indexConduit = indexProvider.get();
-        this.authConduit = authConduit;
+        this.authenticator = authenticator;
     }
 
     public HttpResponse handleGet(HttpRequest req, InetSocketAddress address, HashMap<String, String> params) {
-        if (!authConduit.auth(req, address)) {
+        if (!authenticator.isAuthorized(req, address)) {
             return Response.NO_AUTH;
         }
         String offsetStr = params.get("offset");
