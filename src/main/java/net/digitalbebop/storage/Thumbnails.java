@@ -52,8 +52,11 @@ public final class Thumbnails {
         try {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             BufferedImage img = ImageIO.read(request.getRawData().newInput());
-            Image resizedImg = img.getScaledInstance(THUMBNAIL_SIZE, THUMBNAIL_SIZE, Image.SCALE_DEFAULT);
-            BufferedImage outImg = new BufferedImage(THUMBNAIL_SIZE, THUMBNAIL_SIZE, img.getType());
+            int scaleBy = Math.max(img.getHeight(), img.getWidth()) / THUMBNAIL_SIZE;
+            int height = img.getHeight() / scaleBy;
+            int width = img.getWidth() / scaleBy;
+            Image resizedImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
+            BufferedImage outImg = new BufferedImage(width, height, img.getType());
             Graphics2D g = outImg.createGraphics();
             g.drawImage(resizedImg, 0, 0, null);
             g.dispose();
