@@ -22,10 +22,10 @@ import java.util.concurrent.ConcurrentNavigableMap;
 @Singleton
 public class FileStorageConduit implements StorageConduit {
     private static final Logger logger = LogManager.getLogger(FileStorageConduit.class);
-    private static final int CACHE_SIZE = 10000;
-    private static final int FLUSH_DELAY = 2000;
-    private DB db;
     private ConcurrentNavigableMap<String, byte[]> collection;
+    private static final int CACHE_SIZE = 10000;
+    private DB db;
+
 
     @Inject
     public FileStorageConduit(@Named("fileStorageFile") String dir) {
@@ -34,8 +34,6 @@ public class FileStorageConduit implements StorageConduit {
                 .closeOnJvmShutdown()
                 .cacheHardRefEnable()
                 .cacheSize(CACHE_SIZE)
-                .asyncWriteEnable()
-                .asyncWriteFlushDelay(FLUSH_DELAY)
                 .make();
 
         collection = db.createTreeMap("pulse")

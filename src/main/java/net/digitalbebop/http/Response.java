@@ -23,7 +23,6 @@ public final class Response {
 
     public static HttpResponse ok(byte[] payload) {
         HttpResponse response = new BasicHttpResponse(VERSION, HttpStatus.SC_OK, "OK");
-        response.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
         response.setEntity(new ByteArrayEntity(payload));
         return response;
     }

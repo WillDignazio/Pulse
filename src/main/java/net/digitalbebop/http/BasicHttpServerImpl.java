@@ -15,6 +15,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
+import org.apache.http.message.BasicHeader;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -97,9 +98,11 @@ public class BasicHttpServerImpl implements HttpServer {
 
             /* We can wrap this in a fiber if we feel we can be more async */
             HttpResponse rawResponse = AsyncListenableFuture.get(router.route(rawRequest, address, contentStream));
+            rawResponse.addHeader(new BasicHeader("Access-Control-Allow-Origin", "*"));
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
+            sessionOutputBuffer.flush(); // flushes the header
 
             if (rawResponse.getEntity() != null) {
                 rawResponse.getEntity().writeTo(os);
