@@ -30,10 +30,13 @@ public class FileStorageConduit implements StorageConduit {
     @Inject
     public FileStorageConduit(@Named("fileStorageFile") String dir) {
         db = DBMaker.newFileDB(new File(dir))
+                .mmapFileEnable()
+                .mmapFileEnableIfSupported()
                 .transactionDisable()
                 .closeOnJvmShutdown()
                 .cacheHardRefEnable()
                 .cacheSize(CACHE_SIZE)
+                .asyncWriteEnable()
                 .make();
 
         collection = db.createTreeMap("pulse")

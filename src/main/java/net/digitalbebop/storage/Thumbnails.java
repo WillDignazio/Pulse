@@ -42,7 +42,7 @@ public final class Thumbnails {
             BufferedImage img = pages.get(0).convertToImage(BufferedImage.TYPE_INT_RGB, THUMBNAIL_SIZE);
             ImageIOUtil.writeImage(img, IMAGE_TYPE, outputStream);
             return outputStream.toByteArray();
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("could not generate thumbnail for pdf", e);
             return null;
         }
@@ -56,13 +56,14 @@ public final class Thumbnails {
             int height = img.getHeight() / scaleBy;
             int width = img.getWidth() / scaleBy;
             Image resizedImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            BufferedImage outImg = new BufferedImage(width, height, img.getType());
+            int type = (img.getType() == 0) ? 5 : img.getType();
+            BufferedImage outImg = new BufferedImage(width, height, type);
             Graphics2D g = outImg.createGraphics();
             g.drawImage(resizedImg, 0, 0, null);
             g.dispose();
             ImageIO.write(outImg, IMAGE_TYPE, outputStream);
             return outputStream.toByteArray();
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.warn("could not generate thumbnail for image", e);
             return null;
         }
