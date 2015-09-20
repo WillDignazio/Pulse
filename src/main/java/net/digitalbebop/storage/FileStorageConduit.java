@@ -26,22 +26,24 @@ public class FileStorageConduit implements StorageConduit {
     private static final Logger logger = LogManager.getLogger(FileStorageConduit.class);
     private ConcurrentNavigableMap<String, byte[]> collection;
     private static final int CACHE_SIZE = 10000;
+    private static final int FLUSH_TIME = 2000;
     private DB db;
 
 
     @Inject
     public FileStorageConduit(@Named("fileStorageFile") String dir) {
-        db = DBMaker.newFileDB(new File(dir))
-                .mmapFileEnable()
-                .mmapFileEnableIfSupported()
-                .transactionDisable()
-                .closeOnJvmShutdown()
-                .cacheHardRefEnable()
-                .cacheSize(CACHE_SIZE)
-                .asyncWriteEnable()
+        db = DBMaker.fileDB(new File(dir))
+                .fileChannelEnable()              // uses file channel for all file IO
+                .transactionDisable()             // disables all transactions for performance
+                .closeOnJvmShutdown()             // cleans up when the JVM shutdowns
+                .cacheHashTableEnable()           // uses a Hash Table for on-heap cache
+                .cacheExecutorEnable()            // background cache eviction
+                .asyncWriteEnable()               // allows for asynchronous writes
+                .asyncWriteFlushDelay(FLUSH_TIME) // async flush of writes
+                .storeExecutorEnable()            // background thread pool for async writes
                 .make();
 
-        collection = db.createTreeMap("pulse")
+        collection = db.treeMapCreate("pulse")
                 .valuesOutsideNodesEnable()
                 .keySerializer(BTreeKeySerializer.STRING)
                 .valueSerializer(Serializer.BYTE_ARRAY)
