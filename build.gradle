@@ -58,7 +58,7 @@ dependencies {
 
     compile 'org.javafp:parsecj:0.2'
     compile 'org.apache.solr:solr-noggit:3.5.0'
-    compile 'org.mapdb:mapdb:1.0.8'
+    compile 'org.mapdb:mapdb:2.0-beta7'
 
     compile 'co.paralleluniverse:quasar-core:0.7.2:jdk8'
     quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
