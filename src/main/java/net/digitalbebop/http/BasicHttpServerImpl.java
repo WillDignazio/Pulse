@@ -63,6 +63,7 @@ public class BasicHttpServerImpl implements HttpServer {
     public void fiberServerRoutine(InetSocketAddress address, FiberSocketChannel ch)
             throws SuspendExecution, InterruptedException, IOException {
         logger.debug("Started worker");
+        long startTime = System.currentTimeMillis();
 
         try {
             final SessionInputBufferImpl sessionInputBuffer = new SessionInputBufferImpl(transMetricImpl, SESSION_BUFFER_SIZE);
@@ -118,6 +119,9 @@ public class BasicHttpServerImpl implements HttpServer {
         } catch (ExecutionException e) {
             logger.error("Failed to properly build response: " + e.getLocalizedMessage(), e);
             ch.close();
+        } finally {
+            long endTime = System.currentTimeMillis();
+            logger.debug("Total Time: " + (endTime - startTime) + "ms");
         }
     }
 

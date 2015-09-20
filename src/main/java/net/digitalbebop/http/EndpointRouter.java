@@ -116,7 +116,7 @@ class EndpointRouter implements HttpRouter {
             return Futures.immediateFuture(notFoundHandler.handleGet(request, address, new HashMap<>()));
         } finally {
             long endTime = System.currentTimeMillis();
-            logger.debug("Request: " + request.getRequestLine().getUri() + ", Time: " +
+            logger.debug("Route Time, Request: " + request.getRequestLine().getUri() + ", Time: " +
                     (endTime - startTime) + "ms");
         }
 
