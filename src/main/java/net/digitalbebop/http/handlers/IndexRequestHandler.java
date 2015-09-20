@@ -17,6 +17,7 @@ import org.apache.logging.log4j.Logger;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
@@ -39,7 +40,8 @@ public class IndexRequestHandler implements RequestHandler {
 
     @Override
     @Suspendable
-    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address, HashMap<String, String> params, Optional<InputStream> payload) {
+    public HttpResponse handlePost(HttpRequest req, InetSocketAddress address,
+                                   HashMap<String, String> params, Optional<InputStream> payload) {
         try {
             final InputStream is;
             if (payload.isPresent()) {
@@ -59,14 +61,17 @@ public class IndexRequestHandler implements RequestHandler {
 
             ClientRequests.IndexRequest indexRequest = requestFiber.get();
             logger.debug("Received Index request from: " + indexRequest.getModuleName());
+
             indexConduit.index(indexRequest);
+
+            byte[] rawPayload = indexRequest.getRawData().toByteArray();
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
-                    indexRequest.getTimestamp(), indexRequest.getRawData().toByteArray());
-            byte[] thumbnail = Thumbnails.convert(getFormat(indexRequest.getMetaTags()), indexRequest);
-            if (thumbnail != null) {
-                storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
-                        indexRequest.getTimestamp(), thumbnail);
-            }
+                    indexRequest.getTimestamp(), rawPayload);
+
+            Thumbnails.convert(getFormat(indexRequest.getMetaTags()), rawPayload).ifPresent(thumbnail ->
+                    storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
+                                indexRequest.getTimestamp(), thumbnail));
+            logger.debug("finished indexing");
             return Response.OK;
         } catch (InvalidProtocolBufferException pe) {
             logger.warn("Failed to parse payload in Index handler.", pe);

@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Wrapper around all thumbnail generation. Add function here to create thumbnails for different
@@ -26,32 +27,34 @@ public final class Thumbnails {
      * Creates the OutputStream of the thumbnail generated. Returns null if no thumbnail could be
      * generated. This happens in the case of errors of when the given type is not supported.
      */
-    public static byte[] convert(String format, ClientRequests.IndexRequest request) {
+    public static Optional<byte[]> convert(String format, byte[] data) {
         switch(format) {
-            case "pdf": return generatePdfThumbnail(request);
-            case "image": return generateImageThumbnail(request);
-            default: return null;
+            case "pdf": return generatePdfThumbnail(data);
+            case "image": return generateImageThumbnail(data);
+            default: return Optional.empty();
         }
     }
 
-    private static byte[] generatePdfThumbnail(ClientRequests.IndexRequest request) {
+    private static Optional<byte[]> generatePdfThumbnail(byte[] data) {
         try {
+            ByteArrayInputStream stream = new ByteArrayInputStream(data);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            PDDocument document = PDDocument.load(request.getRawData().newInput());
+            PDDocument document = PDDocument.load(stream);
             List<PDPage> pages = document.getDocumentCatalog().getAllPages();
             BufferedImage img = pages.get(0).convertToImage(BufferedImage.TYPE_INT_RGB, THUMBNAIL_SIZE);
             ImageIOUtil.writeImage(img, IMAGE_TYPE, outputStream);
-            return outputStream.toByteArray();
+            return Optional.of(outputStream.toByteArray());
         } catch (Exception e) {
             logger.warn("could not generate thumbnail for pdf", e);
-            return null;
+            return Optional.empty();
         }
     }
 
-    private static byte[] generateImageThumbnail(ClientRequests.IndexRequest request) {
+    private static Optional<byte[]> generateImageThumbnail(byte[] data) {
         try {
+            ByteArrayInputStream stream = new ByteArrayInputStream(data);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BufferedImage img = ImageIO.read(request.getRawData().newInput());
+            BufferedImage img = ImageIO.read(stream);
             int scaleBy = Math.max(img.getHeight(), img.getWidth()) / THUMBNAIL_SIZE;
             int height = img.getHeight() / scaleBy;
             int width = img.getWidth() / scaleBy;
@@ -62,10 +65,10 @@ public final class Thumbnails {
             g.drawImage(resizedImg, 0, 0, null);
             g.dispose();
             ImageIO.write(outImg, IMAGE_TYPE, outputStream);
-            return outputStream.toByteArray();
+            return Optional.of(outputStream.toByteArray());
         } catch (Exception e) {
             logger.warn("could not generate thumbnail for image", e);
-            return null;
+            return Optional.empty();
         }
     }
 
