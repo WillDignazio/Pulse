@@ -42,6 +42,7 @@ public class IndexRequestHandler implements RequestHandler {
     @Suspendable
     public HttpResponse handlePost(HttpRequest req, InetSocketAddress address,
                                    HashMap<String, String> params, Optional<InputStream> payload) {
+        long startTime = System.currentTimeMillis();
         try {
             final InputStream is;
             if (payload.isPresent()) {
@@ -85,6 +86,9 @@ public class IndexRequestHandler implements RequestHandler {
         } catch (ExecutionException e) {
             logger.error("Failed to index: " + e.getLocalizedMessage(), e);
             return Response.BAD_REQUEST; // XXX: Best choice for this?
+        } finally {
+            long endTime = System.currentTimeMillis();
+            logger.debug("Time to process index: " + (endTime - startTime) + "ms");
         }
     }
 

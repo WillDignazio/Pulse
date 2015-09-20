@@ -32,12 +32,12 @@ public class FileStorageConduit implements StorageConduit {
     @Inject
     public FileStorageConduit(@Named("fileStorageFile") String dir) {
         db = DBMaker.newFileDB(new File(dir))
-                .mmapFileEnable()
-                .mmapFileEnableIfSupported()
+                //.mmapFileEnable()
+                //.mmapFileEnableIfSupported()
                 .transactionDisable()
                 .closeOnJvmShutdown()
                 .cacheHardRefEnable()
-                .cacheSize(CACHE_SIZE)
+                //.cacheSize(CACHE_SIZE)
                 .asyncWriteEnable()
                 .make();
 
