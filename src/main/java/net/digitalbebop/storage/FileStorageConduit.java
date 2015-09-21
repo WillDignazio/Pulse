@@ -1,5 +1,6 @@
 package net.digitalbebop.storage;
 
+import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -14,7 +15,8 @@ import org.mapdb.Serializer;
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentNavigableMap;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Uses on disk storage for the backend data store. This uses MapDB to implement the file
@@ -32,15 +34,23 @@ public class FileStorageConduit implements StorageConduit {
 
     @Inject
     public FileStorageConduit(@Named("fileStorageFile") String dir) {
+        int cpus = Runtime.getRuntime().availableProcessors();
+        ThreadFactory factory = new ThreadFactoryBuilder()
+                .setNameFormat("file-storage-conduit-%d")
+                .setDaemon(true)
+                .build();
+        ScheduledThreadPoolExecutor pool = new ScheduledThreadPoolExecutor(cpus, factory);
+
+
         db = DBMaker.fileDB(new File(dir))
                 .fileChannelEnable()              // uses file channel for all file IO
                 .transactionDisable()             // disables all transactions for performance
                 .closeOnJvmShutdown()             // cleans up when the JVM shutdowns
                 .cacheHashTableEnable()           // uses a Hash Table for on-heap cache
-                .cacheExecutorEnable()            // background cache eviction
+                .cacheExecutorEnable(pool)        // background cache eviction
                 .asyncWriteEnable()               // allows for asynchronous writes
                 .asyncWriteFlushDelay(FLUSH_TIME) // async flush of writes
-                .storeExecutorEnable()            // background thread pool for async writes
+                .storeExecutorEnable(pool)        // background thread pool for async writes
                 .make();
 
         collection = db.treeMapCreate("pulse")
