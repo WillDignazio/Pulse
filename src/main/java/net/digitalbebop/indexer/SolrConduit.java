@@ -123,6 +123,8 @@ public class SolrConduit implements IndexConduit {
  * Internal class used to convert Solr documents to JSON
  */
 class Result implements SearchResult {
+    private static final Logger logger = LogManager.getLogger(SearchResult.class);
+    private static final int MAX_LENGTH = 200;
     QueryResponse response;
 
     public Result(QueryResponse response) {
@@ -132,6 +134,8 @@ class Result implements SearchResult {
         /** replaces the data section with the highlighted snippets */
         for (SolrDocument doc : response.getResults()) {
             String id = (String) doc.getFieldValue("id");
+           
+            // if there is highlighting for doc
             if (response.getHighlighting().get(id) != null) {
                 Map<String, List<String>> forDoc = response.getHighlighting().get(id);
                 if (forDoc != null) {
@@ -142,14 +146,22 @@ class Result implements SearchResult {
                             builder.append(snippets.get(i)).append("...");
                         }
                         builder.append(snippets.get(snippets.size() - 1));
-                        doc.setField("data", builder.toString());
+                        String newData = builder.toString();
+                        int length = Math.min(MAX_LENGTH, newData.length());
+                        String data = newData.substring(0, length);
+                        doc.setField("data", data);
                         noHighlight = false;
+                    } else {
+                        String data = doc.getFieldValue("data").toString();
+                        int length = Math.min(MAX_LENGTH, data.length());
+                        doc.setField("data", data.substring(0, length));
+    
                     }
                 }
             }
             if (noHighlight) {
                 String data = doc.getFieldValue("data").toString();
-                int length = Math.min(200, data.length());
+                int length = Math.min(MAX_LENGTH, data.length());
                 doc.setField("data", data.substring(0, length));
             }
         }
