@@ -38,6 +38,7 @@ public class GalleryIndexer implements ServerIndexer {
         generateImageThumbnail(rawPayload).ifPresent(thumbnail ->
                 storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
                         indexRequest.getTimestamp(), thumbnail));
+        // TODO add facial recognition to tag the record with peoples' username
     }
 
     private static Optional<byte[]> generateImageThumbnail(byte[] data) {

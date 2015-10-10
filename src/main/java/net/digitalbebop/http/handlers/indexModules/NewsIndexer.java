@@ -22,6 +22,7 @@ public class NewsIndexer implements ServerIndexer {
 
     @Override
     public void index(ClientRequests.IndexRequest indexRequest) throws IOException {
+        // TODO add deduplication code for replies in a thread
         indexConduit.index(indexRequest);
         byte[] rawPayload = indexRequest.getRawData().toByteArray();
         storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),

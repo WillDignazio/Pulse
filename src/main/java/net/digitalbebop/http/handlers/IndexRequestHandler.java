@@ -24,6 +24,10 @@ import java.util.concurrent.ExecutionException;
 public class IndexRequestHandler implements RequestHandler {
     private static final Logger logger = LogManager.getLogger(IndexRequestHandler.class);
 
+    /**
+     * There can be custom indexing code per each submodule. This map contains a mapping from the modules' name
+     * to its indexing code. There is a default implementation if we do not need to do anything special.
+     */
     private final ImmutableMap<String, ServerIndexer> indexers;
     private final ServerIndexer defaultIndexer;
 
