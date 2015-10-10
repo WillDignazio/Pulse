@@ -23,19 +23,8 @@ public final class Thumbnails {
     private static final int THUMBNAIL_SIZE = 100;
     private static final String IMAGE_TYPE = "png";
 
-    /**
-     * Creates the OutputStream of the thumbnail generated. Returns null if no thumbnail could be
-     * generated. This happens in the case of errors of when the given type is not supported.
-     */
-    public static Optional<byte[]> convert(String format, byte[] data) {
-        switch(format) {
-            case "pdf": return generatePdfThumbnail(data);
-            case "image": return generateImageThumbnail(data);
-            default: return Optional.empty();
-        }
-    }
 
-    private static Optional<byte[]> generatePdfThumbnail(byte[] data) {
+    public static Optional<byte[]> generatePdfThumbnail(byte[] data) {
         try {
             ByteArrayInputStream stream = new ByteArrayInputStream(data);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -50,26 +39,6 @@ public final class Thumbnails {
         }
     }
 
-    private static Optional<byte[]> generateImageThumbnail(byte[] data) {
-        try {
-            ByteArrayInputStream stream = new ByteArrayInputStream(data);
-            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            BufferedImage img = ImageIO.read(stream);
-            int scaleBy = Math.max(img.getHeight(), img.getWidth()) / THUMBNAIL_SIZE;
-            int height = img.getHeight() / scaleBy;
-            int width = img.getWidth() / scaleBy;
-            Image resizedImg = img.getScaledInstance(width, height, Image.SCALE_SMOOTH);
-            int type = (img.getType() == 0) ? 5 : img.getType();
-            BufferedImage outImg = new BufferedImage(width, height, type);
-            Graphics2D g = outImg.createGraphics();
-            g.drawImage(resizedImg, 0, 0, null);
-            g.dispose();
-            ImageIO.write(outImg, IMAGE_TYPE, outputStream);
-            return Optional.of(outputStream.toByteArray());
-        } catch (Exception e) {
-            logger.warn("could not generate thumbnail for image", e);
-            return Optional.empty();
-        }
-    }
+
 
 }

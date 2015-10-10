@@ -3,7 +3,6 @@ package net.digitalbebop.indexer;
 import net.digitalbebop.ClientRequests;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Optional;
 
 public interface IndexConduit {
