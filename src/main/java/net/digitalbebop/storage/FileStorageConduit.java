@@ -89,7 +89,7 @@ public class FileStorageConduit implements StorageConduit {
         String id = getRawId(moduleName, moduleId, timestamp);
         logger.debug("putting raw: " + id);
         collection.put(id, data);
-        db.commit();
+        //db.commit();
     }
 
     @Override
@@ -97,7 +97,7 @@ public class FileStorageConduit implements StorageConduit {
         String id = getThumbnailId(moduleName, moduleId, timestamp);
         logger.debug("putting thumbnail: " + id);
         collection.put(id, data);
-        db.commit();
+        //db.commit();
     }
 
     @Override

@@ -68,10 +68,13 @@ public class IndexRequestHandler implements RequestHandler {
             byte[] rawPayload = indexRequest.getRawData().toByteArray();
             storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                     indexRequest.getTimestamp(), rawPayload);
-
+            
+            long startThumbnail = System.currentTimeMillis();
             Thumbnails.convert(getFormat(indexRequest.getMetaTags()), rawPayload).ifPresent(thumbnail ->
                     storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
                                 indexRequest.getTimestamp(), thumbnail));
+            long endThumbnail = System.currentTimeMillis();
+            logger.debug("Thumbnail time: " + (endThumbnail - startThumbnail) + "ms");
             logger.debug("finished indexing");
             return Response.OK;
         } catch (InvalidProtocolBufferException pe) {
