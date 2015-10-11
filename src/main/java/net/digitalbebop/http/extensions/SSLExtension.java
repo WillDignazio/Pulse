@@ -1,5 +1,7 @@
 package net.digitalbebop.http.extensions;
 
+import co.paralleluniverse.fibers.Fiber;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.logging.log4j.LogManager;
@@ -25,6 +27,7 @@ public class SSLExtension implements HttpServerExtension {
 
     private static int BUFFER_PAD_BYTES = 50;
 
+    private final String truststorePath;
     private final String keystorePath;
     private final String keystorePass;
 
@@ -32,8 +35,10 @@ public class SSLExtension implements HttpServerExtension {
     private SSLEngine sslEngine;
 
     @Inject
-    public SSLExtension(@Named("keystorePath") final String keystorePath,
+    public SSLExtension(@Named("truststorePath") final String truststorePath,
+                        @Named("keystorePath") final String keystorePath,
                         @Named("keystorePass") final String keystorePass) {
+        this.truststorePath = truststorePath;
         this.keystorePath = keystorePath;
         this.keystorePass = keystorePass;
     }
@@ -44,55 +49,56 @@ public class SSLExtension implements HttpServerExtension {
      */
     @Override
     public void initialize() {
-        logger.info("Initializing SSL extension.");
+        logger.info("Initializing SSL extension: \n" +
+                        "\tKeyStore: " + keystorePath + "\n" +
+                        "\tTrustStore: " + truststorePath + "\n");
 
         try {
-            File storefn = new File(keystorePath);
-            if (!storefn.exists()) {
+            File keystoreFile = new File(keystorePath);
+            if (!keystoreFile.exists()) {
                 logger.error("Keystore does not exist, check keystore path!");
                 throw new RuntimeException("Failed to load KeyStore");
+            }
+
+            File truststoreFile = new File(truststorePath);
+            if (!truststoreFile.exists()) {
+                logger.error("Truststore does not exist, check truststore path!");
+                throw new RuntimeException("Failed to load TrustStore");
             }
 
             final KeyStore ks = KeyStore.getInstance("JKS");
             final KeyStore ts = KeyStore.getInstance("JKS");
 
-            char[] pass = keystorePass.toCharArray();
-            ks.load(new FileInputStream(storefn), pass);
-            ts.load(new FileInputStream(storefn), pass);
+            final char[] pass = keystorePass.toCharArray();
+            ks.load(new FileInputStream(keystoreFile), pass);
+            ts.load(new FileInputStream(truststoreFile), pass);
 
             final String defaultAlgo = KeyManagerFactory.getDefaultAlgorithm();
-            KeyManagerFactory kmf = KeyManagerFactory.getInstance(defaultAlgo);
+            final KeyManagerFactory kmf = KeyManagerFactory.getInstance(defaultAlgo);
             kmf.init(ks, pass);
 
-            TrustManagerFactory tmf = TrustManagerFactory.getInstance(defaultAlgo);
+            final TrustManagerFactory tmf = TrustManagerFactory.getInstance(defaultAlgo);
             tmf.init(ts);
 
-            SSLContext localContext = SSLContext.getInstance("TLS");
+            final SSLContext localContext = SSLContext.getInstance("TLS");
             localContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
 
-            SSLEngine localEngine = localContext.createSSLEngine();
+            final SSLEngine localEngine = localContext.createSSLEngine();
             localEngine.setUseClientMode(false);
             localEngine.setNeedClientAuth(false);
 
-            SSLSession localSession = localEngine.getSession();
-            int appBufferMax = localSession.getApplicationBufferSize();
-            int netBufferMax = localSession.getPacketBufferSize();
+            final SSLSession localSession = localEngine.getSession();
+            final int appBufferMax = localSession.getApplicationBufferSize();
 
             /*
              * Excerpt from sample:
              * We'll make the input buffers a bit bigger than the max needed
              * size, so that unwrap()s following a successful data transfer
              * won't generate BUFFER_OVERFLOWS.
-             *
-             * We'll use a mix of direct and indirect ByteBuffers for
-             * tutorial purposes only.  In reality, only use direct
-             * ByteBuffers when they give a clear performance enhancement.
              */
-            final ByteBuffer clientIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
             final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
 
             
-
         } catch (KeyStoreException e) {
             logger.error("Failed to load KeyStore: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
@@ -114,6 +120,30 @@ public class SSLExtension implements HttpServerExtension {
         } catch (KeyManagementException e) {
             logger.error("Error initializing SSL Context: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
+        }
+    }
+
+    /*
+     * If the result indicates that we have outstanding tasks to do,
+     * go ahead and run them in this thread.
+     */
+    private static void runDelegatedTasks(SSLEngineResult result,
+                                          SSLEngine engine) throws Exception {
+        if (result.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_TASK) {
+            Runnable runnable;
+
+            // TODO: Run async with Fibers
+            while ((runnable = engine.getDelegatedTask()) != null) {
+                logger.debug("running delegated task...");
+                runnable.run();
+            }
+
+            SSLEngineResult.HandshakeStatus hsStatus = engine.getHandshakeStatus();
+            if (hsStatus == SSLEngineResult.HandshakeStatus.NEED_TASK) {
+                throw new Exception("handshake shouldn't need additional tasks");
+            }
+
+            logger.debug("\tnew HandshakeStatus: " + hsStatus);
         }
     }
 }
