@@ -54,6 +54,7 @@ launch_pulse()
 
     JVM_OPTS="$JVM_OPTS -Dlog4j.configurationFile=$PULSE_CONFIG/log4j.xml"
     JVM_OPTS+=" -server -Xmx15g -javaagent:$quasar_path_content"
+    JVM_OPTS+=" -Djava.library.path=lib"
 #    JVM_OPTS+=" -Dco.paralleluniverse.fibers.verifyInstrumentation=true"
 
     echo $JVM_OPTS
