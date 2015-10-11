@@ -5,6 +5,16 @@ import org.apache.commons.lang.NotImplementedException;
 import java.io.IOException;
 
 public interface HttpServer {
-    default void init() throws IOException { throw new NotImplementedException(); }
-    default boolean isInitialized() { throw new NotImplementedException(); }
+    /**
+     * Initialize the HTTP Server, this routine should be run to start the actual process, and is
+     * intented to allocate or initialize any necessary properties.
+     * @throws IOException
+     */
+    default void initialize() throws IOException {
+        throw new NotImplementedException();
+    }
+
+    /**
+     *
+     */
 }
