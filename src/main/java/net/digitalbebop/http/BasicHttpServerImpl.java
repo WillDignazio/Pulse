@@ -8,10 +8,7 @@ import co.paralleluniverse.strands.Strand;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import net.digitalbebop.fibers.FiberChannels;
-import org.apache.http.HttpEntityEnclosingRequest;
-import org.apache.http.HttpException;
-import org.apache.http.HttpRequest;
-import org.apache.http.HttpResponse;
+import org.apache.http.*;
 import org.apache.http.entity.ContentLengthStrategy;
 import org.apache.http.impl.entity.StrictContentLengthStrategy;
 import org.apache.http.impl.io.*;
@@ -75,8 +72,18 @@ public class BasicHttpServerImpl implements HttpServer {
             sessionOutputBuffer.bind(os);
             sessionInputBuffer.bind(is);
 
+            // TODO: If the session is an HTTPS stream we're screwed after this point
+            logger.info("SERVER PORT: " + ch.getLocalAddress().toString());
+            logger.info("CLIENT PORT: " + address.getPort());
+
             final DefaultHttpRequestParser parser = new DefaultHttpRequestParser(sessionInputBuffer);
-            final HttpRequest rawRequest = parser.parse();
+            HttpRequest rawRequest = null;
+            try {
+                rawRequest = parser.parse();
+            } catch (ConnectionClosedException ce) {
+                logger.debug("Client closed connection during request processing: " + ce.getLocalizedMessage(), ce);
+                return;
+            }
 
             // deals with PUT requests
             final Optional<InputStream> contentStream;
@@ -125,12 +132,8 @@ public class BasicHttpServerImpl implements HttpServer {
         }
     }
 
-    public boolean isInitialized() {
-        return initialized.get();
-    }
-
     @Suspendable
-    public void init() throws IOException {
+    public void initialize() throws IOException {
         if(!initialized.compareAndSet(false, true)) {
             logger.error("Server has already been initialized.");
             return;
