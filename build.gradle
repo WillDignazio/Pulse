@@ -60,8 +60,8 @@ dependencies {
     compile 'org.apache.solr:solr-noggit:3.5.0'
     compile 'org.mapdb:mapdb:2.0-beta7'
 
-    compile 'co.paralleluniverse:quasar-core:0.7.2:jdk8'
-    quasar  "co.paralleluniverse:quasar-core:0.7.2:jdk8@jar"
+    compile 'co.paralleluniverse:quasar-core:0.7.3:jdk8'
+    quasar  "co.paralleluniverse:quasar-core:0.7.3:jdk8@jar"
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.xerial:sqlite-jdbc:3.8.11'
