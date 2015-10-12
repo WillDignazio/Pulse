@@ -30,6 +30,10 @@ public class SSLExtension implements ServerExtension {
     private final String keystorePath;
     private final String keystorePass;
 
+    private KeyManagerFactory keyManagerFactory;
+    private TrustManagerFactory trustManagerFactory;
+    private KeyStore keystore;
+    private KeyStore truststore;
     private SSLContext sslContext;
     private SSLEngine sslEngine;
 
@@ -50,10 +54,10 @@ public class SSLExtension implements ServerExtension {
     public void initialize() {
         logger.info("Initializing SSL extension: \n" +
                         "\tKeyStore: " + keystorePath + "\n" +
-                        "\tTrustStore: " + truststorePath + "\n");
+                        "\tTrustStore: " + truststorePath);
 
         try {
-            File keystoreFile = new File(keystorePath);
+            final File keystoreFile = new File(keystorePath);
             if (!keystoreFile.exists()) {
                 logger.error("Keystore does not exist, check keystore path!");
                 throw new RuntimeException("Failed to load KeyStore");
@@ -65,38 +69,19 @@ public class SSLExtension implements ServerExtension {
                 throw new RuntimeException("Failed to load TrustStore");
             }
 
-            final KeyStore ks = KeyStore.getInstance("JKS");
-            final KeyStore ts = KeyStore.getInstance("JKS");
+            keystore = KeyStore.getInstance("JKS");
+            truststore = KeyStore.getInstance("JKS");
 
             final char[] pass = keystorePass.toCharArray();
-            ks.load(new FileInputStream(keystoreFile), pass);
-            ts.load(new FileInputStream(truststoreFile), pass);
+            keystore.load(new FileInputStream(keystoreFile), pass);
+            truststore.load(new FileInputStream(truststoreFile), pass);
 
             final String defaultAlgo = KeyManagerFactory.getDefaultAlgorithm();
-            final KeyManagerFactory kmf = KeyManagerFactory.getInstance(defaultAlgo);
-            kmf.init(ks, pass);
+            keyManagerFactory = KeyManagerFactory.getInstance(defaultAlgo);
+            keyManagerFactory.init(keystore, pass);
 
-            final TrustManagerFactory tmf = TrustManagerFactory.getInstance(defaultAlgo);
-            tmf.init(ts);
-
-            final SSLContext localContext = SSLContext.getInstance("TLS");
-            localContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), null);
-
-            final SSLEngine localEngine = localContext.createSSLEngine();
-            localEngine.setUseClientMode(false);
-            localEngine.setNeedClientAuth(false);
-
-            final SSLSession localSession = localEngine.getSession();
-            final int appBufferMax = localSession.getApplicationBufferSize();
-
-            /*
-             * Excerpt from sample:
-             * We'll make the input buffers a bit bigger than the max needed
-             * size, so that unwrap()s following a successful data transfer
-             * won't generate BUFFER_OVERFLOWS.
-             */
-            final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
-
+            trustManagerFactory = TrustManagerFactory.getInstance(defaultAlgo);
+            trustManagerFactory.init(truststore);
 
         } catch (KeyStoreException e) {
             logger.error("Failed to load KeyStore: " + e.getLocalizedMessage(), e);
@@ -116,14 +101,41 @@ public class SSLExtension implements ServerExtension {
         } catch (UnrecoverableKeyException e) {
             logger.error("Unrecoverable key: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
-        } catch (KeyManagementException e) {
-            logger.error("Error initializing SSL Context: " + e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
         }
     }
 
     @Override
     public Channel handleConnection(Channel input) {
+        try {
+            final SSLContext localContext = SSLContext.getInstance("TLS");
+
+            localContext.init(keyManagerFactory.getKeyManagers(),
+                              trustManagerFactory.getTrustManagers(), null);
+
+            final SSLEngine localEngine = localContext.createSSLEngine();
+            localEngine.setUseClientMode(false);
+            localEngine.setNeedClientAuth(false);
+
+            final SSLSession localSession = localEngine.getSession();
+            final int appBufferMax = localSession.getApplicationBufferSize();
+
+
+
+            /*
+             * Excerpt from sample:
+             * We'll make the input buffers a bit bigger than the max needed
+             * size, so that unwrap()s following a successful data transfer
+             * won't generate BUFFER_OVERFLOWS.
+             */
+            final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Encryption not supported: " + e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        } catch (KeyManagementException e) {
+            logger.info("Failed to retrieve key from store: " + e.getLocalizedMessage(), e);
+            throw new RuntimeException(e);
+        }
+
         return input;
     }
 

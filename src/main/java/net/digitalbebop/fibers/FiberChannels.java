@@ -41,8 +41,9 @@ public final class FiberChannels {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            if (n <= 0)
+            if (n <= 0) {
                 throw new RuntimeException("no bytes written");
+            }
         }
     }
 

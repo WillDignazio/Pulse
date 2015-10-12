@@ -60,7 +60,7 @@ public class BasicHttpServerImpl implements HttpServer {
         this.serverAddress = serverAddress;
         this.httpPort = httpPort;
         this.httpsPort = httpsPort;
-        fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
+        this.fiberScheduler = new FiberForkJoinScheduler("BaseServer", parallelism);
     }
 
     public void fiberServerRoutine(final InetSocketAddress address, final FiberSocketChannel channelIn)
@@ -81,7 +81,7 @@ public class BasicHttpServerImpl implements HttpServer {
             logger.debug("SERVER PORT: " + localAddress.getPort());
             logger.debug("CLIENT PORT: " + address.getPort());
 
-            // TODO: We need a <b>way</b> more elegant solution to this
+            /* TODO: We need a <b>way</b> more elegant solution to this */
             final Channel ch;
             if (localAddress.getPort() == httpsPort) { // Use the https server extension
                 logger.debug("Using SSLExtension for https");
@@ -124,16 +124,19 @@ public class BasicHttpServerImpl implements HttpServer {
 
             DefaultHttpResponseWriter msgWriter = new DefaultHttpResponseWriter(sessionOutputBuffer);
             msgWriter.write(rawResponse);
-            sessionOutputBuffer.flush(); // flushes the header
+            try {
+                sessionOutputBuffer.flush(); // flushes the header
+            } catch (RuntimeException | IOException ioe) {
+                logger.warn("Connection broke while flushing response: " + ioe.getLocalizedMessage());
+                ch.close();
+                return;
+            }
 
             if (rawResponse.getEntity() != null) {
                 rawResponse.getEntity().writeTo(os);
             }
 
-            os.flush();
-            sessionOutputBuffer.flush();
-
-            channelIn.close();
+            ch.close();
         } catch (HttpException | IOException e) {
             logger.error("Error processing request: " + e.getMessage(), e);
             channelIn.close();
@@ -142,7 +145,8 @@ public class BasicHttpServerImpl implements HttpServer {
             channelIn.close();
         } finally {
             long endTime = System.currentTimeMillis();
-            logger.info("Total Time: " + (endTime - startTime) + "ms");
+            //logger.info("Total Time: " + (endTime - startTime) + "ms");
+            channelIn.close();
         }
     }
 
@@ -174,7 +178,10 @@ public class BasicHttpServerImpl implements HttpServer {
                     continue; // XXX: We don't particularly care, it was probably a client issue
                 }
 
-                logger.debug("Accepted from: " + ch.toString());
+                try {
+                    logger.debug("Accepted from: " + ch.getRemoteAddress().toString());
+                } catch (IOException ignored) {}
+
                 new Fiber<Void>(fiberScheduler, () -> {
                     logger.debug("Running server routine in : " + Strand.currentStrand().getName());
                     try {
