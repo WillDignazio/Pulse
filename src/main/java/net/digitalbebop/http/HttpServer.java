@@ -13,8 +13,4 @@ public interface HttpServer {
     default void initialize() throws IOException {
         throw new NotImplementedException();
     }
-
-    /**
-     *
-     */
 }

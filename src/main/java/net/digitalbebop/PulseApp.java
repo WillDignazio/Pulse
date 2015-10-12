@@ -23,7 +23,7 @@ public class PulseApp implements App {
     public void init() {
         logger.info("Initializing pulse instance.");
         try {
-            server.init();
+            server.initialize();
         } catch (IOException ioe ) {
             logger.error("Failed to initialize server: " + ioe.getLocalizedMessage(), ioe);
             throw new RuntimeException(ioe);

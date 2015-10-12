@@ -1,7 +1,5 @@
 package net.digitalbebop.http.extensions;
 
-import co.paralleluniverse.fibers.Fiber;
-import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import org.apache.logging.log4j.LogManager;
@@ -13,6 +11,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.channels.Channel;
 import java.security.*;
 import java.security.cert.CertificateException;
 
@@ -22,7 +21,7 @@ import java.security.cert.CertificateException;
  * in this extension is based off of the example sample at:
  * {@link https://docs.oracle.com/javase/7/docs/technotes/guides/security/jsse/samples/sslengine}
  */
-public class SSLExtension implements HttpServerExtension {
+public class SSLExtension implements ServerExtension {
     private static Logger logger = LogManager.getLogger(SSLExtension.class);
 
     private static int BUFFER_PAD_BYTES = 50;
@@ -98,7 +97,7 @@ public class SSLExtension implements HttpServerExtension {
              */
             final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
 
-            
+
         } catch (KeyStoreException e) {
             logger.error("Failed to load KeyStore: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
@@ -121,6 +120,11 @@ public class SSLExtension implements HttpServerExtension {
             logger.error("Error initializing SSL Context: " + e.getLocalizedMessage(), e);
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public Channel handleConnection(Channel input) {
+        return input;
     }
 
     /*

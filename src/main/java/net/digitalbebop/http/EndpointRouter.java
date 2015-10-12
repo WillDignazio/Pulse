@@ -137,7 +137,7 @@ class EndpointRouter implements HttpRouter {
     }
 
     @Override
-    public void init() {
+    public void initialize() {
         logger.info("Configuring endpoints");
 
         registerEndpoint("/", RequestType.GET, new RequestHandler() {

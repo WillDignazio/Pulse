@@ -28,7 +28,7 @@ interface HttpRouter {
     /**
      * Initialize the HttpRouter.
      */
-    default void init() throws IOException {
+    default void initialize() throws IOException {
         throw new NotImplementedException();
     };
 }
