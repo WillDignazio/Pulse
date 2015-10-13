@@ -73,7 +73,7 @@ public class SolrConduit implements IndexConduit {
             query.setHighlightSimplePost("");
             query.setParam("hl.fl", "data");
             query.setParam("hl.maxAnalyzedChars", "-1");
-            return Optional.of(new Result(client.query(query)));
+            return Optional.of(new Result(client.query(query), !searchStr.contains("moduleName:images")));
         } catch (SolrServerException | IOException e) {
             logger.error("Could not search Solr documents", e);
             return Optional.empty();
@@ -124,11 +124,19 @@ public class SolrConduit implements IndexConduit {
  */
 class Result implements SearchResult {
     private static final Logger logger = LogManager.getLogger(SearchResult.class);
-    private static final int MAX_LENGTH = 200;
+    
+    // the length of the text to be shown in the preview dialog
+    private static final int MAX_LENGTH = 200; 
+    
+    // the number of albums to show when the user has search all modules. This 
+    // makes sure that the entire front page is not filled with albums.
+    private static final int NUM_ALBUMS = 2;
     QueryResponse response;
+    boolean all;
 
-    public Result(QueryResponse response) {
+    public Result(QueryResponse response, boolean all) {
         this.response = response;
+        this.all = all;
         boolean noHighlight = true;
 
         /** replaces the data section with the highlighted snippets */
@@ -170,7 +178,18 @@ class Result implements SearchResult {
     public JSONArray results() {
         JSONArray arr = new JSONArray();
         SolrDocumentList docs = response.getResults();
+        int numAlbums = 0;
+
         for (SolrDocument doc : docs) {
+
+            // removes extra albums results when the user search all modules
+            if (all && doc.getFieldValue("moduleName").equals("images")) {
+                if (numAlbums >= NUM_ALBUMS) {
+                    continue;
+                } else {
+                    numAlbums++;
+                }
+            }
             JSONObject obj = new JSONObject();
             for (Map.Entry<String, Object> entry : doc.entrySet()) {
                 if (entry.getKey().equals("metaData")) {
