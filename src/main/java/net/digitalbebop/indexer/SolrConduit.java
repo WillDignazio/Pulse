@@ -58,6 +58,11 @@ public class SolrConduit implements IndexConduit {
     @Override
     public Optional<SearchResult> search(String searchStr, int offset, int limit) {
         try {
+            if (!searchStr.contains("moduleName")) {
+                
+            }
+
+
             searchStr = "current:true AND " + Query.query.parse(State.of(searchStr)).getResult();
             logger.debug("searching with: " + searchStr);
             SolrQuery query = new SolrQuery();

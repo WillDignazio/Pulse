@@ -1,8 +1,6 @@
 package net.digitalbebop.http.handlers.indexModules;
 
 import org.opencv.contrib.FaceRecognizer;
-import org.opencv.core.Core;
-
 
 public class FisherFaceRecognizer extends FaceRecognizer {
 
