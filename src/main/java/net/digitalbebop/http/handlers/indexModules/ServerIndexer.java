@@ -4,7 +4,10 @@ import net.digitalbebop.ClientRequests;
 
 import java.io.IOException;
 
+/**
+ * Interface to provide custom code per each submodule.
+ */
 public interface ServerIndexer {
 
-    public void index(ClientRequests.IndexRequest request) throws IOException;
+    void index(ClientRequests.IndexRequest request) throws IOException;
 }
