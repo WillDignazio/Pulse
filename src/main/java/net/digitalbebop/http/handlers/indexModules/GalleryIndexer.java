@@ -177,13 +177,15 @@ public class GalleryIndexer implements ServerIndexer {
         byte[] rawPayload = indexRequest.getRawData().toByteArray();
         storageConduit.putRaw(indexRequest.getModuleName(), indexRequest.getModuleId(),
                 indexRequest.getTimestamp(), rawPayload);
-        generateImageThumbnail(rawPayload).ifPresent(thumbnail ->
-                storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(),
-                        indexRequest.getTimestamp(), thumbnail));
+        byte[] thumbnail = generateImageThumbnail(rawPayload);
+        if (thumbnail != null) {
+            storageConduit.putThumbnail(indexRequest.getModuleName(), indexRequest.getModuleId(), 
+                    indexRequest.getTimestamp(), thumbnail);
+        }
         // TODO add facial recognition to tag the record with peoples' username
     }
 
-    private static Optional<byte[]> generateImageThumbnail(byte[] data) {
+    private static byte[] generateImageThumbnail(byte[] data) {
         try {
             ByteArrayInputStream stream = new ByteArrayInputStream(data);
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -198,10 +200,10 @@ public class GalleryIndexer implements ServerIndexer {
             g.drawImage(resizedImg, 0, 0, null);
             g.dispose();
             ImageIO.write(outImg, IMAGE_TYPE, outputStream);
-            return Optional.of(outputStream.toByteArray());
+            return outputStream.toByteArray();
         } catch (Exception e) {
             logger.warn("could not generate thumbnail for image", e);
-            return Optional.empty();
+            return null;
         }
     }
 }
