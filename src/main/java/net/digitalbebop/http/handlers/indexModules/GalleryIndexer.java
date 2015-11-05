@@ -3,8 +3,9 @@ package net.digitalbebop.http.handlers.indexModules;
 import com.google.inject.Inject;
 import net.digitalbebop.ClientRequests;
 import net.digitalbebop.indexer.IndexConduit;
+import net.digitalbebop.opencv.EigenFaceRecognizer;
+import net.digitalbebop.opencv.FisherFaceRecognizer;
 import net.digitalbebop.storage.StorageConduit;
-import org.apache.commons.collections4.BidiMap;
 import org.apache.commons.collections4.bidimap.DualHashBidiMap;
 import org.apache.commons.io.FileUtils;
 import org.apache.logging.log4j.LogManager;
@@ -39,7 +40,8 @@ public class GalleryIndexer implements ServerIndexer {
 
     private final IndexConduit indexConduit;
     private final StorageConduit storageConduit;
-    private FaceRecognizer facerec;
+    private FaceRecognizer fishFaceRec;
+    private FaceRecognizer eigenFaceRec;
     private CascadeClassifier faceCascade;
     private Size size = new Size(175, 175);
     private DualHashBidiMap<Integer, String> uidLookup;
@@ -55,7 +57,7 @@ public class GalleryIndexer implements ServerIndexer {
         this.uidLookup = new DualHashBidiMap<>();
 
 
-        File[] trainingFiles = null; //new File("/home/jd/Documents/git/OpenQuery/imgs_300").listFiles();
+        File[] trainingFiles = new File("/home/jd/Documents/git/CSHFaces/scaled_imgs").listFiles();
         faceCascade = new CascadeClassifier(face_cascade_name);
 
         if (trainingFiles != null) {
@@ -66,7 +68,7 @@ public class GalleryIndexer implements ServerIndexer {
             int counter = 0;
 
             for (int i = 0; i < trainingFiles.length; i++) {
-                Mat img = imread(trainingFiles[i].getAbsolutePath(), 0);
+                Mat img = imread(trainingFiles[i].getAbsolutePath());
                 String uid = trainingFiles[i].getName().split(" ")[0];
 
                 int label;
@@ -82,13 +84,15 @@ public class GalleryIndexer implements ServerIndexer {
                 images.add(img);
                 labels.put(i, 0, label);
             }
-            facerec = new FisherFaceRecognizer(80);
+            fishFaceRec = new FisherFaceRecognizer(0);
             logger.info("Starting to train with " + trainingFiles.length + " images");
-            facerec.train(images, labels);
+            fishFaceRec.train(images, labels);
             logger.info("Finished training");
+            eigenFaceRec = new EigenFaceRecognizer(0);
+            eigenFaceRec.train(images, labels);
         }
-        //detectFaces();
-        getFaces("/home/jd/Documents/csh/gallery/gallery/gallery-data/albums/", "/home/jd/Documents/csh/gallery/gallery/gallery-data/faces");
+        detectFaces();
+        //getFaces("/home/jd/Documents/csh/gallery/gallery/gallery-data/albums/", "/home/jd/Documents/csh/gallery/gallery/gallery-data/faces");
         //getFaces("/home/jd/Documents/csh/gallery/gallery/gallery-data/albums/2014", "/home/jd/Documents/csh/gallery/gallery/gallery-data/faces");
 
     }
@@ -132,7 +136,7 @@ public class GalleryIndexer implements ServerIndexer {
     }
 
     private void detectFaces() {
-        String dir = "/home/jd/Documents/csh/gallery/gallery/gallery-data/albums/2014";
+        String dir = "/home/jd/Documents/csh/gallery/gallery/gallery-data/albums/2013";
         Collection<File> files = FileUtils.listFiles(new File(dir), new String[]{"png", "jpg","jpeg"}, true);
         File[] input = files.toArray(new File[files.size()]);
 
@@ -142,24 +146,37 @@ public class GalleryIndexer implements ServerIndexer {
             Mat frameGray = new Mat();
             MatOfRect faces = new MatOfRect();
 
-            cvtColor(img, frameGray, COLOR_BGR2GRAY);
-            equalizeHist(frameGray, frameGray);
+            //cvtColor(img, frameGray, COLOR_BGR2GRAY);
+            //equalizeHist(frameGray, frameGray);
             logger.info(file.getAbsoluteFile());
             faceCascade.detectMultiScale(frameGray, faces, 1.1, 2, 0 | CASCADE_SCALE_IMAGE, size, new Size());
             for (Rect rect : faces.toArray()) {
+                int[] predict = new int[]{-1};
+                double[] confidence = new double[]{0.0};
                 Mat out = new Mat(img, rect);
                 resize(out, out, size);
                 cvtColor(out, out, COLOR_BGR2GRAY);
-                int[] predict = new int[]{-1};
-                double[] confidence = new double[]{0.0};
 
-                facerec.predict(out, predict, confidence);
-                String uid = uidLookup.get(predict[0]);
-                logger.info(predict[0] + " - " + confidence[0] + " - " + uid);
-                if (uid != null && confidence[0] != 0.0 && confidence[0] < 3000)
-                    imwrite("/home/jd/Documents/csh/gallery/gallery/gallery-data/faces_test/" + uid + "-" + UUID.randomUUID() + ".png", out);
-                else if (confidence[0] != 0.0)
-                    imwrite("/home/jd/Documents/csh/gallery/gallery/gallery-data/faces_bad/" + uid + "-" + UUID.randomUUID() + ".png", out);
+                fishFaceRec.predict(out, predict, confidence);
+                int fisherPredict = predict[0];
+                double fisherConfidence = confidence[0];
+
+                predict = new int[]{-1};
+                confidence = new double[]{0.0};
+                eigenFaceRec.predict(out, predict, confidence);
+                int eigenPredict = predict[0];
+                double eigenConfidence = confidence[0];
+
+                String euid = uidLookup.get(eigenPredict);
+                String fuid = uidLookup.get(fisherPredict);
+
+
+                if (fuid != null || euid != null) {
+                    logger.info(fuid + " - " + fisherConfidence + ", " + euid + " - " + eigenConfidence);
+                    imwrite("/home/jd/Documents/csh/gallery/gallery/gallery-data/faces_test/" + euid + "-" + UUID.randomUUID() + ".png", out);
+                }
+                //else if (confidence[0] != 0.0)
+                //    imwrite("/home/jd/Documents/csh/gallery/gallery/gallery-data/faces_bad/" + euid + "-" + UUID.randomUUID() + ".png", out);
 
                 out.release();
             }

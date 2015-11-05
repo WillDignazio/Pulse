@@ -1,4 +1,4 @@
-package net.digitalbebop.http.handlers.indexModules;
+package net.digitalbebop.opencv;
 
 import org.opencv.contrib.FaceRecognizer;
 
