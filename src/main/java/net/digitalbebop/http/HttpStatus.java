@@ -5,6 +5,7 @@ package net.digitalbebop.http;
  * responses, so we're going to cover the code necessary here as enum values.
  */
 public enum HttpStatus {
+    BAD_REQUEST(400),
     NOT_AUTHORIZED(401),
     INTERNAL_ERROR(500),
     OK(200);

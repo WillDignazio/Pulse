@@ -1,7 +1,11 @@
 package net.digitalbebop.http.extensions;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.io.FiberSocketChannel;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import net.digitalbebop.PulseException;
+import net.digitalbebop.http.HttpStatus;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -11,7 +15,6 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.channels.Channel;
 import java.security.*;
 import java.security.cert.CertificateException;
 
@@ -34,8 +37,6 @@ public class SSLExtension implements ServerExtension {
     private TrustManagerFactory trustManagerFactory;
     private KeyStore keystore;
     private KeyStore truststore;
-    private SSLContext sslContext;
-    private SSLEngine sslEngine;
 
     @Inject
     public SSLExtension(@Named("truststorePath") final String truststorePath,
@@ -105,37 +106,57 @@ public class SSLExtension implements ServerExtension {
     }
 
     @Override
-    public Channel handleConnection(Channel input) {
+    public FiberSocketChannel handleConnection(FiberSocketChannel input) throws SuspendExecution {
         try {
-            final SSLContext localContext = SSLContext.getInstance("TLS");
+            final  SSLContext sslContext = SSLContext.getInstance("TLS"); ;
 
-            localContext.init(keyManagerFactory.getKeyManagers(),
-                              trustManagerFactory.getTrustManagers(), null);
+            sslContext.init(keyManagerFactory.getKeyManagers(),
+                            trustManagerFactory.getTrustManagers(), null);
 
-            final SSLEngine localEngine = localContext.createSSLEngine();
-            localEngine.setUseClientMode(false);
-            localEngine.setNeedClientAuth(false);
+            final SSLEngine sslEngine = sslContext.createSSLEngine();
+            sslEngine.setUseClientMode(false);
+            sslEngine.setNeedClientAuth(true);
 
-            final SSLSession localSession = localEngine.getSession();
+            final SSLSession localSession = sslEngine.getSession();
             final int appBufferMax = localSession.getApplicationBufferSize();
 
+            while(!sslEngine.isInboundDone() &&
+                  !sslEngine.isOutboundDone()) {
+                /*
+                 * Excerpt from sample:
+                 * We'll make the input buffers a bit bigger than the max needed
+                 * size, so that unwrap()s following a successful data transfer
+                 * won't generate BUFFER_OVERFLOWS.
+                 */
+                final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
+                final ByteBuffer clientIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
 
+                final ByteBuffer initial = ByteBuffer.wrap("TEST".getBytes());
+                final SSLEngineResult serverResult = sslEngine.wrap(initial, serverIn);
+                runDelegatedTasks(serverResult, sslEngine);
 
-            /*
-             * Excerpt from sample:
-             * We'll make the input buffers a bit bigger than the max needed
-             * size, so that unwrap()s following a successful data transfer
-             * won't generate BUFFER_OVERFLOWS.
-             */
-            final ByteBuffer serverIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
-        } catch (NoSuchAlgorithmException e) {
-            logger.error("Encryption not supported: " + e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+                logger.debug("Handshake status: " + serverResult.getHandshakeStatus().toString());
+                int nr = input.read(clientIn);
+                logger.debug("Read " + nr + " bytes from client");
+
+                final ByteBuffer unwrappedClientIn = ByteBuffer.allocate(appBufferMax + BUFFER_PAD_BYTES);
+                SSLEngineResult clientResult = sslEngine.unwrap(clientIn, unwrappedClientIn);
+                logger.debug("Read in client data: " + new String(unwrappedClientIn.array()));
+                runDelegatedTasks(clientResult, sslEngine);
+
+                break;
+            }
+
         } catch (KeyManagementException e) {
-            logger.info("Failed to retrieve key from store: " + e.getLocalizedMessage(), e);
-            throw new RuntimeException(e);
+            logger.error("Unable to read stores: " + e.getLocalizedMessage(), e);
+            throw new PulseException(HttpStatus.INTERNAL_ERROR, "Internal SSL Failure");
+        } catch (NoSuchAlgorithmException e) {
+            logger.error("Invalid encryption algorithem: " + e.getLocalizedMessage(), e);
+            throw new PulseException(HttpStatus.INTERNAL_ERROR, "Internal SSL Failure");
+        } catch (IOException e) {
+            logger.warn("Client crapped out while decoding ssl handshake: " + e.getLocalizedMessage());
+            throw new PulseException(HttpStatus.BAD_REQUEST, "Invalid SSL Stream");
         }
-
         return input;
     }
 
@@ -144,8 +165,10 @@ public class SSLExtension implements ServerExtension {
      * go ahead and run them in this thread.
      */
     private static void runDelegatedTasks(SSLEngineResult result,
-                                          SSLEngine engine) throws Exception {
+                                          SSLEngine engine) {
         if (result.getHandshakeStatus() == SSLEngineResult.HandshakeStatus.NEED_TASK) {
+            logger.info("NEED_TASK");
+
             Runnable runnable;
 
             // TODO: Run async with Fibers
@@ -156,10 +179,12 @@ public class SSLExtension implements ServerExtension {
 
             SSLEngineResult.HandshakeStatus hsStatus = engine.getHandshakeStatus();
             if (hsStatus == SSLEngineResult.HandshakeStatus.NEED_TASK) {
-                throw new Exception("handshake shouldn't need additional tasks");
+                throw new PulseException(HttpStatus.INTERNAL_ERROR, "handshake shouldn't need additional tasks");
             }
 
             logger.debug("\tnew HandshakeStatus: " + hsStatus);
         }
+
+        logger.info("Finishing delegated tasks.");
     }
 }

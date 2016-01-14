@@ -7,6 +7,7 @@ import co.paralleluniverse.fibers.io.FiberSocketChannel;
 import co.paralleluniverse.strands.Strand;
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import net.digitalbebop.PulseException;
 import net.digitalbebop.fibers.FiberChannels;
 import net.digitalbebop.http.extensions.SSLExtension;
 import org.apache.http.*;
@@ -139,10 +140,10 @@ public class BasicHttpServerImpl implements HttpServer {
             ch.close();
         } catch (HttpException | IOException e) {
             logger.error("Error processing request: " + e.getMessage(), e);
-            channelIn.close();
         } catch (ExecutionException e) {
             logger.error("Failed to properly build response: " + e.getLocalizedMessage(), e);
-            channelIn.close();
+        } catch (PulseException pe) {
+            logger.error("Caught pulse exception: " + pe);
         } finally {
             long endTime = System.currentTimeMillis();
             //logger.info("Total Time: " + (endTime - startTime) + "ms");

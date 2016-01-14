@@ -1,5 +1,8 @@
 package net.digitalbebop.http.extensions;
 
+import co.paralleluniverse.fibers.SuspendExecution;
+import co.paralleluniverse.fibers.io.FiberSocketChannel;
+
 import java.nio.channels.Channel;
 
 public interface ServerExtension {
@@ -8,7 +11,7 @@ public interface ServerExtension {
      * other in the server. Use it to initialize any dynamic properties or configure
      * the extension before use.
      */
-    default void initialize() {}
+    default void initialize() throws SuspendExecution {}
 
 
     /**
@@ -19,7 +22,7 @@ public interface ServerExtension {
      * @param input Channel that is created immediately after given a client connection.
      * @return Channel that uses has been processed by the extension.
      */
-    default Channel handleConnection(Channel input) {
+    default FiberSocketChannel handleConnection(FiberSocketChannel input)throws SuspendExecution{
         return input;
     }
 }
